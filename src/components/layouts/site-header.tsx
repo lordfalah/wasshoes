@@ -8,7 +8,7 @@ import { AuthDropdown } from "./auth-dropdown";
 export function SiteHeader() {
   return (
     <header className="bg-background sticky top-0 z-50 w-full border-b">
-      <div className="container mx-auto flex h-16 items-center px-4 sm:px-0">
+      <div className="container flex h-16 items-center">
         <MainNav items={siteConfig.mainNav} />
         <MobileNav items={siteConfig.mainNav} />
         <div className="flex flex-1 items-center justify-end space-x-4">

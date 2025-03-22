@@ -15,6 +15,7 @@ datasource db {
 }
 
 enum UserRole {
+  SUPERADMIN
   ADMIN
   USER
 }
@@ -30,6 +31,8 @@ model User {
   accounts              Account[]
   isTwoFactorEnabled    Boolean                @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
+
+  @@map("users")
 }
 
 model Account {
@@ -49,6 +52,7 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@map("accounts")
 }
 
 model VerificationToken {
@@ -58,6 +62,7 @@ model VerificationToken {
   expires DateTime
 
   @@unique([email, token])
+  @@map("verificationTokens")
 }
 
 model PasswordResetToken {
@@ -67,6 +72,7 @@ model PasswordResetToken {
   expires DateTime
 
   @@unique([email, token])
+  @@map("passwordResetToken")
 }
 
 model TwoFactorToken {
@@ -76,6 +82,7 @@ model TwoFactorToken {
   expires DateTime
 
   @@unique([email, token])
+  @@map("twoFactorToken")
 }
 
 model TwoFactorConfirmation {
@@ -85,4 +92,5 @@ model TwoFactorConfirmation {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId])
+  @@map("twoFactorConfirmation")
 }

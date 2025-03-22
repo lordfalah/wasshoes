@@ -19,7 +19,7 @@ import { SparklesText } from "@/components/ui/sparkles-text";
 
 export function LobbySkeleton() {
   return (
-    <Shell className="mx-auto max-w-6xl gap-0 p-[2rem]">
+    <Shell className="max-w-6xl gap-0">
       <PageHeader
         as="section"
         className="mx-auto items-center gap-2 text-center"

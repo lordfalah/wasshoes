@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
@@ -53,6 +54,7 @@ export async function CartSheet() {
         <SheetHeader className="space-y-2.5 pr-6">
           {/* <SheetTitle>Cart {itemCount > 0 && `(${itemCount})`}</SheetTitle> */}
           <SheetTitle>Cart 0</SheetTitle>
+
           <Separator />
         </SheetHeader>
         {/* {itemCount > 0 ? (

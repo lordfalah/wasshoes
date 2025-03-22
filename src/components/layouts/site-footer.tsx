@@ -10,7 +10,7 @@ import { ModeToggle } from "./mode-toggle";
 export function SiteFooter() {
   return (
     <footer className="bg-background w-full border-t">
-      <Shell className="container mx-auto px-4">
+      <Shell>
         <section className="flex flex-col gap-10 lg:flex-row lg:gap-20">
           <section>
             <Link href="/" className="flex w-fit items-center space-x-2">
