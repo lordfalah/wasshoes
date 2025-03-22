@@ -1,12 +1,22 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import type { Metadata, Viewport } from "next";
 import { SessionProvider } from "next-auth/react";
 import "@/app/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { auth } from "@/auth";
+import NextTopLoader from "nextjs-toploader";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
+import { cn } from "@/lib/utils";
+import { fontHeading } from "@/lib/fonts";
 
-const inter = Inter({ subsets: ["latin"] });
+export const viewport: Viewport = {
+  colorScheme: "dark light",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "black" },
+  ],
+};
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -23,7 +33,14 @@ export default async function RootLayout({
   return (
     <SessionProvider session={session}>
       <html lang="en">
-        <body className={inter.className}>
+        <body
+          className={cn(
+            "bg-background min-h-screen font-sans antialiased",
+            GeistSans.variable,
+            GeistMono.variable,
+            fontHeading.variable,
+          )}
+        >
           <Toaster />
           <ThemeProvider
             attribute="class"
@@ -31,6 +48,7 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <NextTopLoader />
             {children}
           </ThemeProvider>
         </body>
