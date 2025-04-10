@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/form-error";
 import { FormSuccess } from "@/components/form-success";
 import { login } from "@/actions/login";
-import { Input } from "../ui/input";
+import { Input } from "@/components/ui/input";
 
 export const LoginForm: React.FC = () => {
   const searchParams = useSearchParams();
@@ -160,7 +160,7 @@ export const LoginForm: React.FC = () => {
           <FormError message={error || urlError} />
           <FormSuccess message={success} />
           <Button disabled={isPending} type="submit" className="w-full">
-            {showTwoFactor ? "Confirm" : "Login"}
+            {showTwoFactor ? "Confirm" : "Sign In"}
           </Button>
         </form>
       </Form>

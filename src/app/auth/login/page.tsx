@@ -1,6 +1,7 @@
 import { LoginForm } from "@/components/auth/login-form";
 import PlaiceholderImage, { TypeImage } from "@/components/plaiceholder-image";
 import { GalleryVerticalEnd } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 
 const LoginPage: React.FC = () => {
@@ -8,12 +9,12 @@ const LoginPage: React.FC = () => {
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
-          <a href="#" className="flex items-center gap-2 font-medium">
+          <Link href="/" className="flex items-center gap-2 font-medium">
             <div className="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-md">
               <GalleryVerticalEnd className="size-4" />
             </div>
             Acme Inc.
-          </a>
+          </Link>
         </div>
         <div className="flex flex-1 items-center justify-center">
           <LoginForm />
