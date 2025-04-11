@@ -32,6 +32,8 @@ model User {
   isTwoFactorEnabled    Boolean                @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
 
+  stores Store[]
+
   @@map("users")
 }
 
@@ -93,4 +95,78 @@ model TwoFactorConfirmation {
 
   @@unique([userId])
   @@map("twoFactorConfirmation")
+}
+
+model Store {
+  id          String  @id @default(cuid())
+  name        String  @db.VarChar(50)
+  bannerStore Json[]
+  user        User    @relation(fields: [userId], references: [id])
+  userId      String
+  paket       Paket[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("store")
+}
+
+enum TStatusOrder {
+  SUCCESS
+  PENDING
+  ERROR
+}
+
+enum TPaymentMethod {
+  MANUAL
+  AUTO
+}
+
+model Order {
+  id            String         @id @default(cuid())
+  status        TStatusOrder
+  totalPrice    Int            @db.Integer
+  paymentMethod TPaymentMethod @default(MANUAL)
+  pakets        PaketOrder[]
+
+  @@map("order")
+}
+
+model Paket {
+  id          String       @id @default(cuid())
+  name        String       @db.VarChar(100)
+  description String       @db.VarChar(200)
+  price       Int          @db.Integer
+  images      Json[]
+  stores      Store[]
+  orders      PaketOrder[]
+  category    Category     @relation(fields: [id], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("paket")
+}
+
+model PaketOrder {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  paketId String
+  paket   Paket  @relation(fields: [paketId], references: [id])
+
+  @@map("paketOrder")
+}
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String  @unique @db.VarChar(50)
+  description String  @db.VarChar(200)
+  pakets      Paket[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("category")
 }

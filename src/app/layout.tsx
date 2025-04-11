@@ -7,7 +7,7 @@ import { auth } from "@/auth";
 import NextTopLoader from "nextjs-toploader";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { absoluteUrl, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { fontHeading } from "@/lib/fonts";
 import { siteConfig } from "@/config/site";
 
