@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/form-error";
 import { FormSuccess } from "@/components/form-success";
 import { UserRole } from "@prisma/client";
-import { ExtendedUser } from "../../../../../next-auth";
+import { ExtendedUser } from "@/types/types";
 
 const FormSetting: React.FC<{ user: ExtendedUser }> = ({ user }) => {
   const [error, setError] = useState<string | undefined>();
@@ -46,7 +46,7 @@ const FormSetting: React.FC<{ user: ExtendedUser }> = ({ user }) => {
       newPassword: "",
       name: user?.name || "",
       email: user?.email || "",
-      role: user?.role || "",
+      role: user?.role || "USER",
       isTwoFactorEnabled: user?.isTwoFactorEnabled || undefined,
     },
   });

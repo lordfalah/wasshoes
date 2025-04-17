@@ -10,6 +10,7 @@ import { GeistMono } from "geist/font/mono";
 import { cn } from "@/lib/utils";
 import { fontHeading } from "@/lib/fonts";
 import { siteConfig } from "@/config/site";
+import Providers from "@/components/provider";
 
 export const viewport: Viewport = {
   colorScheme: "dark light",
@@ -88,7 +89,7 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
             <NextTopLoader />
-            {children}
+            <Providers>{children}</Providers>
           </ThemeProvider>
         </body>
       </html>

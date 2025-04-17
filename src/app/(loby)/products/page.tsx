@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ProductsPage({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

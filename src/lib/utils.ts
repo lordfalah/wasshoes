@@ -101,3 +101,12 @@ export function isMacOs() {
 
   return window.navigator.userAgent.includes("Mac");
 }
+
+export function extractFileKeyFromUrl(url: string) {
+  try {
+    const parts = url.split("/");
+    return parts.at(-1) ?? "";
+  } catch {
+    return "";
+  }
+}

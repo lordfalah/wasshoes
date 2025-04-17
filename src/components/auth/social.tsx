@@ -16,7 +16,7 @@ export const Social = () => {
   };
 
   return (
-    <div className="flex w-full items-center gap-x-2 text-white">
+    <div className="flex w-full items-center gap-x-2">
       <Button
         size="lg"
         className="w-full"

@@ -52,36 +52,36 @@ export interface DataTableFilterField<TData> {
   options?: Option[];
 }
 
-export type DrizzleWhere<T> =
-  | SQL<unknown>
-  | ((aliases: T) => SQL<T> | undefined)
-  | undefined;
+// export type DrizzleWhere<T> =
+//   | SQL<unknown>
+//   | ((aliases: T) => SQL<T> | undefined)
+//   | undefined;
 
-export type StripePaymentStatus = Stripe.PaymentIntent.Status;
+// export type StripePaymentStatus = Stripe.PaymentIntent.Status;
 
-export interface Plan {
-  id: Store["plan"];
-  title: string;
-  description: string;
-  features: string[];
-  stripePriceId: string;
-  limits: {
-    stores: number;
-    products: number;
-    tags: number;
-    variants: number;
-  };
-}
+// export interface Plan {
+//   id: Store["plan"];
+//   title: string;
+//   description: string;
+//   features: string[];
+//   stripePriceId: string;
+//   limits: {
+//     stores: number;
+//     products: number;
+//     tags: number;
+//     variants: number;
+//   };
+// }
 
-export interface PlanWithPrice extends Plan {
-  price: string;
-}
+// export interface PlanWithPrice extends Plan {
+//   price: string;
+// }
 
-export interface UserPlan extends Plan {
-  stripeSubscriptionId?: string | null;
-  stripeCurrentPeriodEnd?: string | null;
-  stripeCustomerId?: string | null;
-  isSubscribed: boolean;
-  isCanceled: boolean;
-  isActive: boolean;
-}
+// export interface UserPlan extends Plan {
+//   stripeSubscriptionId?: string | null;
+//   stripeCurrentPeriodEnd?: string | null;
+//   stripeCustomerId?: string | null;
+//   isSubscribed: boolean;
+//   isCanceled: boolean;
+//   isActive: boolean;
+// }
