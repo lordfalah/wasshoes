@@ -6,7 +6,7 @@ import { UploadAvatar } from "./_components/form-avatar";
 const SettingPage: React.FC = async () => {
   const session = await auth();
 
-  if (!session || !session.user.id) throw new Error("data not found");
+  if (!session || !session.user) throw new Error("You are not Authentication");
 
   return (
     <div className="p-4 lg:p-6">
@@ -18,7 +18,7 @@ const SettingPage: React.FC = async () => {
           alt: session.user.name ?? `Avatar : ${session.user.id}`,
           width: 350,
           height: 350,
-          id: session.user.id,
+          id: session.user.id as string,
         }}
       />
       <FormSetting user={session.user} />
