@@ -84,4 +84,4 @@ export const GET = auth(async (req) => {
     console.error("Error fetching visitor stats:", error);
     return PrismaErrorHandler.handlePrisma(error as never);
   }
-});
+}) as never;
