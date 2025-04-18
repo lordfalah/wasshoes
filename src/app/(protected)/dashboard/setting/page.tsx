@@ -9,7 +9,7 @@ const SettingPage: React.FC = async () => {
   if (!session || !session.user) throw new Error("You are not Authentication");
 
   return (
-    <div className="p-4 lg:p-6">
+    <div className="space-y-4 p-4 lg:p-6">
       <UploadAvatar
         avatar={{
           src:

@@ -50,7 +50,14 @@ export const GET = auth(async (req) => {
       desktop: Math.floor(Math.random() * 10),
     }));
 
-    return NextResponse.json(dummy);
+    return NextResponse.json(
+      {
+        status: "success",
+        data: dummy,
+        message: "get data visitor",
+      },
+      { status: 200 },
+    );
   }
 
   try {
@@ -65,7 +72,14 @@ export const GET = auth(async (req) => {
       }),
     );
 
-    return NextResponse.json(results);
+    return NextResponse.json(
+      {
+        status: "success",
+        data: results,
+        message: "get data visitor",
+      },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("Error fetching visitor stats:", error);
     return PrismaErrorHandler.handlePrisma(error as never);
