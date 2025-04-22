@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition, useState } from "react";
 import { useSession } from "next-auth/react";
-
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -30,10 +29,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/form-error";
 import { FormSuccess } from "@/components/form-success";
-import { UserRole } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { ExtendedUser } from "@/types/types";
 
-const FormSetting: React.FC<{ user: ExtendedUser }> = ({ user }) => {
+const FormSetting: React.FC<{ user: ExtendedUser; roles: Role[] }> = ({
+  user,
+  roles,
+}) => {
   const [error, setError] = useState<string | undefined>();
   const [success, setSuccess] = useState<string | undefined>();
   const { update } = useSession();
@@ -46,7 +48,7 @@ const FormSetting: React.FC<{ user: ExtendedUser }> = ({ user }) => {
       newPassword: "",
       name: user?.name || "",
       email: user?.email || "",
-      role: user?.role || "USER",
+      role: user.role.name,
       isTwoFactorEnabled: user?.isTwoFactorEnabled || undefined,
     },
   });
@@ -173,8 +175,11 @@ const FormSetting: React.FC<{ user: ExtendedUser }> = ({ user }) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-                      <SelectItem value={UserRole.USER}>User</SelectItem>
+                      {roles.map(({ id, name }) => (
+                        <SelectItem key={id} value={name}>
+                          {name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

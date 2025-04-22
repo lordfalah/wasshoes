@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { Session } from "next-auth";
-import { NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
 
 export const currentUser = async () => {
   const session = await auth();
@@ -17,12 +17,16 @@ export const currentRole = async () => {
 export interface NextRequestExt extends NextRequest {
   // this is for my needs
   auth?: Session;
+  params: Promise<Record<string, string>>;
 }
 
 export const withAuth = (
   handler: (req: NextRequestExt) => Promise<Response>,
 ) => {
-  return async function (req: NextRequestExt) {
+  return async function (
+    req: NextRequestExt,
+    { params }: { params: Promise<Record<string, string>> },
+  ) {
     try {
       const session = await auth();
       if (!session) {
@@ -34,6 +38,7 @@ export const withAuth = (
 
       // Add session to request for use in handler
       req.auth = session;
+      req.params = params;
 
       return handler(req);
     } catch (error) {

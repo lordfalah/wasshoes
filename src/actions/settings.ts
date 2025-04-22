@@ -66,8 +66,21 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
     where: { id: dbUser.id },
     data: {
       ...values,
+      role: {
+        connect: {
+          name: values.role,
+        },
+      },
+    },
+
+    include: {
+      role: true,
     },
   });
+
+  if (!updatedUser.role) {
+    return { error: "Role is Required!" };
+  }
 
   await update({
     user: {

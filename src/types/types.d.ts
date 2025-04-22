@@ -1,8 +1,8 @@
-import { UserRole } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { type DefaultSession } from "next-auth";
 
 export type ExtendedUser = DefaultSession["user"] & {
-  role: UserRole;
+  role: Role;
   isTwoFactorEnabled: boolean;
   isOAuth: boolean;
 };
@@ -10,5 +10,14 @@ export type ExtendedUser = DefaultSession["user"] & {
 declare module "next-auth" {
   interface Session {
     user: ExtendedUser;
+  }
+}
+
+// The `JWT` interface can be found in the `next-auth/jwt` submodule
+declare module "next-auth/jwt" {
+  /** Returned by the `jwt` callback and `auth`, when using JWT sessions */
+  interface JWT {
+    /** OpenID ID Token */
+    role: Role;
   }
 }

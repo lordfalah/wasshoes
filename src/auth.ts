@@ -1,5 +1,5 @@
 import NextAuth from "next-auth";
-import { UserRole } from "@prisma/client";
+import { Role, UserRole } from "@prisma/client";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
 import { getUserById } from "@/data/user";
@@ -19,6 +19,38 @@ export const {
     error: "/auth/error",
   },
   events: {
+    async createUser({ user }) {
+      try {
+        // Periksa apakah role default sudah ada
+        let defaultRole = await db.role.findFirst({
+          where: { name: UserRole.USER }, // Cari berdasarkan nama role
+        });
+
+        // Jika belum ada, buat role default
+        if (!defaultRole) {
+          defaultRole = await db.role.create({
+            data: {
+              name: UserRole.USER,
+            },
+          });
+        }
+
+        // Hubungkan role dan permission default ke user
+        await db.user.update({
+          where: {
+            id: user.id, // ID user yang baru dibuat oleh NextAuth
+          },
+          data: {
+            role: {
+              connect: { id: defaultRole.id }, // Hubungkan role default
+            },
+          },
+        });
+      } catch (error) {
+        console.error("Error assigning role and permissions:", error);
+      }
+    },
+
     async linkAccount({ user }) {
       await db.user.update({
         where: { id: user.id },
@@ -57,7 +89,7 @@ export const {
       }
 
       if (token.role && session.user) {
-        session.user.role = token.role as UserRole;
+        session.user.role = token.role as Role;
       }
 
       if (session.user) {

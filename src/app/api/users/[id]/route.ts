@@ -1,12 +1,10 @@
+import { NextRequestExt, withAuth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export const PATCH = async (
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) => {
-  const id = (await params).id;
+export const PATCH = withAuth(async (req: NextRequestExt) => {
+  const id = (await req?.params).id;
 
   if (!id) {
     return NextResponse.json(
@@ -55,4 +53,4 @@ export const PATCH = async (
   } catch (error) {
     return PrismaErrorHandler.handlePrisma(error as never);
   }
-};
+}) as never;

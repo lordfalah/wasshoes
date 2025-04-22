@@ -69,8 +69,9 @@ export function UploadAvatar({
             image: string;
           }>;
 
-          const deleteFile = await deleteFiles(resFile[0].key);
-          console.log({ deleteFile });
+          // delete file
+          await deleteFiles(resFile[0].key);
+
           setPreviewImage(avatar.src);
           showErrorToast(message);
           return;
