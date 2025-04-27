@@ -59,22 +59,24 @@ export default auth((req, context) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
 
-  // ⛔️ Bypass middleware untuk endpoint ini
-  if (nextUrl.pathname === "/api/uploadthing") {
-    return NextResponse.next();
-  }
-
   const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
-  if (isApiAuthRoute) {
+  // Ambil session token dari cookie kalau ada
+  const sessionToken =
+    req.cookies.get("next-auth.session-token")?.value ||
+    req.cookies.get("__Secure-authjs.session-token")?.value;
+
+  // Bypass middleware untuk route tertentu (contoh: upload, auth API)
+  if (isApiAuthRoute || nextUrl.pathname === "/api/uploadthing") {
     return NextResponse.next();
   }
 
+  // ⛔️ Kalau user ke halaman auth (/login, /register), tapi sudah login
   if (isAuthRoute) {
     if (isLoggedIn) {
-      return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
+      return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
     }
     return NextResponse.next();
   }
@@ -95,12 +97,15 @@ export default auth((req, context) => {
       );
     }
 
-    let callbackUrl = nextUrl.pathname;
-    if (nextUrl.search) {
-      callbackUrl += nextUrl.search;
+    // Kalau masih ada session token tapi tidak valid (logout belum clear)
+    if (sessionToken) {
+      console.log("Force redirect because stale session cookie found.");
     }
 
-    const encodedCallbackUrl = encodeURIComponent(callbackUrl);
+    // Redirect paksa ke /auth/login
+    const encodedCallbackUrl = encodeURIComponent(
+      nextUrl.pathname + nextUrl.search,
+    );
 
     return Response.redirect(
       new URL(`/auth/login?callbackUrl=${encodedCallbackUrl}`, nextUrl),
