@@ -47,7 +47,7 @@ export function LobbySkeleton() {
             Buy now
           </Link>
           <Link
-            href="/dashboard/stores"
+            href="/dashboard/store"
             className={cn(buttonVariants({ variant: "outline" }))}
           >
             Sell now
