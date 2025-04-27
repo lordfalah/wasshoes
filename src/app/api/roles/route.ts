@@ -1,23 +1,10 @@
-import { withAuth } from "@/lib/auth";
+import { withAuthRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
 import { UserSchema } from "@/schemas";
-import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-export const GET = withAuth(async (req) => {
-  if (req.auth?.user.role.name !== UserRole.SUPERADMIN) {
-    return NextResponse.json(
-      {
-        status: "error",
-        message:
-          "Unauthorized access. You must be a SUPERADMIN to perform this action.",
-        errors: null,
-      },
-      { status: 401 },
-    );
-  }
-
+export const GET = withAuthRole(async () => {
   try {
     const res = await db.role.findMany();
 
@@ -35,19 +22,7 @@ export const GET = withAuth(async (req) => {
   }
 }) as never;
 
-export const POST = withAuth(async (req) => {
-  if (req.auth?.user.role.name !== UserRole.SUPERADMIN) {
-    return NextResponse.json(
-      {
-        status: "error",
-        message:
-          "Unauthorized access. You must be a SUPERADMIN to perform this action.",
-        errors: null,
-      },
-      { status: 401 },
-    );
-  }
-
+export const POST = withAuthRole(async (req) => {
   try {
     const body = await req.json();
 
@@ -56,22 +31,7 @@ export const POST = withAuth(async (req) => {
     );
 
     if (!success) {
-      const errors = error.issues.reduce(
-        (acc, issue) => {
-          acc[issue.path.join(".")] = issue.message;
-          return acc;
-        },
-        {} as Record<string, string>,
-      );
-
-      return NextResponse.json(
-        {
-          status: "error",
-          message: "Validation error",
-          errors,
-        },
-        { status: 400 },
-      );
+      return PrismaErrorHandler.handleZodCompact(error);
     }
 
     const newRole = await db.role.create({

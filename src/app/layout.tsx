@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { SessionProvider } from "next-auth/react";
 import "@/app/globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -89,7 +90,9 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
             <NextTopLoader />
-            <Providers>{children}</Providers>
+            <Providers>
+              <NuqsAdapter>{children}</NuqsAdapter>
+            </Providers>
           </ThemeProvider>
         </body>
       </html>

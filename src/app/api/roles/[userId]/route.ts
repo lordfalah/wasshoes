@@ -3,12 +3,12 @@ import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
 import { NextResponse } from "next/server";
 import { NextRequestExt, withAuth } from "@/lib/auth";
 import { UserSchema } from "@/schemas";
+import { UserRole } from "@prisma/client";
 
 export const PATCH = withAuth(async (req: NextRequestExt) => {
-  const session = req.auth?.user;
   const userId = (await req.params).userId;
 
-  if (!session || session.role.name !== "SUPERADMIN") {
+  if (req.auth?.user.role.name !== UserRole.SUPERADMIN) {
     return NextResponse.json(
       {
         status: "error",
@@ -30,31 +30,15 @@ export const PATCH = withAuth(async (req: NextRequestExt) => {
     );
   }
 
-  const body = await req.json();
-  const { success, data, error } = UserSchema.pick({ role: true }).safeParse(
-    body,
-  );
-
-  if (!success) {
-    const errors = error.issues.reduce(
-      (acc, issue) => {
-        acc[issue.path.join(".")] = issue.message;
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
-
-    return NextResponse.json(
-      {
-        status: "error",
-        message: "Validation failed",
-        errors,
-      },
-      { status: 400 },
-    );
-  }
-
   try {
+    const body = await req.json();
+    const { success, data, error } = UserSchema.pick({ role: true }).safeParse(
+      body,
+    );
+
+    if (!success) {
+      return PrismaErrorHandler.handleZodCompact(error);
+    }
     const role = await db.role.findUnique({
       where: {
         name: data.role,
@@ -74,6 +58,9 @@ export const PATCH = withAuth(async (req: NextRequestExt) => {
 
     const updatedUser = await db.user.update({
       where: { id: userId },
+      omit: {
+        password: true,
+      },
       data: {
         role: {
           connect: {

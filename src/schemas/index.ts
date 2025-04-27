@@ -8,6 +8,7 @@ export const UserSchema = z.object({
   email: z.optional(z.string().email()),
   password: z.optional(z.string().min(6)),
   newPassword: z.optional(z.string().min(6)),
+  url: z.optional(z.string().url()),
 });
 
 export const SettingsSchema = UserSchema.refine(
@@ -79,3 +80,10 @@ export const RegisterSchema = z.object({
     message: "Name is required",
   }),
 });
+
+export const RoleSchema = UserSchema.pick({ role: true });
+export const roles = [
+  { label: "Super Admin", value: UserRole.SUPERADMIN },
+  { label: "Admin", value: UserRole.ADMIN },
+  { label: "User", value: UserRole.USER },
+] satisfies Array<{ label: string; value: UserRole }>;

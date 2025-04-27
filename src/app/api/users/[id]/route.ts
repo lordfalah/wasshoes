@@ -1,6 +1,7 @@
 import { NextRequestExt, withAuth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
+import { UserSchema } from "@/schemas";
 import { NextResponse } from "next/server";
 
 export const PATCH = withAuth(async (req: NextRequestExt) => {
@@ -18,19 +19,13 @@ export const PATCH = withAuth(async (req: NextRequestExt) => {
   }
 
   try {
-    const { url } = (await req.json()) as { url: string };
+    const body = await req.json();
+    const { success, error, data } = UserSchema.pick({ url: true }).safeParse(
+      body,
+    );
 
-    if (!url) {
-      return NextResponse.json(
-        {
-          status: "error",
-          message: "Invalid url",
-          errors: {
-            image: "Must have url",
-          },
-        },
-        { status: 400 },
-      );
+    if (!success) {
+      return PrismaErrorHandler.handleZodCompact(error);
     }
 
     const res = await db.user.update({
@@ -38,7 +33,7 @@ export const PATCH = withAuth(async (req: NextRequestExt) => {
         id,
       },
       data: {
-        image: url,
+        image: data.url,
       },
     });
 

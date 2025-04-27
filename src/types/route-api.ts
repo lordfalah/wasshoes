@@ -1,6 +1,7 @@
 // Response data from api
 
 export type TError<TData> = {
+  data: null;
   errors: Record<keyof TData, string>;
   message: string;
   status: string;

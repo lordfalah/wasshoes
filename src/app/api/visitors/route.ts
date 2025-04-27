@@ -1,6 +1,6 @@
 export const revalidate = 60;
 
-import { auth } from "@/auth";
+import { withAuth } from "@/lib/auth";
 import { redis } from "@/lib/db_redis";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
 import { NextResponse } from "next/server";
@@ -18,18 +18,7 @@ const getLastNDates = (n: number): string[] => {
   return dates.reverse();
 };
 
-export const GET = auth(async (req) => {
-  if (!req.auth || !req.auth?.user) {
-    return NextResponse.json(
-      {
-        status: "error",
-        message: "Invalid Request",
-        errors: null,
-      },
-      { status: 401 },
-    );
-  }
-
+export const GET = withAuth(async (req) => {
   const searchParams = req.nextUrl.searchParams;
   const range = searchParams.get("range") || "7days";
 
@@ -82,6 +71,6 @@ export const GET = auth(async (req) => {
     );
   } catch (error) {
     console.error("Error fetching visitor stats:", error);
-    return PrismaErrorHandler.handlePrisma(error as never);
+    return PrismaErrorHandler.handleDefault(error);
   }
 }) as never;

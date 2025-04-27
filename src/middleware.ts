@@ -8,7 +8,7 @@ import {
 } from "@/routes";
 import { NextFetchEvent, NextResponse, userAgent } from "next/server";
 import { ipAddress } from "@vercel/functions";
-import { redis } from "./lib/db_redis";
+import { redis } from "@/lib/db_redis";
 
 const { auth } = NextAuth(authConfig);
 
@@ -80,6 +80,21 @@ export default auth((req, context) => {
   }
 
   if (!isLoggedIn && !isPublicRoute) {
+    const isApiRequest =
+      req.headers.get("accept")?.includes("application/json") ||
+      nextUrl.pathname.startsWith("/api");
+
+    if (isApiRequest) {
+      return NextResponse.json(
+        {
+          status: "error",
+          message: "Unauthorized",
+          errors: null,
+        },
+        { status: 401 },
+      );
+    }
+
     let callbackUrl = nextUrl.pathname;
     if (nextUrl.search) {
       callbackUrl += nextUrl.search;

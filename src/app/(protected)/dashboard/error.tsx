@@ -19,7 +19,7 @@ export default function Error({
           {error.digest}
         </p>
         <h1 className="mt-4 text-5xl font-semibold tracking-tight text-balance sm:text-7xl">
-          Page is error
+          Page is <span className="text-red-400">Error</span>
         </h1>
         <p className="mt-6 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8">
           {getErrorMessage(error)}

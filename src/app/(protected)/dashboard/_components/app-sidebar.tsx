@@ -3,7 +3,6 @@
 import * as React from "react";
 import {
   ArrowUpCircleIcon,
-  BarChartIcon,
   CameraIcon,
   ClipboardListIcon,
   DatabaseIcon,
@@ -16,6 +15,7 @@ import {
   SearchIcon,
   Settings,
   SettingsIcon,
+  Store,
   Users,
 } from "lucide-react";
 
@@ -52,9 +52,9 @@ const data = {
       icon: Users,
     },
     {
-      title: "Analytics",
-      url: "#",
-      icon: BarChartIcon,
+      title: "Store",
+      url: "/dashboard/store",
+      icon: Store,
     },
     {
       title: "Projects",
