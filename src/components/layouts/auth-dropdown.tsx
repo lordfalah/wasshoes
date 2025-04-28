@@ -2,7 +2,7 @@ import * as React from "react";
 import Link from "next/link";
 import { DashboardIcon, ExitIcon, GearIcon } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Icons } from "@/components/icons";
 import { auth, signOut } from "@/auth";
 
 interface AuthDropdownProps
@@ -36,8 +35,6 @@ export async function AuthDropdown({ className, ...props }: AuthDropdownProps) {
     );
   }
 
-  const initials = `${session.user.name?.charAt(0) ?? ""}`;
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -53,14 +50,14 @@ export async function AuthDropdown({ className, ...props }: AuthDropdownProps) {
                 alt={session.user.name ?? ""}
               />
             )}
-            <AvatarFallback>{initials}</AvatarFallback>
+            {/* <AvatarFallback>{initials}</AvatarFallback> */}
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm leading-none font-medium">{initials}</p>
+            {/* <p className="text-sm leading-none font-medium">{initials}</p> */}
             <p className="text-muted-foreground text-xs leading-none">
               {session.user.email ?? ""}
             </p>
@@ -111,13 +108,13 @@ async function AuthDropdownGroup() {
           <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
         </Link>
       </DropdownMenuItem>
-      <DropdownMenuItem asChild>
+      {/* <DropdownMenuItem asChild>
         <Link href="/dashboard/billing">
           <Icons.credit className="mr-2 size-4" aria-hidden="true" />
           Billing
           <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
         </Link>
-      </DropdownMenuItem>
+      </DropdownMenuItem> */}
       <DropdownMenuItem asChild>
         <Link href="/dashboard/setting">
           <GearIcon className="mr-2 size-4" aria-hidden="true" />

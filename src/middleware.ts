@@ -51,22 +51,15 @@ export default auth((req, context) => {
         }
       })(),
     );
-    return NextResponse.next();
   }
 
   // validate auth
-
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
 
   const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
-
-  // Ambil session token dari cookie kalau ada
-  const sessionToken =
-    req.cookies.get("next-auth.session-token")?.value ||
-    req.cookies.get("__Secure-authjs.session-token")?.value;
 
   // Bypass middleware untuk route tertentu (contoh: upload, auth API)
   if (isApiAuthRoute || nextUrl.pathname === "/api/uploadthing") {
@@ -76,6 +69,7 @@ export default auth((req, context) => {
   // ⛔️ Kalau user ke halaman auth (/login, /register), tapi sudah login
   if (isAuthRoute) {
     if (isLoggedIn) {
+      console.log("OIII");
       return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
     }
     return NextResponse.next();
@@ -95,11 +89,6 @@ export default auth((req, context) => {
         },
         { status: 401 },
       );
-    }
-
-    // Kalau masih ada session token tapi tidak valid (logout belum clear)
-    if (sessionToken) {
-      console.log("Force redirect because stale session cookie found.");
     }
 
     // Redirect paksa ke /auth/login
