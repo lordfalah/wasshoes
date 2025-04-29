@@ -1,0 +1,64 @@
+import { withAuthRole } from "@/lib/auth";
+import { db } from "@/lib/db";
+import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
+import { StoreSchema } from "@/schemas/store";
+import { InputJsonValue } from "@prisma/client/runtime/library";
+import { NextResponse } from "next/server";
+
+export const PATCH = withAuthRole(async (req) => {
+  try {
+    const storeId = (await req.params).storeId;
+    if (!storeId) {
+      return NextResponse.json(
+        { status: "error", message: "Store ID is required", data: null },
+        { status: 400 },
+      );
+    }
+
+    const body = await req.json();
+    const { success, error, data } = StoreSchema.safeParse(body);
+    if (!success) {
+      return PrismaErrorHandler.handleZodCompact(error);
+    }
+
+    const updatedStore = await db.store.update({
+      where: { id: storeId },
+      data: {
+        name: data?.name,
+        bannerStore: data?.bannerStore as unknown as InputJsonValue[],
+      },
+    });
+
+    return NextResponse.json(
+      { status: "success", message: "Store updated", data: updatedStore },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("[STORE_PATCH]", error);
+    return PrismaErrorHandler.handlePrisma(error as never);
+  }
+});
+
+export const DELETE = withAuthRole(async (req) => {
+  try {
+    const storeId = (await req.params).storeId;
+    if (!storeId) {
+      return NextResponse.json(
+        { status: "error", message: "Store ID is required", data: null },
+        { status: 400 },
+      );
+    }
+
+    await db.store.delete({
+      where: { id: storeId },
+    });
+
+    return NextResponse.json(
+      { status: "success", message: "Store deleted", data: null },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("[STORE_DELETE]", error);
+    return PrismaErrorHandler.handlePrisma(error as never);
+  }
+});

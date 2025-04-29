@@ -1,24 +1,11 @@
 import { db } from "@/lib/db";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
 import { NextResponse } from "next/server";
-import { NextRequestExt, withAuth } from "@/lib/auth";
+import { NextRequestExt, withAuthRole } from "@/lib/auth";
 import { UserSchema } from "@/schemas";
-import { UserRole } from "@prisma/client";
 
-export const PATCH = withAuth(async (req: NextRequestExt) => {
+export const PATCH = withAuthRole(async (req: NextRequestExt) => {
   const userId = (await req.params).userId;
-
-  if (req.auth?.user.role.name !== UserRole.SUPERADMIN) {
-    return NextResponse.json(
-      {
-        status: "error",
-        message: "Unauthorized. Only SUPERADMIN can update user role.",
-        errors: null,
-      },
-      { status: 401 },
-    );
-  }
-
   if (!userId) {
     return NextResponse.json(
       {
