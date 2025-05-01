@@ -1,7 +1,7 @@
 import { withAuthRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
-import { StoreSchema } from "@/schemas/store";
+import { StoreSchemaServer } from "@/schemas/store";
 import { InputJsonValue } from "@prisma/client/runtime/library";
 import { NextResponse } from "next/server";
 
@@ -16,7 +16,7 @@ export const PATCH = withAuthRole(async (req) => {
     }
 
     const body = await req.json();
-    const { success, error, data } = StoreSchema.safeParse(body);
+    const { success, error, data } = StoreSchemaServer.safeParse(body);
     if (!success) {
       return PrismaErrorHandler.handleZodCompact(error);
     }
@@ -24,8 +24,8 @@ export const PATCH = withAuthRole(async (req) => {
     const updatedStore = await db.store.update({
       where: { id: storeId },
       data: {
-        name: data?.name,
-        bannerStore: data?.bannerStore as unknown as InputJsonValue[],
+        name: data.name,
+        bannerImgs: data.bannerImgs as unknown as InputJsonValue[],
       },
     });
 

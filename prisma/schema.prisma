@@ -107,12 +107,12 @@ model TwoFactorConfirmation {
 }
 
 model Store {
-  id          String  @id @default(cuid())
-  name        String  @db.VarChar(50)
-  bannerStore Json[]
-  user        User    @relation(fields: [userId], references: [id])
-  userId      String
-  paket       Paket[]
+  id         String  @id @default(cuid())
+  name       String  @db.VarChar(50)
+  bannerImgs Json[]
+  user       User[]
+  userId     String
+  paket      Paket[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

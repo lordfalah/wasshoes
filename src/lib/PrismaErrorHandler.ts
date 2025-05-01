@@ -102,7 +102,8 @@ class PrismaErrorHandler {
   static handleZodCompact(error: ZodError) {
     const errors = error.issues.reduce(
       (acc, issue) => {
-        acc[issue.path.join(".")] = issue.message;
+        const path = issue.path.at(-1)?.toString() ?? "unknown";
+        acc[path] = issue.message;
         return acc;
       },
       {} as Record<string, string>,

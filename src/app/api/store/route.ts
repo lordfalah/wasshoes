@@ -1,7 +1,7 @@
 import { withAuth, withAuthRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
-import { StoreSchema } from "@/schemas/store";
+import { StoreSchemaServer } from "@/schemas/store";
 import { InputJsonValue } from "@prisma/client/runtime/library";
 import { NextResponse } from "next/server";
 
@@ -32,7 +32,7 @@ export const POST = withAuthRole(async (req) => {
   try {
     const body = await req.json();
 
-    const { success, error, data } = StoreSchema.safeParse(body);
+    const { success, error, data } = StoreSchemaServer.safeParse(body);
 
     if (!success) {
       return PrismaErrorHandler.handleZodCompact(error);
@@ -41,7 +41,7 @@ export const POST = withAuthRole(async (req) => {
     const store = await db.store.create({
       data: {
         name: data.name,
-        bannerStore: data.bannerStore as unknown as InputJsonValue[],
+        bannerImgs: data.bannerImgs as unknown as InputJsonValue[],
         userId: req.auth?.user.id as string,
       },
     });
