@@ -27,52 +27,117 @@ import {
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { StoreSchemaClient, TStoreSchemaClient } from "@/schemas/store";
+import {
+  StoreSchemaClient,
+  TStoreSchemaClient,
+  TStoreSchemaServer,
+} from "@/schemas/store";
 import { getErrorMessage } from "@/lib/handle-error";
 import { TError } from "@/types/route-api";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { uploadFiles } from "@/lib/uploadthing";
 import { deleteFiles } from "@/app/api/uploadthing/helper-function";
+import { ClientUploadedFileData } from "uploadthing/types";
 
-const CreateStore: React.FC = () => {
+const DetailStore: React.FC<{ data: TStoreSchemaServer & { id: string } }> = ({
+  data,
+}) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
   const form = useForm<TStoreSchemaClient>({
     resolver: zodResolver(StoreSchemaClient),
     defaultValues: {
-      name: "",
+      name: data.name || "",
       bannerImgs: [],
     },
   });
 
+  React.useEffect(() => {
+    const convertToFiles = async () => {
+      const files = await Promise.all(
+        data.bannerImgs.map(async ({ ufsUrl, name, type, lastModified }) => {
+          const res = await fetch(ufsUrl);
+          const blob = await res.blob();
+          return new File([blob], name, {
+            type,
+            lastModified,
+          });
+        }),
+      );
+      form.setValue("bannerImgs", files);
+    };
+
+    if (data.bannerImgs.length) convertToFiles();
+  }, [data.bannerImgs, form]);
+
   const onSubmit = React.useCallback(
-    (data: TStoreSchemaClient) => {
+    (values: TStoreSchemaClient) => {
       toast.promise(
         (async () => {
           setIsSubmitting(true);
-          try {
-            const resFile = await uploadFiles("storePicture", {
-              files: data.bannerImgs,
+
+          const prevFiles = data.bannerImgs;
+          const currentFiles = values.bannerImgs;
+
+          // Bandingkan apakah file baru identik dengan sebelumnya
+          const isSameFiles =
+            prevFiles.length === currentFiles.length &&
+            currentFiles.every((file, idx) => {
+              if (!(file instanceof File)) return true; // dari server, anggap sama
+              const prev = prevFiles[idx];
+              return (
+                file.name === prev.name &&
+                file.type === prev.type &&
+                file.lastModified === prev.lastModified
+              );
             });
 
-            if (!resFile) return console.log("GAGAL UPLOADTHING");
+          let resFile: ClientUploadedFileData<{
+            uploadedBy: string | undefined;
+          }>[] = prevFiles;
 
+          try {
+            // Jika file berubah (ada yang berbeda atau baru), upload ulang
+            if (!isSameFiles) {
+              console.log("Detected file changes, uploading new files...");
+
+              // Upload file baru
+              const uploaded = await uploadFiles("storePicture", {
+                files: currentFiles.filter((f): f is File => f instanceof File),
+              });
+
+              if (!uploaded || uploaded.length === 0) {
+                throw new Error("Gagal mengupload file ke UploadThing");
+              }
+
+              // Hapus file lama dari UploadThing
+              const { deletedCount } = await deleteFiles(
+                prevFiles.map((f) => f.key),
+              );
+              console.log(`Old files deleted : ${deletedCount}`);
+
+              resFile = uploaded;
+            } else {
+              console.log("No file changes detected, skipping upload");
+            }
+
+            // Kirim PATCH API
             const req = await fetch(
-              `${process.env.NEXT_PUBLIC_APP_URL}/api/store`,
+              `${process.env.NEXT_PUBLIC_APP_URL}/api/store/${data.id}`,
               {
-                method: "POST",
+                method: "PATCH",
                 headers: {
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  ...data,
+                  ...values,
                   bannerImgs: resFile,
                 }),
               },
             );
 
-            // check if fail
             if (!req.ok) {
               const {
                 errors,
@@ -81,26 +146,27 @@ const CreateStore: React.FC = () => {
 
               if (errors) {
                 Object.keys(errors).forEach((key) => {
-                  form.setError(
-                    key as keyof z.infer<typeof StoreSchemaClient>,
-                    {
-                      type: "server",
-                      message:
-                        errors[key as keyof z.infer<typeof StoreSchemaClient>],
-                    },
-                  );
+                  form.setError(key as keyof TStoreSchemaClient, {
+                    type: "server",
+                    message: errors[key as keyof TStoreSchemaClient],
+                  });
                 });
               }
 
-              // delete file
-              await deleteFiles(resFile.map(({ key }) => key));
+              // Jika upload file baru tadi, rollback (hapus)
+              if (!isSameFiles) {
+                const { deletedCount } = await deleteFiles(
+                  resFile.map((f) => f.key),
+                );
+                console.log(`Rollback: new files deleted = ${deletedCount}`);
+              }
+
               throw new Error(message);
             }
 
-            form.reset();
             router.refresh();
           } catch (error) {
-            console.log({ error });
+            console.error("[STORE_UPDATE]", error);
             throw error;
           } finally {
             setIsSubmitting(false);
@@ -108,12 +174,12 @@ const CreateStore: React.FC = () => {
         })(),
         {
           loading: "Saving Store...",
-          success: "Role saved successfully!",
+          success: "Store updated successfully!",
           error: (err) => getErrorMessage(err),
         },
       );
     },
-    [form, router],
+    [form, router, data],
   );
 
   return (
@@ -194,7 +260,12 @@ const CreateStore: React.FC = () => {
               </FormItem>
             )}
           />
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={
+              isSubmitting || !form.formState.isDirty || !form.formState.isValid
+            }
+          >
             {isSubmitting ? (
               <React.Fragment>
                 <Loader2 className="animate-spin" />
@@ -210,4 +281,4 @@ const CreateStore: React.FC = () => {
   );
 };
 
-export default CreateStore;
+export default DetailStore;

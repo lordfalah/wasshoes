@@ -5,6 +5,30 @@ import { StoreSchemaServer } from "@/schemas/store";
 import { InputJsonValue } from "@prisma/client/runtime/library";
 import { NextResponse } from "next/server";
 
+export const GET = withAuthRole(async (req) => {
+  try {
+    const storeId = (await req.params).storeId;
+    if (!storeId) {
+      return NextResponse.json(
+        { status: "error", message: "Store ID is required", data: null },
+        { status: 400 },
+      );
+    }
+
+    const store = await db.store.findFirst({
+      where: { id: storeId },
+    });
+
+    return NextResponse.json(
+      { status: "success", message: "Store get detail", data: store },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error(`[STORE_GET_DETAIL]`, error);
+    return PrismaErrorHandler.handlePrisma(error as never);
+  }
+});
+
 export const PATCH = withAuthRole(async (req) => {
   try {
     const storeId = (await req.params).storeId;

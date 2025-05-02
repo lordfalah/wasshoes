@@ -10,13 +10,29 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
 import { DataTable } from "@/components/tables/data-table";
 import { Role, User } from "@prisma/client";
 import { TStoreSchemaServer } from "@/schemas/store";
 import { Scroller } from "@/components/ui/scroller";
 import Image from "next/image";
+import Link from "next/link";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/handle-error";
+import { TError } from "@/types/route-api";
 
 const DataTableStore: React.FC<{
   data: (TStoreSchemaServer & {
@@ -109,7 +125,53 @@ const DataTableStore: React.FC<{
 
       {
         id: "actions",
-        cell: function Cell() {
+        cell: function Cell({ cell }) {
+          const [isSubmitting, setIsSubmitting] = useState(false);
+          const router = useRouter();
+
+          const onDeleteStore = () => {
+            toast.promise(
+              (async () => {
+                setIsSubmitting(true);
+                try {
+                  const req = await fetch(
+                    `${process.env.NEXT_PUBLIC_APP_URL}/api/store/${cell.row.original.id}`,
+                    {
+                      method: "DELETE",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                    },
+                  );
+
+                  // check if fail
+                  if (!req.ok) {
+                    const {
+                      errors,
+                      message,
+                    }: TError<{ code: number; description: string }> =
+                      await req.json();
+                    console.log(errors);
+
+                    throw new Error(message);
+                  }
+
+                  router.refresh();
+                } catch (error) {
+                  console.log({ error });
+                  throw error;
+                } finally {
+                  setIsSubmitting(false);
+                }
+              })(),
+              {
+                loading: "Delete store...",
+                success: "Store delete successfully!",
+                error: (err) => getErrorMessage(err),
+              },
+            );
+          };
+
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -119,10 +181,45 @@ const DataTableStore: React.FC<{
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>Edit</DropdownMenuItem>
-                <DropdownMenuItem variant="destructive">
-                  Delete
+                <DropdownMenuItem asChild>
+                  <Button variant="ghost" asChild>
+                    <Link href={`/dashboard/store/${cell.row.id}`}>Edit</Link>
+                  </Button>
                 </DropdownMenuItem>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="w-full hover:bg-red-400/20 hover:text-red-500"
+                    >
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Are you absolutely sure?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently
+                        delete your account and remove your data from our
+                        servers.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel disabled={isSubmitting}>
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        disabled={isSubmitting}
+                        onClick={onDeleteStore}
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </DropdownMenuContent>
             </DropdownMenu>
           );
@@ -143,8 +240,6 @@ const DataTableStore: React.FC<{
     },
     getRowId: (row) => row.id,
   });
-
-  console.log(data);
 
   return (
     <>

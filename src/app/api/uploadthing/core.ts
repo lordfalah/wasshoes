@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { UserRole } from "@prisma/client";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 
@@ -15,6 +16,7 @@ export const ourFileRouter = {
        */
       maxFileSize: "4MB",
       maxFileCount: 1,
+      minFileCount: 1,
     },
   })
     // Set permissions and file types for this FileRoute
@@ -53,13 +55,17 @@ export const ourFileRouter = {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     .middleware(async ({ req }) => {
       // This code runs on your server before upload
-      const user = await auth();
+      const session = await auth();
 
       // If you throw, the user will not be able to upload
-      if (!user) throw new UploadThingError("Unauthorized");
+      if (!session) throw new UploadThingError("Unauthorized");
+      if (session.user.role.name !== UserRole.SUPERADMIN)
+        throw new UploadThingError(
+          "Unauthorized access. You must be a SUPERADMIN to perform this action",
+        );
 
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
-      return { userId: user.user.id };
+      return { userId: session.user.id };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code RUNS ON YOUR SERVER after upload
