@@ -12,6 +12,7 @@ import {
   FolderIcon,
   HelpCircleIcon,
   LayoutDashboardIcon,
+  Package,
   SearchIcon,
   Settings,
   SettingsIcon,
@@ -45,43 +46,55 @@ const data = {
       title: "Dashboard",
       url: "/dashboard",
       icon: LayoutDashboardIcon,
-      path: "Dashboard",
     },
     {
       title: "Users",
       url: "/dashboard/users",
       icon: Users,
-      path: "Users",
     },
     {
       title: "Store",
       icon: Store,
       url: "/dashboard/store",
-      path: "Store",
+
       items: [
         {
           title: "Create",
           url: "/dashboard/store/build",
-          path: "build",
         },
         {
           title: "View",
           url: "/dashboard/store",
-          path: "store",
         },
       ],
     },
+
+    {
+      title: "Package",
+      icon: Package,
+      url: "/dashboard/package",
+
+      items: [
+        {
+          title: "Create",
+          url: "/dashboard/package/build",
+        },
+        {
+          title: "View",
+          url: "/dashboard/package",
+        },
+      ],
+    },
+
     {
       title: "Projects",
       url: "#",
       icon: FolderIcon,
-      path: "",
     },
     {
       title: "Setting",
       url: "/dashboard/setting",
       icon: Settings,
-      path: "Setting",
     },
   ],
   navClouds: [

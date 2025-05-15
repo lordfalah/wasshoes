@@ -108,7 +108,7 @@ const CreateStore: React.FC = () => {
         })(),
         {
           loading: "Saving Store...",
-          success: "Role saved successfully!",
+          success: "Store saved successfully!",
           error: (err) => getErrorMessage(err),
         },
       );
@@ -145,7 +145,7 @@ const CreateStore: React.FC = () => {
                 <FormLabel>Attachments</FormLabel>
                 <FormControl>
                   <FileUpload
-                    value={field.value as File[]}
+                    value={field.value}
                     onValueChange={field.onChange}
                     accept="image/*"
                     maxFiles={3}

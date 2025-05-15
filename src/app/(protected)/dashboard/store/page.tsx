@@ -5,7 +5,7 @@ import { Role, User } from "@prisma/client";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import DataTableStore from "./build/_components/data-table-store";
+import DataTableStore from "./_components/data-table-store";
 
 const fetchStore = async (cookieAuth: ReadonlyRequestCookies) => {
   try {
@@ -18,7 +18,7 @@ const fetchStore = async (cookieAuth: ReadonlyRequestCookies) => {
       | TSuccess<
           (TStoreSchemaServer & {
             id: string;
-            user: (User & { role: Role[] })[];
+            users: (User & { role: Role[] })[];
           })[]
         >
       | TError<{

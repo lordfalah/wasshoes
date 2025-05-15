@@ -108,11 +108,10 @@ model TwoFactorConfirmation {
 
 model Store {
   id         String  @id @default(cuid())
-  name       String  @db.VarChar(50)
+  name       String  @unique @db.VarChar(50)
   bannerImgs Json[]
-  user       User[]
-  userId     String
-  paket      Paket[]
+  users      User[]
+  pakets     Paket[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -146,10 +145,13 @@ model Paket {
   name        String       @db.VarChar(100)
   description String       @db.VarChar(200)
   price       Int          @db.Integer
-  images      Json[]
+  image       Json
+  isVisible   Boolean      @default(true)
   stores      Store[]
   orders      PaketOrder[]
-  category    Category     @relation(fields: [id], references: [id])
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -158,12 +160,14 @@ model Paket {
 }
 
 model PaketOrder {
-  id      String @id @default(cuid())
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id])
-
-  paketId String
-  paket   Paket  @relation(fields: [paketId], references: [id])
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id])
+  paketId     String
+  paket       Paket    @relation(fields: [paketId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt   DateTime @default(now())
+  priceOrder  Int
+  shoesImages Json[]
 
   @@map("paketOrder")
 }

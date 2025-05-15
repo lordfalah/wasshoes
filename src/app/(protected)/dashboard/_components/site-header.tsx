@@ -1,3 +1,4 @@
+import { ModeToggle } from "@/components/layouts/mode-toggle";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
@@ -10,7 +11,10 @@ export function SiteHeader() {
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4"
         />
-        <h1 className="text-base font-medium">Documents</h1>
+        <div className="flex w-full items-center justify-between">
+          <h1 className="text-base font-medium">Documents</h1>
+          <ModeToggle />
+        </div>
       </div>
     </header>
   );

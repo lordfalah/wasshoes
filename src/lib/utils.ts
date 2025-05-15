@@ -63,6 +63,10 @@ export function formatBytes(
   }`;
 }
 
+export function formatToRupiah(number: number) {
+  return new Intl.NumberFormat("id-ID").format(number);
+}
+
 export function formatId(id: string) {
   return `#${id.toString().padStart(4, "0")}`;
 }

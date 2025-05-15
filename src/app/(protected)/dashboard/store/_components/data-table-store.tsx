@@ -37,12 +37,12 @@ import { TError } from "@/types/route-api";
 const DataTableStore: React.FC<{
   data: (TStoreSchemaServer & {
     id: string;
-    user: (User & { role: Role[] })[];
+    users: (User & { role: Role[] })[];
   })[];
 }> = ({ data }) => {
   const columns = useMemo<
     ColumnDef<
-      TStoreSchemaServer & { id: string; user: (User & { role: Role[] })[] }
+      TStoreSchemaServer & { id: string; users: (User & { role: Role[] })[] }
     >[]
   >(
     () => [
@@ -114,8 +114,8 @@ const DataTableStore: React.FC<{
 
         cell: ({ row }) => (
           <div>
-            {row.original.user.length > 0
-              ? row.original.user.map(({ name }, idx) => (
+            {row.original.users.length > 0
+              ? row.original.users.map(({ name }, idx) => (
                   <p key={idx}>{name}</p>
                 ))
               : "Doesn't have user"}

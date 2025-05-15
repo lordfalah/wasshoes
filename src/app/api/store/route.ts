@@ -9,7 +9,7 @@ export const GET = withAuth(async () => {
   try {
     const stores = await db.store.findMany({
       include: {
-        user: {
+        users: {
           include: {
             role: true,
           },
@@ -42,7 +42,6 @@ export const POST = withAuthRole(async (req) => {
       data: {
         name: data.name,
         bannerImgs: data.bannerImgs as unknown as InputJsonValue[],
-        userId: req.auth?.user.id as string,
       },
     });
 

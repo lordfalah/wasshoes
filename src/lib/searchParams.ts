@@ -5,4 +5,9 @@ export const nameUser = {
   name: parseAsString.withDefault(""),
 };
 
+export const dataDashboard = {
+  data: parseAsString.withDefault("categorys"),
+};
+
+export const loadSearchParamsDataDashboard = createLoader(dataDashboard);
 export const loadSearchParams = createLoader(nameUser);
