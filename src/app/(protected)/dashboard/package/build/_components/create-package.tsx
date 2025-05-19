@@ -63,7 +63,7 @@ const CreatePackage: React.FC<{
       price: 0,
       categoryId: "",
       isVisible: true,
-      nameStore: [""],
+      nameStore: [],
     },
   });
 
@@ -139,13 +139,13 @@ const CreatePackage: React.FC<{
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="mx-auto max-w-md space-y-6"
+          className="mx-auto grid max-w-md grid-cols-12 gap-x-3 gap-y-3.5"
         >
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem className="space-y-2.5">
+              <FormItem className="col-span-12 space-y-2.5 lg:col-span-6">
                 <FormLabel>Name Package</FormLabel>
                 <FormControl>
                   <Input {...field} placeholder="wasshoes" type="text" />
@@ -157,27 +157,9 @@ const CreatePackage: React.FC<{
 
           <FormField
             control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem className="space-y-2.5">
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <AutosizeTextarea
-                    placeholder="This textarea with min height 52 and max height 200."
-                    maxHeight={200}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="price"
             render={({ field }) => (
-              <FormItem className="space-y-2.5">
+              <FormItem className="col-span-12 space-y-2.5 lg:col-span-6">
                 <FormLabel>Price</FormLabel>
                 <FormControl>
                   <div className="relative z-10 after:absolute after:top-1/2 after:z-20 after:-translate-y-1/2 after:pl-2 after:text-sm after:content-['Rp.']">
@@ -201,27 +183,17 @@ const CreatePackage: React.FC<{
 
           <FormField
             control={form.control}
-            name="categoryId"
+            name="description"
             render={({ field }) => (
-              <FormItem className="space-y-2.5">
-                <FormLabel>Category</FormLabel>
-
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category to display" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {categorys.length > 0
-                      ? categorys.map(({ name, id }) => (
-                          <SelectItem value={id} key={id}>
-                            {name}
-                          </SelectItem>
-                        ))
-                      : "Category doesnt exsist"}
-                  </SelectContent>
-                </Select>
+              <FormItem className="col-span-12 space-y-2.5">
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <AutosizeTextarea
+                    placeholder="This textarea with min height 52 and max height 200."
+                    maxHeight={200}
+                    {...field}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -231,7 +203,7 @@ const CreatePackage: React.FC<{
             control={form.control}
             name="nameStore"
             render={() => (
-              <FormItem>
+              <FormItem className="col-span-12 md:col-span-6">
                 <div className="mb-4">
                   <FormLabel className="text-base">Stores</FormLabel>
                   <FormDescription>
@@ -279,23 +251,23 @@ const CreatePackage: React.FC<{
             )}
           />
 
-          {/* <FormField
+          <FormField
             control={form.control}
-            name="nameStore"
+            name="categoryId"
             render={({ field }) => (
-              <FormItem className="space-y-2.5">
-                <FormLabel>Stores</FormLabel>
+              <FormItem className="col-span-12 space-y-2.5 md:col-span-6">
+                <FormLabel>Category</FormLabel>
 
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a stores to display" />
+                      <SelectValue placeholder="Select a category to display" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {stores.length > 0
-                      ? stores.map(({ name, id }) => (
-                          <SelectItem value={name} key={id}>
+                    {categorys.length > 0
+                      ? categorys.map(({ name, id }) => (
+                          <SelectItem value={id} key={id}>
                             {name}
                           </SelectItem>
                         ))
@@ -305,13 +277,13 @@ const CreatePackage: React.FC<{
                 <FormMessage />
               </FormItem>
             )}
-          /> */}
+          />
 
           <FormField
             control={form.control}
             name="isVisible"
             render={({ field }) => (
-              <FormItem className="col-span-12 flex flex-row items-center justify-between space-y-2.5 rounded-lg border p-3 shadow-sm md:col-span-6">
+              <FormItem className="col-span-12 flex flex-row items-center justify-between space-y-2.5 rounded-lg border p-3 shadow-sm">
                 <div className="space-y-0.5">
                   <FormLabel>Is visible</FormLabel>
                   <FormDescription>Enable flag to show user</FormDescription>
@@ -331,7 +303,7 @@ const CreatePackage: React.FC<{
             control={form.control}
             name="image"
             render={({ field }) => (
-              <FormItem className="space-y-2.5">
+              <FormItem className="col-span-12 space-y-2.5">
                 <FormLabel>Attachments</FormLabel>
                 <FormControl>
                   <FileUpload
@@ -377,14 +349,18 @@ const CreatePackage: React.FC<{
                     </FileUploadList>
                   </FileUpload>
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-center">
                   Upload up to 2 images up to 4MB each.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="col-span-12 mt-2.5"
+          >
             {isSubmitting ? (
               <React.Fragment>
                 <Loader2 className="animate-spin" />

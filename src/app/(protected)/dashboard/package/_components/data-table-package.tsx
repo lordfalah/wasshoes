@@ -14,7 +14,6 @@ import { Fragment, useMemo, useState } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
 import { DataTable } from "@/components/tables/data-table";
 import { Category, Paket, Store } from "@prisma/client";
-
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -102,6 +101,7 @@ const DataTablePackage: React.FC<{
         cell: ({ row }) => (
           <div className="relative h-40 w-80 rounded-md">
             <Image
+              priority
               src={row.original.image.ufsUrl}
               alt={row.original.image.name}
               fill
@@ -152,7 +152,7 @@ const DataTablePackage: React.FC<{
         header: "Stores",
 
         cell: ({ row }) => (
-          <div>
+          <div className="space-x-2.5">
             {row.original.stores.length > 0
               ? row.original.stores.map(({ name, id }) => (
                   <Badge key={id}>{name}</Badge>

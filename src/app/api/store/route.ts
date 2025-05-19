@@ -1,11 +1,11 @@
-import { withAuth, withAuthRole } from "@/lib/auth";
+import { withAuthRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
 import { StoreSchemaServer } from "@/schemas/store";
 import { InputJsonValue } from "@prisma/client/runtime/library";
 import { NextResponse } from "next/server";
 
-export const GET = withAuth(async () => {
+export const GET = withAuthRole(async () => {
   try {
     const stores = await db.store.findMany({
       include: {

@@ -62,16 +62,42 @@ const fetchCategorys = async (cookieAuth: ReadonlyRequestCookies) => {
   }
 };
 
+const fetchStores = async (cookieAuth: ReadonlyRequestCookies) => {
+  try {
+    const req = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/store`, {
+      headers: {
+        Cookie: cookieAuth.toString(),
+      },
+    });
+    const res = (await req.json()) as
+      | TSuccess<Store[]>
+      | TError<{
+          code?: number;
+          description?: string;
+        }>;
+
+    if (!res.data) {
+      throw new Error(res.message || res.errors.description);
+    }
+
+    return res;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export default async function PageDashboardPackageEdit({
   params,
 }: {
   params: Promise<{ packageId: string }>;
 }) {
   const [{ packageId }, cookieStore] = await Promise.all([params, cookies()]);
-  const [{ data: dataPaket }, { data: dataCategorys }] = await Promise.all([
-    fetchCategoryDetail(cookieStore, packageId),
-    fetchCategorys(cookieStore),
-  ]);
+  const [{ data: dataPaket }, { data: dataCategorys }, { data: dataStores }] =
+    await Promise.all([
+      fetchCategoryDetail(cookieStore, packageId),
+      fetchCategorys(cookieStore),
+      fetchStores(cookieStore),
+    ]);
 
   return (
     <div className="flex flex-col gap-4 px-4 py-4 md:gap-6 md:py-6 lg:px-6">
@@ -83,6 +109,7 @@ export default async function PageDashboardPackageEdit({
           }>,
         }}
         dataCategorys={dataCategorys}
+        dataStores={dataStores}
       />
     </div>
   );

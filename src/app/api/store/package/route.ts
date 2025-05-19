@@ -16,16 +16,23 @@ export const POST = withAuth(async (req) => {
 
     const paket = await db.paket.create({
       data: {
-        ...data,
-        image: data.image[0] as unknown as InputJsonValue,
+        name: data.name,
         price: data.price,
         description: data.description,
-        name: data.name,
-        stores: {
+        image: data.image[0] as unknown as InputJsonValue,
+        category: {
           connect: {
-            name: data.nameStore ? data.nameStore : undefined,
+            id: data.categoryId,
           },
         },
+        stores:
+          Array.isArray(data.nameStore) && data.nameStore.length > 0
+            ? {
+                connect: data.nameStore
+                  .filter((name) => name.trim() !== "")
+                  .map((name) => ({ name })),
+              }
+            : undefined,
       },
     });
 

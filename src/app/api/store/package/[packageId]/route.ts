@@ -47,13 +47,18 @@ export const PATCH = withAuth(async (req) => {
     const paket = await db.paket.update({
       where: { id: packageId },
       data: {
-        ...data,
+        name: data.name,
+        description: data.description,
+        price: data.price,
         image: data.image[0] as unknown as InputJsonValue,
-        stores: {
-          connect: {
-            name: data.nameStore ? data.nameStore : undefined,
-          },
-        },
+        stores:
+          Array.isArray(data.nameStore) && data.nameStore.length > 0
+            ? {
+                set: data.nameStore
+                  .filter((name) => name.trim() !== "")
+                  .map((name) => ({ name })),
+              }
+            : undefined,
       },
     });
 

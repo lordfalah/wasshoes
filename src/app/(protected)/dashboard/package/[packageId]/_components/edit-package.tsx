@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CloudUpload, Loader2, LoaderCircle, X } from "lucide-react";
+import { CloudUpload, Loader2, X } from "lucide-react";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,8 @@ import {
 } from "@/components/ui/select";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { ClientUploadedFileData } from "uploadthing/types";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 const EditPackage: React.FC<{
   dataPackage: Omit<Paket, "image"> & {
@@ -53,12 +55,12 @@ const EditPackage: React.FC<{
     stores: Store[];
     category: Category;
   };
-
   dataCategorys: Category[];
-}> = ({ dataPackage, dataCategorys }) => {
+  dataStores: Store[];
+}> = ({ dataPackage, dataCategorys, dataStores }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [isLoadImg, setIsLoadImg] = React.useState(false);
+
   const form = useForm<TPackageSchemaClient>({
     resolver: zodResolver(PackageSchemaClient),
     defaultValues: {
@@ -67,6 +69,8 @@ const EditPackage: React.FC<{
       description: dataPackage.description,
       price: dataPackage.price,
       categoryId: dataPackage.categoryId || undefined,
+      isVisible: dataPackage.isVisible,
+      nameStore: dataPackage.stores.map(({ name }) => name),
     },
   });
 
@@ -82,7 +86,6 @@ const EditPackage: React.FC<{
       ];
 
       form.setValue("image", files);
-      setIsLoadImg(true);
     };
 
     if (dataPackage.image.ufsUrl) convertToFiles();
@@ -200,13 +203,13 @@ const EditPackage: React.FC<{
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="mx-auto max-w-md space-y-6"
+          className="mx-auto grid max-w-md grid-cols-12 gap-x-3 gap-y-3.5"
         >
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem className="space-y-2.5">
+              <FormItem className="col-span-12 space-y-2.5 lg:col-span-6">
                 <FormLabel>Name Package</FormLabel>
                 <FormControl>
                   <Input {...field} placeholder="wasshoes" type="text" />
@@ -218,27 +221,9 @@ const EditPackage: React.FC<{
 
           <FormField
             control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem className="space-y-2.5">
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <AutosizeTextarea
-                    placeholder="This textarea with min height 52 and max height 200."
-                    maxHeight={200}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="price"
             render={({ field }) => (
-              <FormItem className="space-y-2.5">
+              <FormItem className="col-span-12 space-y-2.5 lg:col-span-6">
                 <FormLabel>Price</FormLabel>
                 <FormControl>
                   <div className="relative z-10 after:absolute after:top-1/2 after:z-20 after:-translate-y-1/2 after:pl-2 after:text-sm after:content-['Rp.']">
@@ -262,9 +247,79 @@ const EditPackage: React.FC<{
 
           <FormField
             control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem className="col-span-12 space-y-2.5">
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <AutosizeTextarea
+                    placeholder="This textarea with min height 52 and max height 200."
+                    maxHeight={200}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="nameStore"
+            render={() => (
+              <FormItem className="col-span-12 md:col-span-6">
+                <div className="mb-4">
+                  <FormLabel className="text-base">Stores</FormLabel>
+                  <FormDescription>
+                    Select the items you want to display in the Stores.
+                  </FormDescription>
+                </div>
+                {dataStores.map((item) => (
+                  <FormField
+                    key={item.id}
+                    control={form.control}
+                    name="nameStore"
+                    render={({ field }) => {
+                      return (
+                        <FormItem
+                          key={item.id}
+                          className="flex flex-row items-start space-y-0 space-x-3"
+                        >
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(item.name)}
+                              onCheckedChange={(checked) => {
+                                return checked
+                                  ? field.onChange([
+                                      ...(field.value ?? []),
+                                      item.name,
+                                    ])
+                                  : field.onChange(
+                                      field.value?.filter(
+                                        (value) => value !== item.name,
+                                      ),
+                                    );
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-sm font-normal">
+                            {item.name}
+                          </FormLabel>
+                        </FormItem>
+                      );
+                    }}
+                  />
+                ))}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="categoryId"
             render={({ field }) => (
-              <FormItem className="space-y-2.5">
+              <FormItem className="col-span-12 space-y-2.5 md:col-span-6">
                 <FormLabel>Category</FormLabel>
 
                 <Select onValueChange={field.onChange} value={field.value}>
@@ -290,9 +345,29 @@ const EditPackage: React.FC<{
 
           <FormField
             control={form.control}
+            name="isVisible"
+            render={({ field }) => (
+              <FormItem className="col-span-12 flex flex-row items-center justify-between space-y-2.5 rounded-lg border p-3 shadow-sm">
+                <div className="space-y-0.5">
+                  <FormLabel>Is visible</FormLabel>
+                  <FormDescription>Enable flag to show user</FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    disabled={isSubmitting}
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="image"
             render={({ field }) => (
-              <FormItem className="space-y-2.5">
+              <FormItem className="col-span-12 space-y-2.5">
                 <FormLabel>Attachments</FormLabel>
                 <FormControl>
                   <FileUpload
@@ -318,17 +393,12 @@ const EditPackage: React.FC<{
                       </FileUploadTrigger>
                       to upload
                     </FileUploadDropzone>
+
                     <FileUploadList>
                       {field.value.map((file, index) => (
                         <FileUploadItem key={index} value={file}>
-                          {isLoadImg ? (
-                            <>
-                              <FileUploadItemPreview />
-                              <FileUploadItemMetadata />
-                            </>
-                          ) : (
-                            <LoaderCircle size={20} className="animate-spin" />
-                          )}
+                          <FileUploadItemPreview />
+                          <FileUploadItemMetadata />
                           <FileUploadItemDelete asChild>
                             <Button
                               variant="ghost"
@@ -344,14 +414,18 @@ const EditPackage: React.FC<{
                     </FileUploadList>
                   </FileUpload>
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-center">
                   Upload up to 2 images up to 4MB each.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="col-span-12 mt-2.5"
+          >
             {isSubmitting ? (
               <React.Fragment>
                 <Loader2 className="animate-spin" />
