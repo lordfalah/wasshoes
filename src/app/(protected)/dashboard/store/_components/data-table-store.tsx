@@ -14,7 +14,7 @@ import { useMemo, useState } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
 import { DataTable } from "@/components/tables/data-table";
 import { Role, User } from "@prisma/client";
-import { TStoreSchemaServer } from "@/schemas/store";
+import { TStoreSchemaServer } from "@/schemas/store.schema";
 import { Scroller } from "@/components/ui/scroller";
 import Image from "next/image";
 import Link from "next/link";
@@ -77,7 +77,14 @@ const DataTableStore: React.FC<{
         accessorKey: "name",
         header: "Name Store",
 
-        cell: ({ row }) => <p>{row.original.name}</p>,
+        cell: ({ row }) => (
+          <div>
+            <h3 className="font-semibold">{row.original.name}</h3>
+            <p className="w-72 text-wrap break-all">
+              {row.original.description}
+            </p>
+          </div>
+        ),
       },
 
       {
@@ -89,9 +96,10 @@ const DataTableStore: React.FC<{
           <div className="grid grid-cols-[repeat(auto-fill,minmax(500px,1fr))] gap-x-5">
             <div className="w-full">
               <Scroller orientation="horizontal" className="p-4" asChild>
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center gap-2.5">
                   {row.original.bannerImgs.map(({ ufsUrl, name }, idx) => (
                     <Image
+                      priority
                       key={idx}
                       src={ufsUrl}
                       alt={name}
@@ -103,6 +111,23 @@ const DataTableStore: React.FC<{
                 </div>
               </Scroller>
             </div>
+          </div>
+        ),
+      },
+
+      {
+        id: "MapEmbed",
+        accessorKey: "mapEmbed",
+        header: () => <p className="text-center">Map Location</p>,
+        cell: ({ row }) => (
+          <div className="p-4">
+            <iframe
+              src={row.original.mapEmbed}
+              allowFullScreen={false}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="size-[300px] rounded-2xl border-0 border-none"
+            />
           </div>
         ),
       },

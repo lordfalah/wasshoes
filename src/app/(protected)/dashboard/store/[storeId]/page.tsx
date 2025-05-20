@@ -1,4 +1,4 @@
-import { TStoreSchemaServer } from "@/schemas/store";
+import { TStoreSchemaServer } from "@/schemas/store.schema";
 import { TError, TSuccess } from "@/types/route-api";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { cookies } from "next/headers";

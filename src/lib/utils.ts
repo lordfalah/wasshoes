@@ -114,3 +114,10 @@ export function extractFileKeyFromUrl(url: string) {
     return "";
   }
 }
+
+// Fungsi helper untuk ekstrak `src` dari iframe
+export function extractMapUrlFromIframe(iframeHtml: string): string | null {
+  // Gunakan regex yang mengabaikan whitespace dan newline
+  const match = iframeHtml.match(/<iframe[^>]+src\s*=\s*"(.*?)"/i);
+  return match ? match[1] : null;
+}

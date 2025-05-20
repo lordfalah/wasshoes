@@ -107,11 +107,13 @@ model TwoFactorConfirmation {
 }
 
 model Store {
-  id         String  @id @default(cuid())
-  name       String  @unique @db.VarChar(50)
-  bannerImgs Json[]
-  users      User[]
-  pakets     Paket[]
+  id          String  @id @default(cuid())
+  name        String  @unique @db.VarChar(150)
+  description String  @db.Text
+  mapEmbed    String  @db.Text
+  bannerImgs  Json[]
+  users       User[]
+  pakets      Paket[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -143,7 +145,7 @@ model Order {
 model Paket {
   id          String       @id @default(cuid())
   name        String       @db.VarChar(100)
-  description String       @db.VarChar(200)
+  description String       @db.Text
   price       Int          @db.Integer
   image       Json
   isVisible   Boolean      @default(true)
@@ -175,7 +177,7 @@ model PaketOrder {
 model Category {
   id          String  @id @default(cuid())
   name        String  @unique @db.VarChar(50)
-  description String  @db.VarChar(200)
+  description String  @db.Text
   pakets      Paket[]
 
   createdAt DateTime @default(now())

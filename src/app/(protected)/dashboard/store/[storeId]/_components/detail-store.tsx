@@ -31,7 +31,7 @@ import {
   StoreSchemaClient,
   TStoreSchemaClient,
   TStoreSchemaServer,
-} from "@/schemas/store";
+} from "@/schemas/store.schema";
 import { getErrorMessage } from "@/lib/handle-error";
 import { TError } from "@/types/route-api";
 import { z } from "zod";

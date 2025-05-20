@@ -1,7 +1,7 @@
 import { withAuthRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
-import { StoreSchemaServer } from "@/schemas/store";
+import { StoreSchemaServer } from "@/schemas/store.schema";
 import { InputJsonValue } from "@prisma/client/runtime/library";
 import { NextResponse } from "next/server";
 
@@ -42,6 +42,8 @@ export const POST = withAuthRole(async (req) => {
       data: {
         name: data.name,
         bannerImgs: data.bannerImgs as unknown as InputJsonValue[],
+        description: data.description,
+        mapEmbed: data.mapEmbed,
       },
     });
 
