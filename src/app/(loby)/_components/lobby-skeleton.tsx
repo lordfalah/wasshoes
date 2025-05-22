@@ -1,9 +1,7 @@
 import Link from "next/link";
-
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-
 import {
   PageActions,
   PageHeader,

@@ -66,21 +66,30 @@ export function formatBytes(
 export function formatToRupiah(number: number) {
   return new Intl.NumberFormat("id-ID").format(number);
 }
+export function abbreviationName(name: string): string {
+  return name
+    .split(" ")
+    .map((kata) => kata[0]?.toUpperCase())
+    .join("");
+}
 
 export function formatId(id: string) {
   return `#${id.toString().padStart(4, "0")}`;
 }
 
-export function slugify(str: string) {
-  return str
-    .toLowerCase()
-    .replace(/ /g, "-")
-    .replace(/[^\w-]+/g, "")
-    .replace(/--+/g, "-");
-}
+// Fungsi untuk memvalidasi format slug
+export const isValidSlug = (slug: string) =>
+  /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug); // Regex untuk validasi slug
 
-export function unslugify(str: string) {
-  return str.replace(/-/g, " ");
+// Fungsi slugify
+export function slugify(str: string): string {
+  str = str.trim();
+  str = str.toLowerCase();
+  str = str
+    .replace(/[^a-z0-9 -]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+  return str;
 }
 
 export function toTitleCase(str: string) {

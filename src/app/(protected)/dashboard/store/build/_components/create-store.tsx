@@ -24,11 +24,7 @@ import {
   FileUploadList,
   FileUploadTrigger,
 } from "@/components/ui/file-upload";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -50,7 +46,13 @@ import {
   StepperTrigger,
 } from "@/components/ui/stepper";
 import Image from "next/image";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { AnimatePresence, motion } from "motion/react";
+import { slugify } from "@/lib/utils";
 
 const steps = [
   {
@@ -78,7 +80,7 @@ const CreateStore: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [currentStep, setCurrentStep] = React.useState(1);
   const [prevStep, setPrevStep] = React.useState(1);
-
+  const [isSlugModified, setIsSlugModified] = React.useState(false);
   const current = steps.find((s) => s.step === currentStep);
   const direction = currentStep > prevStep ? 1 : -1; // 1 = next, -1 = prev
   const handleStepChange = (step: number) => {
@@ -90,11 +92,15 @@ const CreateStore: React.FC = () => {
     resolver: zodResolver(StoreSchemaClient),
     defaultValues: {
       name: "",
+      slug: "",
       bannerImgs: [],
       description: "",
       mapEmbed: "",
     },
   });
+
+  // Watch current values of slug
+  const slugValue = form.watch("slug");
 
   const onSubmit = React.useCallback(
     (data: TStoreSchemaClient) => {
@@ -167,7 +173,7 @@ const CreateStore: React.FC = () => {
   );
 
   return (
-    <Card className="mx-auto w-full px-4 sm:px-0">
+    <Card className="mx-auto w-full p-4">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -180,8 +186,48 @@ const CreateStore: React.FC = () => {
               <FormItem className="space-y-2.5">
                 <FormLabel>Name Store</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="wasshoes" type="text" />
+                  <Input
+                    placeholder="wasshoes..."
+                    {...field}
+                    onFocus={() => {
+                      if (form.formState.errors.slug) {
+                        setIsSlugModified(false);
+                      }
+                    }}
+                    onChange={(e) => {
+                      field.onChange(e); // Update name
+                      const newName = e.target.value;
+
+                      if (newName === "" && slugValue === "") {
+                        setIsSlugModified(false); // Reset isSlugModified if both fields are empty
+                      } else if (!isSlugModified) {
+                        form.setValue("slug", slugify(newName)); // Auto-generate slug
+                      }
+                    }}
+                  />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="slug"
+            render={({ field }) => (
+              <FormItem className="sr-only space-y-2.5">
+                <FormLabel>Slug</FormLabel>
+                <FormControl>
+                  <Input
+                    className="pointer-events-none cursor-not-allowed"
+                    disabled={true}
+                    placeholder="falxxxx"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  This is your public display link.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -212,11 +258,11 @@ const CreateStore: React.FC = () => {
               <FormItem className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <FormLabel>Map Embed</FormLabel>
-                  <HoverCard>
-                    <HoverCardTrigger>
+                  <Popover>
+                    <PopoverTrigger>
                       <Info className="size-5 cursor-context-menu" />
-                    </HoverCardTrigger>
-                    <HoverCardContent className="mr-4 w-fit space-y-2.5">
+                    </PopoverTrigger>
+                    <PopoverContent className="mr-4 w-fit space-y-2.5">
                       <div className="relative mx-auto h-[158px] w-[300px] overflow-hidden rounded-lg border shadow">
                         <AnimatePresence mode="wait" initial={false}>
                           <motion.div
@@ -265,8 +311,8 @@ const CreateStore: React.FC = () => {
                           </StepperItem>
                         ))}
                       </Stepper>
-                    </HoverCardContent>
-                  </HoverCard>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <FormControl>
                   <Input

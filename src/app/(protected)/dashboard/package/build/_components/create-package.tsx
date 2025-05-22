@@ -135,7 +135,7 @@ const CreatePackage: React.FC<{
   );
 
   return (
-    <Card className="mx-auto w-full">
+    <Card className="mx-auto w-full p-4">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -162,7 +162,7 @@ const CreatePackage: React.FC<{
               <FormItem className="col-span-12 space-y-2.5 lg:col-span-6">
                 <FormLabel>Price</FormLabel>
                 <FormControl>
-                  <div className="relative z-10 after:absolute after:top-1/2 after:z-20 after:-translate-y-1/2 after:pl-2 after:text-sm after:content-['Rp.']">
+                  <div className="relative z-10 h-fit after:absolute after:top-1/2 after:z-20 after:-translate-y-1/2 after:pl-2 after:text-sm after:content-['Rp.']">
                     <Input
                       className="!pl-8"
                       {...field}

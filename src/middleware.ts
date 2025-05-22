@@ -69,7 +69,6 @@ export default auth((req, context) => {
   // ⛔️ Kalau user ke halaman auth (/login, /register), tapi sudah login
   if (isAuthRoute) {
     if (isLoggedIn) {
-      console.log("OIII");
       return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
     }
     return NextResponse.next();

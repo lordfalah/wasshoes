@@ -1,8 +1,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { DashboardIcon, ExitIcon, GearIcon } from "@radix-ui/react-icons";
-import { cn } from "@/lib/utils";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { abbreviationName, cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -35,6 +35,10 @@ export async function AuthDropdown({ className, ...props }: AuthDropdownProps) {
     );
   }
 
+  const initial = abbreviationName(
+    session.user.name ?? (session.user.email as string),
+  );
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -50,14 +54,18 @@ export async function AuthDropdown({ className, ...props }: AuthDropdownProps) {
                 alt={session.user.name ?? ""}
               />
             )}
-            {/* <AvatarFallback>{initials}</AvatarFallback> */}
+            <AvatarFallback>{initial}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            {/* <p className="text-sm leading-none font-medium">{initials}</p> */}
+            {session.user.name && (
+              <p className="text-sm leading-none font-medium">
+                {session.user.name}
+              </p>
+            )}
             <p className="text-muted-foreground text-xs leading-none">
               {session.user.email ?? ""}
             </p>

@@ -1,4 +1,4 @@
-import { extractMapUrlFromIframe } from "@/lib/utils";
+import { extractMapUrlFromIframe, isValidSlug } from "@/lib/utils";
 import { ClientUploadedFileData } from "uploadthing/types";
 import { z } from "zod";
 
@@ -7,7 +7,17 @@ export const StoreSchemaClient = z.object({
   name: z
     .string({ required_error: "Name is required" })
     .min(1, "Name is required")
-    .max(50, "Name must be at most 50 characters"),
+    .max(150, "Name must be at most 150 characters"),
+
+  slug: z
+    .string()
+    .min(1, { message: "Slug is required" })
+    .toLowerCase()
+    .refine((value) => isValidSlug(value), {
+      message:
+        "Invalid slug format. Slug must contain only lowercase letters, numbers, and hyphens.",
+    }),
+
   description: z
     .string({ required_error: "description is required" })
     .min(1, "description is required")
@@ -43,6 +53,16 @@ export const StoreSchemaServer = z.object({
     .string({ required_error: "Name is required" })
     .min(1, "Name is required")
     .max(50, "Name must be at most 50 characters"),
+
+  slug: z
+    .string()
+    .min(1, { message: "Slug is required" })
+    .toLowerCase()
+    .refine((value) => isValidSlug(value), {
+      message:
+        "Invalid slug format. Slug must contain only lowercase letters, numbers, and hyphens.",
+    }),
+
   description: z
     .string({ required_error: "description is required" })
     .min(1, "description is required")

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import * as React from "react";
@@ -21,35 +20,41 @@ import { Icons } from "@/components/icons";
 
 import { useDebounce } from "@/hooks/use-debounce";
 import { Kbd } from "./kbd";
+import { filterPakets } from "@/actions/product";
+
+type ProductGroup = NonNullable<
+  Awaited<ReturnType<typeof filterPakets>>["data"]
+>[number];
 
 export function ProductsCombobox() {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const debouncedQuery = useDebounce(query, 300);
-  const [data, setData] = React.useState<null>(null);
+  const [data, setData] = React.useState<ProductGroup[] | null>(null);
   const [loading, setLoading] = React.useState(false);
 
-  // React.useEffect(() => {
-  //   if (debouncedQuery.length <= 0) {
-  //     setData(null)
-  //     return
-  //   }
+  React.useEffect(() => {
+    if (debouncedQuery.length <= 0) {
+      setData(null);
+      return;
+    }
 
-  //   async function fetchData() {
-  //     setLoading(true)
-  //     const { data, error } = await filterProducts({ query: debouncedQuery })
+    async function fetchData() {
+      setLoading(true);
+      const { data, error } = await filterPakets({ query: debouncedQuery });
 
-  //     if (error) {
-  //       setLoading(false)
-  //       return
-  //     }
-  //     setData(data)
-  //     setLoading(false)
-  //   }
+      if (error) {
+        setLoading(false);
+        return;
+      }
 
-  //   void fetchData()
-  // }, [debouncedQuery])
+      setData(data);
+      setLoading(false);
+    }
+
+    void fetchData();
+  }, [debouncedQuery]);
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -104,7 +109,7 @@ export function ProductsCombobox() {
           >
             No products found.
           </CommandEmpty>
-          {/* {loading ? (
+          {loading ? (
             <div className="space-y-1 overflow-hidden px-1 py-2">
               <Skeleton className="h-4 w-10 rounded" />
               <Skeleton className="h-8 rounded-sm" />
@@ -117,27 +122,27 @@ export function ProductsCombobox() {
                 className="capitalize"
                 heading={group.name}
               >
-                {group.products.map((item) => {
+                {group.pakets.map((item) => {
                   return (
                     <CommandItem
                       key={item.id}
                       className="h-9"
-                      value={item.name}
+                      value={`${group.name} ${item.name}`.toLowerCase()}
                       onSelect={() =>
                         onSelect(() => router.push(`/product/${item.id}`))
                       }
                     >
                       <Icons.product
-                        className="mr-2.5 size-3 text-muted-foreground"
+                        className="text-muted-foreground mr-2.5 size-3"
                         aria-hidden="true"
                       />
                       <span className="truncate">{item.name}</span>
                     </CommandItem>
-                  )
+                  );
                 })}
               </CommandGroup>
             ))
-          )} */}
+          )}
         </CommandList>
       </CommandDialog>
     </>
