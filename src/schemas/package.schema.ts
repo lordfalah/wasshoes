@@ -25,7 +25,7 @@ export const BasePackageFields = {
         required_error: "Harga wajib diisi",
         invalid_type_error: "Harga harus berupa angka",
       })
-      .min(0, { message: "Harga tidak boleh negatif" }),
+      .min(1000, { message: "Harga tidak boleh dibawah 1000" }),
   ),
 
   categoryId: z

@@ -10,24 +10,19 @@ import { Shell } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Category, Paket, Store } from "@prisma/client";
+import { Category, Paket } from "@prisma/client";
 import Link from "next/link";
 import React from "react";
 import { CategoryCard } from "./category-card";
 import { ProductCard } from "@/components/ui/product-card";
-import { ClientUploadedFileData } from "uploadthing/types";
 import { SparklesText } from "@/components/ui/sparkles-text";
+import { StoreCard } from "@/components/ui/store-card";
+import { getFeaturedStores } from "@/actions/store";
 
 const Loby: React.FC<{
-  packagePromise: Promise<
-    Array<
-      Paket & {
-        image: ClientUploadedFileData<{ uploadedBy: string | undefined }>;
-      }
-    >
-  >;
+  packagePromise: Promise<Array<Paket>>;
   categorysPromise: Promise<Category[]>;
-  storesPromise: Promise<Store[]>;
+  storesPromise: ReturnType<typeof getFeaturedStores>;
 }> = async ({ packagePromise, categorysPromise, storesPromise }) => {
   const [packages, categorys, stores] = await Promise.all([
     packagePromise,
@@ -49,7 +44,7 @@ const Loby: React.FC<{
           style={{ animationDelay: "0.10s", animationFillMode: "both" }}
         >
           <Icons.store className="mr-2 size-3.5" aria-hidden="true" />
-          {stores.length + 1} stores on Wasshoes
+          {stores.length} stores on Wasshoes
         </Badge>
 
         <PageHeaderHeading
@@ -99,7 +94,7 @@ const Loby: React.FC<{
           <ProductCard key={product.id} product={product} />
         ))}
       </ContentSection>
-      {/* <ContentSection
+      <ContentSection
         title="Featured stores"
         description="Explore stores from around the world"
         href="/stores"
@@ -113,7 +108,7 @@ const Loby: React.FC<{
             href={`/products?store_ids=${store.id}`}
           />
         ))}
-      </ContentSection> */}
+      </ContentSection>
     </Shell>
   );
 };

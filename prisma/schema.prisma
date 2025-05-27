@@ -8,6 +8,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator json {
+  provider = "prisma-json-types-generator"
+}
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
@@ -41,7 +45,10 @@ model User {
   isTwoFactorEnabled    Boolean                @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
 
-  stores Store[]
+  orders  Order[]
+  store   Store?  @relation(fields: [storeId], references: [id])
+  storeId String?
+  carts   Cart[]
 
   @@map("users")
 }
@@ -112,6 +119,7 @@ model Store {
   slug        String  @unique @db.VarChar(150)
   description String  @db.Text
   mapEmbed    String  @db.Text
+  /// [Image]
   bannerImgs  Json[]
   users       User[]
   pakets      Paket[]
@@ -135,10 +143,13 @@ enum TPaymentMethod {
 
 model Order {
   id            String         @id @default(cuid())
-  status        TStatusOrder
   totalPrice    Int            @db.Integer
   paymentMethod TPaymentMethod @default(MANUAL)
+  paymentToken  String? // Token Snap (WAJIB)
+  redirectUrl   String?
   pakets        PaketOrder[]
+  User          User           @relation(fields: [userId], references: [id])
+  userId        String
 
   @@map("order")
 }
@@ -148,6 +159,7 @@ model Paket {
   name        String       @db.VarChar(100)
   description String       @db.Text
   price       Int          @db.Integer
+  /// [Image]
   image       Json
   isVisible   Boolean      @default(true)
   stores      Store[]
@@ -170,9 +182,24 @@ model PaketOrder {
   paket       Paket    @relation(fields: [paketId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   createdAt   DateTime @default(now())
   priceOrder  Int
+  quantity    Int      @db.SmallInt
+  /// [Image]
   shoesImages Json[]
 
   @@map("paketOrder")
+}
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  /// [ItemsPaket]
+  items     Json[]
+  closed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("cart")
 }
 
 model Category {

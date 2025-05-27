@@ -9,8 +9,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { DialogShell } from "@/components/ui/dialog-shell";
 import { db } from "@/lib/db";
-import { Paket } from "@prisma/client";
-import { ClientUploadedFileData } from "uploadthing/types";
 import { Rating } from "@/components/rating";
 
 interface ProductModalPageProps {
@@ -24,11 +22,9 @@ export default async function ProductModalPage({
 }: ProductModalPageProps) {
   const productId = decodeURIComponent((await params).productId);
 
-  const product = (await db.paket.findFirst({
+  const product = await db.paket.findFirst({
     where: { id: productId },
-  })) as Paket & {
-    image: ClientUploadedFileData<{ uploadedBy: string | undefined }>;
-  };
+  });
 
   if (!product) {
     notFound();
@@ -70,7 +66,7 @@ export default async function ProductModalPage({
         <div className="space-y-2">
           <h1 className="line-clamp-2 text-2xl font-bold">{product.name}</h1>
           <p className="text-muted-foreground text-base">
-            {formatToRupiah(product.price)}
+            Rp. {formatToRupiah(product.price)}
           </p>
           <Rating rating={Math.round(0)} />
           {product.isVisible ? (

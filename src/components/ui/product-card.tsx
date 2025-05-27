@@ -21,12 +21,11 @@ import {
 import { Icons } from "@/components/icons";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import { Paket } from "@prisma/client";
-import { ClientUploadedFileData } from "uploadthing/types";
+import { addToCart } from "@/actions/cart";
+import { toast } from "sonner";
 
 interface ProductCardProps extends React.HTMLAttributes<HTMLDivElement> {
-  product: Pick<Paket, "id" | "name" | "price" | "image"> & {
-    image: ClientUploadedFileData<{ uploadedBy: string | undefined }>;
-  };
+  product: Pick<Paket, "id" | "name" | "price" | "image">;
   variant?: "default" | "switchable";
   isAddedToCart?: boolean;
   onSwitch?: () => Promise<void>;
@@ -80,19 +79,19 @@ export function ProductCard({
       <CardFooter className="p-4 pt-1">
         {variant === "default" ? (
           <div className="flex w-full items-center space-x-2">
-            {/* <Button
+            <Button
               aria-label="Add to cart"
               size="sm"
-              className="h-8 w-full rounded-sm"
+              className="h-8 w-full flex-1 rounded-sm"
               onClick={async () => {
-                startUpdateTransition(() => {})
+                startUpdateTransition(() => {});
                 const { error } = await addToCart({
                   productId: product.id,
                   quantity: 1,
-                })
+                });
 
                 if (error) {
-                  toast.error(error)
+                  toast.error(error);
                 }
               }}
               disabled={isUpdatePending}
@@ -104,7 +103,7 @@ export function ProductCard({
                 />
               )}
               Add to cart
-            </Button> */}
+            </Button>
             <Link
               href={`/preview/product/${product.id}`}
               title="Preview"
@@ -112,7 +111,7 @@ export function ProductCard({
                 buttonVariants({
                   variant: "secondary",
                   size: "icon",
-                  className: "h-8 w-8 shrink-0",
+                  className: "h-8 w-8",
                 }),
               )}
             >

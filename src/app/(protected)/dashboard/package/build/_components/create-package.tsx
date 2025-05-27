@@ -170,7 +170,7 @@ const CreatePackage: React.FC<{
                       type="number"
                       onFocus={() => {
                         if (form.getValues("price") === 0) {
-                          form.setValue("price", "" as unknown as number);
+                          form.setValue("price", "" as never satisfies number);
                         }
                       }}
                     />

@@ -50,8 +50,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 
 const EditPackage: React.FC<{
-  dataPackage: Omit<Paket, "image"> & {
-    image: ClientUploadedFileData<{ uploadedBy: string | undefined }>;
+  dataPackage: Paket & {
     stores: Store[];
     category: Category;
   };
@@ -179,7 +178,6 @@ const EditPackage: React.FC<{
               throw new Error(message);
             }
 
-            form.reset();
             router.refresh();
           } catch (error) {
             console.error("[PACKAGE_UPDATE]", error);

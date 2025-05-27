@@ -1,5 +1,7 @@
+import { TCartItemSchema } from "@/schemas/cart.schema";
 import { Role } from "@prisma/client";
 import { type DefaultSession } from "next-auth";
+import { ClientUploadedFileData } from "uploadthing/types";
 
 export type ExtendedUser = DefaultSession["user"] & {
   role: Role;
@@ -19,5 +21,13 @@ declare module "next-auth/jwt" {
   interface JWT {
     /** OpenID ID Token */
     role: Role;
+  }
+}
+
+// type prisma only column have json
+declare global {
+  namespace PrismaJson {
+    type Image = ClientUploadedFileData<{ uploadedBy: string | undefined }>;
+    type ItemsPaket = TCartItemSchema;
   }
 }

@@ -2,7 +2,6 @@ import { withAuthRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
 import { StoreSchemaServer } from "@/schemas/store.schema";
-import { InputJsonValue } from "@prisma/client/runtime/library";
 import { NextResponse } from "next/server";
 
 export const GET = withAuthRole(async (req) => {
@@ -49,7 +48,7 @@ export const PATCH = withAuthRole(async (req) => {
       where: { id: storeId },
       data: {
         ...data,
-        bannerImgs: data.bannerImgs as unknown as InputJsonValue[],
+        bannerImgs: data.bannerImgs,
       },
     });
 

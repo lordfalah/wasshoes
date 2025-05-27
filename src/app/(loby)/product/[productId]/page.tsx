@@ -14,11 +14,10 @@ import { Rating } from "@/components/rating";
 import { Shell } from "@/components/shell";
 import { db } from "@/lib/db";
 import { ProductImageCarousel } from "./_components/product-image-carousel";
-import { ClientUploadedFileData } from "uploadthing/types";
 import { ProductCard } from "@/components/ui/product-card";
 import { Badge } from "@/components/ui/badge";
-
 import { Store } from "lucide-react";
+import AddToCartForm from "./_components/add-to-cart-form";
 
 interface ProductPageProps {
   params: Promise<{
@@ -54,23 +53,6 @@ export async function generateMetadata({
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const productId = decodeURIComponent((await params).productId);
-
-  // const product = await db.query.products.findFirst({
-  //   columns: {
-  //     id: true,
-  //     name: true,
-  //     description: true,
-  //     price: true,
-  //     images: true,
-  //     inventory: true,
-  //     rating: true,
-  //     storeId: true,
-  //   },
-  //   with: {
-  //     category: true,
-  //   },
-  //   where: eq(products.id, productId),
-  // });
 
   const product = await db.paket.findFirst({
     select: {
@@ -115,39 +97,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
     },
     take: 4,
   });
-  // const otherProducts = store
-  //   ? await db
-  //       .select({
-  //         id: products.id,
-  //         name: products.name,
-  //         price: products.price,
-  //         images: products.images,
-  //         category: categories.name,
-  //         inventory: products.inventory,
-  //         rating: products.rating,
-  //       })
-  //       .from(products)
-  //       .leftJoin(categories, eq(products.categoryId, categories.id))
-  //       .limit(4)
-  //       .where(
-  //         and(
-  //           eq(products.storeId, product.storeId),
-  //           not(eq(products.id, productId)),
-  //         ),
-  //       )
-  //       .orderBy(desc(products.inventory))
-  //   : [];
 
   return (
     <Shell className="pb-12 md:pb-14">
       <div className="flex flex-col gap-8 md:flex-row md:gap-16">
         <ProductImageCarousel
           className="w-full md:w-1/2"
-          images={
-            (Array(product.image) as unknown as ClientUploadedFileData<{
-              uploadedBy: string | undefined;
-            }>[]) ?? []
-          }
+          images={Array(product.image) ?? []}
           options={{
             loop: true,
           }}
@@ -189,7 +145,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               rating={product.rating}
             /> */}
           </div>
-          {/* <AddToCartForm productId={productId} showBuyNow={true} /> */}
+          <AddToCartForm productId={productId} showBuyNow={true} />
           <Separator className="mt-5" />
           <Accordion
             type="single"
@@ -225,7 +181,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               {otherProducts.map((product) => (
                 <ProductCard
                   key={product.id}
-                  product={product as never}
+                  product={product}
                   className="max-w-lg min-w-[260px]"
                 />
               ))}

@@ -2,7 +2,6 @@ import { withAuth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
 import { PackageSchemaServer } from "@/schemas/package.schema";
-import { InputJsonValue } from "@prisma/client/runtime/library";
 import { NextResponse } from "next/server";
 
 export const POST = withAuth(async (req) => {
@@ -19,7 +18,7 @@ export const POST = withAuth(async (req) => {
         name: data.name,
         price: data.price,
         description: data.description,
-        image: data.image[0] as unknown as InputJsonValue,
+        image: data.image[0],
         category: {
           connect: {
             id: data.categoryId,

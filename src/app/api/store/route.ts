@@ -2,7 +2,6 @@ import { withAuthRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
 import { StoreSchemaServer } from "@/schemas/store.schema";
-import { InputJsonValue } from "@prisma/client/runtime/library";
 import { NextResponse } from "next/server";
 
 export const GET = withAuthRole(async () => {
@@ -41,7 +40,8 @@ export const POST = withAuthRole(async (req) => {
     const store = await db.store.create({
       data: {
         name: data.name,
-        bannerImgs: data.bannerImgs as unknown as InputJsonValue[],
+        slug: data.slug,
+        bannerImgs: data.bannerImgs,
         description: data.description,
         mapEmbed: data.mapEmbed,
       },

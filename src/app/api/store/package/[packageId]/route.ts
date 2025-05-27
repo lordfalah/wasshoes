@@ -2,7 +2,6 @@ import { withAuth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
 import { PackageSchemaServer } from "@/schemas/package.schema";
-import { InputJsonValue } from "@prisma/client/runtime/library";
 import { NextResponse } from "next/server";
 
 export const GET = withAuth(async (req) => {
@@ -50,7 +49,7 @@ export const PATCH = withAuth(async (req) => {
         name: data.name,
         description: data.description,
         price: data.price,
-        image: data.image[0] as unknown as InputJsonValue,
+        image: data.image[0],
         stores:
           Array.isArray(data.nameStore) && data.nameStore.length > 0
             ? {

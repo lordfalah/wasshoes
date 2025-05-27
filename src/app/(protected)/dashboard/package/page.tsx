@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import CreateCategory from "./_components/create-category";
-import { ClientUploadedFileData } from "uploadthing/types";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { TError, TSuccess } from "@/types/route-api";
 import { Category, Paket, Store } from "@prisma/client";
@@ -21,8 +20,7 @@ const fetchPackage = async (cookieAuth: ReadonlyRequestCookies) => {
     const res = (await req.json()) as
       | TSuccess<
           Array<
-            Omit<Paket, "image"> & {
-              image: ClientUploadedFileData<{ uploadedBy: string | undefined }>;
+            Paket & {
               category: Category;
               stores: Store[];
             }

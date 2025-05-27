@@ -31,14 +31,12 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/handle-error";
 import { TError } from "@/types/route-api";
-import { ClientUploadedFileData } from "uploadthing/types";
 import { Badge } from "@/components/ui/badge";
 import { formatToRupiah } from "@/lib/utils";
 
 const DataTablePackage: React.FC<{
   data: Array<
-    Omit<Paket, "image"> & {
-      image: ClientUploadedFileData<{ uploadedBy: string | undefined }>;
+    Paket & {
       category: Category;
       stores: Store[];
     }
@@ -46,10 +44,9 @@ const DataTablePackage: React.FC<{
 }> = ({ data }) => {
   const columns = useMemo<
     ColumnDef<
-      Omit<Paket, "image"> & {
+      Paket & {
         category: Category;
         stores: Store[];
-        image: ClientUploadedFileData<{ uploadedBy: string | undefined }>;
       }
     >[]
   >(
