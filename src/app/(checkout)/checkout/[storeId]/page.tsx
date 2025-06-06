@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-
 import { db } from "@/lib/db";
 import Link from "next/link";
 import { ArrowLeftIcon } from "@radix-ui/react-icons";
@@ -9,10 +8,10 @@ import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { CartLineItems } from "@/components/checkout/cart-line-items";
-import { Shell } from "@/components/shell";
 import { notFound } from "next/navigation";
 import { getCart } from "@/actions/cart";
 import { DialogTitle } from "@/components/ui/dialog";
+import CheckoutFormDetail from "@/components/checkout/checkout-form-detail";
 
 export const metadata: Metadata = {
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL}`),
@@ -56,8 +55,8 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
         <div className="fixed top-0 z-40 h-16 w-full bg-[#09090b] py-4 lg:static lg:top-auto lg:z-0 lg:h-0 lg:py-0">
           <div className="container flex max-w-xl items-center justify-between space-x-2 lg:mr-0 lg:ml-auto lg:pr-[4.5rem]">
             <Link
-              aria-label="Back to cart"
-              href="/cart"
+              aria-label="Back to invoice"
+              href="/invoice"
               className="group flex w-28 items-center space-x-2 lg:flex-auto"
             >
               <ArrowLeftIcon
@@ -130,6 +129,13 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
           />
         </ScrollArea>
       </CheckoutShell> */}
+
+      <section className="size-full flex-1 bg-white pt-10 pb-12 lg:flex-initial lg:px-12 lg:pt-16">
+        <ScrollArea className="w-full">
+          <h2 className="text-black">Checkout</h2>
+          <CheckoutFormDetail carts={cartLineItems} storeId={store.id} />
+        </ScrollArea>
+      </section>
     </section>
   );
 }

@@ -11,13 +11,25 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { CartLineItems } from "@/components/checkout/cart-line-items";
 import { getCart } from "@/actions/cart";
+import { getUnpaidOrderByStore } from "@/actions/order";
 
 interface CheckoutCardProps {
   storeId: string;
+  userId: string;
 }
 
-export async function CheckoutCard({ storeId }: CheckoutCardProps) {
+export async function CheckoutCard({ storeId, userId }: CheckoutCardProps) {
   const cartLineItems = await getCart({ storeId });
+
+  let redirectUrl = `/checkout/${storeId}`;
+
+  if (userId) {
+    const unpaidOrder = await getUnpaidOrderByStore(userId, storeId);
+    if (unpaidOrder) {
+      redirectUrl = `/payment/${unpaidOrder.id}`;
+    }
+  }
+
   console.log(cartLineItems);
 
   return (
@@ -38,14 +50,16 @@ export async function CheckoutCard({ storeId }: CheckoutCardProps) {
         </CardTitle>
         <Link
           aria-label="Checkout"
-          href={`/checkout/${storeId}`}
+          href={redirectUrl}
           className={cn(
             buttonVariants({
               size: "sm",
             }),
           )}
         >
-          Checkout
+          {redirectUrl.includes("/payment/")
+            ? "Selesaikan Pembayaran"
+            : "Checkout"}
         </Link>
       </CardHeader>
       <Separator className="mb-4" />

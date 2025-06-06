@@ -12,55 +12,56 @@ export const customerSchema = z.object({
 
 // Digunakan saat user login & checkout paket sendiri lewat aplikasi/web
 export const userCheckoutSchemaServer = z.object({
-  orderId: z.string().cuid(),
+  storeId: z.string().cuid(),
   paymentMethod: z.enum([TPaymentMethod.MANUAL, TPaymentMethod.AUTO]),
+  grossAmount: z.number(),
+  shoesImages: z
+    .array(
+      z.custom<ClientUploadedFileData<{ uploadedBy: string | undefined }>>(),
+    )
+    .min(1, "File is required")
+    .nonempty("BannerStore must have at least one image")
+    .max(2, "Please select up to 2 files")
+    .refine((files) => files.every((file) => file.size <= 4 * 1024 * 1024), {
+      message: "File size must be less than 4MB",
+      path: ["shoesImages"],
+    }),
   pakets: z
     .array(
       z.object({
         paketId: z.string().cuid(),
         quantity: z.number().min(1).default(1),
-        shoesImages: z
-          .array(
-            z.custom<
-              ClientUploadedFileData<{ uploadedBy: string | undefined }>
-            >(),
-          )
-          .min(1, "File is required")
-          .nonempty("BannerStore must have at least one image")
-          .max(2, "Please select up to 2 files")
-          .refine(
-            (files) => files.every((file) => file.size <= 4 * 1024 * 1024),
-            {
-              message: "File size must be less than 4MB",
-              path: ["shoesImages"],
-            },
-          ),
+        price: z.number(),
       }),
     )
     .min(1, "Minimal 1 paket harus dipilih"),
+
+  customer: customerSchema,
 });
 
 export const userCheckoutSchemaClient = z.object({
-  orderId: z.string().cuid(),
+  storeId: z.string().cuid(),
   paymentMethod: z.enum([TPaymentMethod.MANUAL, TPaymentMethod.AUTO]),
+  grossAmount: z.number(),
+  shoesImages: z
+    .array(z.custom<File>())
+    .min(1, "Minimal 1 gambar sepatu")
+    .max(2, "Maksimal 2 gambar sepatu")
+    .refine((files) => files.every((file) => file.size <= 4 * 1024 * 1024), {
+      message: "Ukuran file maksimal 4MB",
+    }),
+
   pakets: z
     .array(
       z.object({
         paketId: z.string().cuid(),
         quantity: z.number().min(1).default(1),
-        shoesImages: z
-          .array(z.custom<File>())
-          .min(1, "Minimal 1 gambar sepatu")
-          .max(2, "Maksimal 2 gambar sepatu")
-          .refine(
-            (files) => files.every((file) => file.size <= 4 * 1024 * 1024),
-            {
-              message: "Ukuran file maksimal 4MB",
-            },
-          ),
+        price: z.number(),
       }),
     )
-    .min(1, "Minimal 1 paket harus dipilih"),
+    .min(1, "Minimal 1 paket harus dipilih")
+    .optional(),
+  customer: customerSchema,
 });
 
 export const adminCheckoutSchemaClient = z.object({
@@ -71,7 +72,7 @@ export const adminCheckoutSchemaClient = z.object({
     .array(
       z.object({
         paketId: z.string().cuid(),
-        priceOrder: z.number().min(0),
+        priceOrder: z.number().min(0).optional(),
         quantity: z.number().min(1).default(1),
         shoesImages: z
           .array(z.custom<File>())
@@ -96,7 +97,7 @@ export const adminCheckoutSchemaServer = z.object({
     .array(
       z.object({
         paketId: z.string().cuid(),
-        priceOrder: z.number().min(0),
+        priceOrder: z.number().min(0).optional(),
         quantity: z.number().min(1).default(1),
         shoesImages: z
           .array(

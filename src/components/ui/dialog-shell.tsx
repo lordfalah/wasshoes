@@ -33,7 +33,7 @@ export function DialogShell({
 
   // Close the dialog when the user clicks outside of it
   useClickOutside({
-    ref: shellRef,
+    ref: shellRef as never,
     handler: () => router.back(),
   });
 

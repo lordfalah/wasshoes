@@ -4,6 +4,7 @@ import { MobileNav } from "./mobile-nav";
 import { ProductsCombobox } from "../products-combobox";
 import { CartSheet } from "../checkout/cart-sheet";
 import { AuthDropdown } from "./auth-dropdown";
+import InvoiceCart from "../invoice-cart";
 
 export function SiteHeader() {
   return (
@@ -14,6 +15,7 @@ export function SiteHeader() {
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
             <ProductsCombobox />
+            <InvoiceCart />
             <CartSheet />
             <AuthDropdown />
           </nav>

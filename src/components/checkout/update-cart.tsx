@@ -2,10 +2,7 @@
 
 import * as React from "react";
 import { MinusIcon, PlusIcon, TrashIcon } from "@radix-ui/react-icons";
-
-// import { deleteCartItem, updateCartItem } from "@/lib/actions/cart"
 import { showErrorToast } from "@/lib/handle-error";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CartLineItem, deleteCartItem, updateCartItem } from "@/actions/cart";

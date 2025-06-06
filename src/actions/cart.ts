@@ -12,6 +12,8 @@ import { z } from "zod";
 import { getErrorMessage } from "@/lib/handle-error";
 import { Category, Paket, Store } from "@prisma/client";
 import { auth } from "@/auth";
+import { connection } from "next/server";
+import { cookies } from "next/headers";
 
 export type CartLineItem = Paket & {
   quantity: number;
@@ -22,13 +24,36 @@ export type CartLineItem = Paket & {
 export async function getCart(input?: {
   storeId?: string;
 }): Promise<CartLineItem[]> {
+  await connection();
   try {
-    const session = await auth();
+    const [session, cookieStore] = await Promise.all([auth(), cookies()]);
+    if (!session || !session.user?.id) return [];
 
-    const cart = await db.cart.findFirst({
-      where: { userId: session?.user.id, closed: false },
-      select: { items: true },
-    });
+    const userId = session.user.id;
+    const cartIdFromCookie = cookieStore.get("cartId")?.value;
+
+    let cart = null;
+
+    if (cartIdFromCookie) {
+      cart = await db.cart.findUnique({
+        where: { id: cartIdFromCookie },
+        select: { id: true, closed: true, items: true },
+      });
+
+      // Jika cart tidak ditemukan atau sudah ditutup, cari cart aktif dari user
+      if (!cart || cart.closed) {
+        cart = await db.cart.findFirst({
+          where: { userId, closed: false },
+          select: { id: true, closed: true, items: true },
+        });
+      }
+    } else {
+      // Tidak ada cookie, cari cart aktif berdasarkan user
+      cart = await db.cart.findFirst({
+        where: { userId, closed: false },
+        select: { id: true, closed: true, items: true },
+      });
+    }
 
     const items = cart?.items as TCartItemSchema[] | undefined;
     if (!items || items.length === 0) return [];
@@ -58,10 +83,11 @@ export async function getCart(input?: {
   }
 }
 
-export async function getUniqueStoreIds() {
+export async function getUniqueStoreIds(): Promise<string[]> {
+  await connection();
   const session = await auth();
 
-  if (!session || !session.user.id) return [];
+  if (!session || !session.user?.id) return [];
 
   try {
     const cart = await db.cart.findFirst({
@@ -71,23 +97,19 @@ export async function getUniqueStoreIds() {
 
     if (!cart || !cart.items || cart.items.length === 0) return [];
 
-    // Ambil semua productId dari items cart
     const productIds = cart.items.map((item) => item.productId);
 
-    // Ambil semua paket yang berkaitan dan ambil store-nya
     const pakets = await db.paket.findMany({
       where: {
         id: { in: productIds },
       },
       select: {
-        id: true,
         stores: {
           select: { id: true },
         },
       },
     });
 
-    // Kumpulkan semua storeId unik dari paket
     const storeIds = [
       ...new Set(
         pakets.flatMap((paket) => paket.stores.map((store) => store.id)),
@@ -95,19 +117,25 @@ export async function getUniqueStoreIds() {
     ];
 
     return storeIds;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (err: unknown) {
+  } catch (err) {
+    console.error("GET_UNIQUE_STORE_IDS_ERROR:", err);
     return [];
   }
 }
 
 export async function addToCart(rawInput: z.infer<typeof cartItemSchema>) {
-  try {
-    const session = await auth();
-    if (!session?.user.id) throw new Error("Not Authorized");
+  await connection();
 
+  try {
     const input = cartItemSchema.parse(rawInput);
 
+    const [session, cookieStore] = await Promise.all([auth(), cookies()]);
+    const userId = session?.user?.id;
+    if (!userId) throw new Error("Not Authorized");
+
+    const cartIdFromCookie = cookieStore.get("cartId")?.value;
+
+    // Cek apakah produk valid dan visible
     const paket = await db.paket.findUnique({
       where: { id: input.productId },
       select: { isVisible: true },
@@ -117,20 +145,51 @@ export async function addToCart(rawInput: z.infer<typeof cartItemSchema>) {
       throw new Error("Paket tidak ditemukan atau tidak tersedia.");
     }
 
-    let cart = await db.cart.findFirst({
-      where: { userId: session?.user.id, closed: false },
-    });
+    let cart = null;
 
+    // 1. Coba ambil cart dari cookie
+    if (cartIdFromCookie) {
+      cart = await db.cart.findUnique({
+        where: { id: cartIdFromCookie },
+      });
+
+      // Jika cart tidak ditemukan atau sudah ditutup, hapus cookie dan reset cart
+      if (!cart || cart.closed) {
+        cookieStore.set("cartId", "", { expires: new Date(0) });
+        cart = null;
+      }
+    }
+
+    // 2. Jika tidak ada cart valid di cookie, cari berdasarkan user login
+    if (!cart && userId) {
+      cart = await db.cart.findFirst({
+        where: { userId, closed: false },
+      });
+    }
+
+    // 3. Jika tetap belum ada, buat cart baru
     if (!cart) {
       cart = await db.cart.create({
         data: {
-          userId: session.user.id,
+          userId: userId,
           items: [input],
         },
       });
+
+      // Simpan cartId ke cookie
+      cookieStore.set("cartId", cart.id, {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7, // 7 hari
+      });
+
+      revalidatePath("/");
       return { data: cart.items, error: null };
     }
 
+    // 4. Update cart jika sudah ada
     const items = cart.items ?? [];
     const index = items.findIndex((item) => item.productId === input.productId);
 
@@ -146,7 +205,6 @@ export async function addToCart(rawInput: z.infer<typeof cartItemSchema>) {
     });
 
     revalidatePath("/");
-
     return { data: updatedCart.items, error: null };
   } catch (err) {
     return { data: null, error: getErrorMessage(err) };
@@ -154,26 +212,28 @@ export async function addToCart(rawInput: z.infer<typeof cartItemSchema>) {
 }
 
 export async function updateCartItem(rawInput: TCartItemSchema) {
-  try {
-    const session = await auth();
-    if (!session?.user.id) throw new Error("Not Authorized");
+  await connection();
 
+  try {
+    const [session, cookieStore] = await Promise.all([auth(), cookies()]);
     const input = cartItemSchema.parse(rawInput);
 
+    const userId = session?.user.id;
+    const cartId = cookieStore.get("cartId")?.value;
+
     const cart = await db.cart.findFirst({
-      where: { userId: session.user.id, closed: false },
+      where: {
+        ...(userId ? { userId } : { id: cartId }),
+        closed: false,
+      },
     });
 
-    if (!cart) {
-      throw new Error("Cart not found.");
-    }
+    if (!cart) throw new Error("Cart not found.");
 
     let updatedItems: TCartItemSchema[] = [];
-
     const currentItems = Array.isArray(cart.items) ? cart.items : [];
 
     if (input.quantity === 0) {
-      // Remove item if quantity is 0
       updatedItems = currentItems.filter(
         (item) => item.productId !== input.productId,
       );
@@ -183,14 +243,12 @@ export async function updateCartItem(rawInput: TCartItemSchema) {
       );
 
       if (existingItem) {
-        // Update existing item quantity
         updatedItems = currentItems.map((item) =>
           item.productId === input.productId
             ? { ...item, quantity: input.quantity }
             : item,
         );
       } else {
-        // Add new item if not exists
         updatedItems = [...currentItems, input];
       }
     }
@@ -202,61 +260,65 @@ export async function updateCartItem(rawInput: TCartItemSchema) {
 
     revalidatePath("/");
 
-    return {
-      data: updatedItems,
-      error: null,
-    };
+    return { data: updatedItems, error: null };
   } catch (err) {
-    return {
-      data: null,
-      error: getErrorMessage(err),
-    };
+    return { data: null, error: getErrorMessage(err) };
   }
 }
 
 export async function deleteCart() {
+  await connection();
+
   try {
-    const session = await auth();
-    if (!session?.user.id) throw new Error("Not Authorized");
+    const [session, cookieStore] = await Promise.all([auth(), cookies()]);
+    const userId = session?.user.id;
+    const cartId = cookieStore.get("cartId")?.value;
 
     const cart = await db.cart.findFirst({
-      where: { userId: session.user.id, closed: false },
+      where: {
+        ...(userId ? { userId } : { id: cartId }),
+        closed: false,
+      },
     });
 
-    if (!cart) {
-      throw new Error("Cart not found.");
+    if (!cart) throw new Error("Cart not found.");
+
+    await db.cart.delete({ where: { id: cart.id } });
+
+    // Hapus cookie jika menggunakan cartId dari cookie
+    if (!userId) {
+      cookieStore.set("cartId", "", {
+        path: "/",
+        expires: new Date(0),
+      });
     }
-
-    await db.cart.delete({
-      where: { id: cart.id },
-    });
 
     revalidatePath("/");
 
-    return {
-      data: null,
-      error: null,
-    };
+    return { data: null, error: null };
   } catch (err) {
-    return {
-      data: null,
-      error: getErrorMessage(err),
-    };
+    return { data: null, error: getErrorMessage(err) };
   }
 }
 
 export async function deleteCartItem(
   input: z.infer<typeof deleteCartItemSchema>,
 ) {
+  await connection();
+
   try {
-    const session = await auth();
-    if (!session?.user.id) throw new Error("Not Authorized");
+    const [session, cookieStore] = await Promise.all([auth(), cookies()]);
+    const userId = session?.user.id;
+    const cartId = cookieStore.get("cartId")?.value;
 
     const cart = await db.cart.findFirst({
-      where: { userId: session.user.id, closed: false },
+      where: {
+        ...(userId ? { userId } : { id: cartId }),
+        closed: false,
+      },
     });
 
-    if (!cart) return;
+    if (!cart) throw new Error("Cart not found.");
 
     const currentItems = Array.isArray(cart.items) ? cart.items : [];
     const updatedItems = currentItems.filter(
@@ -270,33 +332,32 @@ export async function deleteCartItem(
 
     revalidatePath("/");
 
-    return {
-      data: updatedItems,
-      error: null,
-    };
+    return { data: updatedItems, error: null };
   } catch (err) {
-    return {
-      data: null,
-      error: getErrorMessage(err),
-    };
+    return { data: null, error: getErrorMessage(err) };
   }
 }
 
 export async function deleteCartItems(
   input: z.infer<typeof deleteCartItemsSchema>,
 ) {
+  await connection();
+
   try {
-    const session = await auth();
-    if (!session?.user.id) throw new Error("Not Authorized");
+    const [session, cookieStore] = await Promise.all([auth(), cookies()]);
+    const userId = session?.user.id;
+    const cartId = cookieStore.get("cartId")?.value;
 
     const cart = await db.cart.findFirst({
-      where: { userId: session.user.id, closed: false },
+      where: {
+        ...(userId ? { userId } : { id: cartId }),
+        closed: false,
+      },
     });
 
-    if (!cart) return;
+    if (!cart) throw new Error("Cart not found.");
 
     const currentItems = Array.isArray(cart.items) ? cart.items : [];
-
     const updatedItems = currentItems.filter(
       (item) => !input.productIds.includes(item.productId),
     );
@@ -308,14 +369,8 @@ export async function deleteCartItems(
 
     revalidatePath("/");
 
-    return {
-      data: updatedItems,
-      error: null,
-    };
+    return { data: updatedItems, error: null };
   } catch (err) {
-    return {
-      data: null,
-      error: getErrorMessage(err),
-    };
+    return { data: null, error: getErrorMessage(err) };
   }
 }

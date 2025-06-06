@@ -11,6 +11,13 @@ export default {
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorization() {
+        try {
+          console.log("WOIIII");
+        } catch (error) {
+          console.log({ error });
+        }
+      },
     }),
 
     Credentials({

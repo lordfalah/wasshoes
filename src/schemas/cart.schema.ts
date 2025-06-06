@@ -9,6 +9,10 @@ export const cartItemSchema = z.object({
   quantity: z.number().min(0),
 });
 
+export const checkoutItemSchema = cartItemSchema.extend({
+  price: z.number(),
+});
+
 export const deleteCartItemSchema = z.object({
   productId: z.string(),
 });
@@ -19,5 +23,6 @@ export const deleteCartItemsSchema = z.object({
 
 export type TUpdateCartItemSchema = z.infer<typeof updateCartItemSchema>;
 export type TCartItemSchema = z.infer<typeof cartItemSchema>;
+export type TCheckoutItemSchema = z.infer<typeof checkoutItemSchema>;
 export type TDeleteCartItemSchema = z.infer<typeof deleteCartItemSchema>;
 export type TDeleteCartItemsSchema = z.infer<typeof deleteCartItemsSchema>;

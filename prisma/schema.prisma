@@ -33,8 +33,15 @@ model Role {
 }
 
 model User {
-  id                    String                 @id @default(cuid())
-  name                  String?
+  id        String  @id @default(cuid())
+  name      String?
+  firstName String?
+  lastName  String?
+  phone     String?
+
+  /// InformationCustomers
+  informationCustomers Json[]
+
   email                 String?                @unique
   emailVerified         DateTime?
   image                 String?
@@ -123,6 +130,7 @@ model Store {
   bannerImgs  Json[]
   users       User[]
   pakets      Paket[]
+  order       Order[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -131,9 +139,19 @@ model Store {
 }
 
 enum TStatusOrder {
-  SUCCESS
+  SETTLEMENT
   PENDING
-  ERROR
+  Deny
+  DENY
+  CANCEL
+  EXPIRE
+  REFUND
+  PARTIAL_REFUND
+  CHARGEBACK
+  PARTIAL_CHARGEBACK
+  AUTHORIZE
+  CAPTURE
+  FAILURE
 }
 
 enum TPaymentMethod {
@@ -147,9 +165,20 @@ model Order {
   paymentMethod TPaymentMethod @default(MANUAL)
   paymentToken  String? // Token Snap (WAJIB)
   redirectUrl   String?
-  pakets        PaketOrder[]
-  User          User           @relation(fields: [userId], references: [id])
-  userId        String
+  status        TStatusOrder   @default(PENDING)
+
+  /// [Image]
+  shoesImages Json[]
+
+  pakets PaketOrder[]
+  user   User         @relation(fields: [userId], references: [id])
+  userId String
+
+  storeId String // ✅ Foreign key ke Store
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("order")
 }
@@ -162,6 +191,7 @@ model Paket {
   /// [Image]
   image       Json
   isVisible   Boolean      @default(true)
+  rating      Int          @default(0) @db.SmallInt
   stores      Store[]
   orders      PaketOrder[]
 
@@ -175,16 +205,15 @@ model Paket {
 }
 
 model PaketOrder {
-  id          String   @id @default(cuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id])
-  paketId     String
-  paket       Paket    @relation(fields: [paketId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt   DateTime @default(now())
-  priceOrder  Int
-  quantity    Int      @db.SmallInt
-  /// [Image]
-  shoesImages Json[]
+  id         String @id @default(cuid())
+  orderId    String
+  order      Order  @relation(fields: [orderId], references: [id])
+  paketId    String
+  paket      Paket  @relation(fields: [paketId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  priceOrder Int?
+  quantity   Int    @db.SmallInt
+
+  createdAt DateTime @default(now())
 
   @@map("paketOrder")
 }

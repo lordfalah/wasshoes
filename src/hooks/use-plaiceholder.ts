@@ -1,3 +1,5 @@
+"use server";
+
 import fs from "node:fs/promises";
 import { getPlaiceholder } from "plaiceholder";
 

@@ -6,6 +6,7 @@ import { getUserById } from "@/data/user";
 import { getTwoFactorConfirmationByUserId } from "@/data/two-factor-confirmation";
 import authConfig from "./auth.config";
 import { getAccountByUserId } from "@/data/account";
+import { cookies } from "next/headers";
 
 export const {
   handlers: { GET, POST },
@@ -57,6 +58,17 @@ export const {
         data: { emailVerified: new Date() },
       });
     },
+
+    async signOut() {
+      try {
+        // Hapus cookie cartId
+        const cookieStore = await cookies();
+        cookieStore.delete("cartId");
+        console.log("cartId cookie deleted on sign out.");
+      } catch (err) {
+        console.error("Error deleting cartId cookie on signOut:", err);
+      }
+    },
   },
   callbacks: {
     async signIn({ user, account }) {
@@ -101,6 +113,7 @@ export const {
         session.user.email = token.email as string;
         session.user.isOAuth = token.isOAuth as boolean;
         session.user.image = token.picture;
+        session.user.storeId = token.storeId as string;
       }
 
       return session;
@@ -120,6 +133,7 @@ export const {
       token.role = existingUser.role;
       token.isTwoFactorEnabled = existingUser.isTwoFactorEnabled;
       token.picture = existingUser.image;
+      token.storeId = existingUser.storeId;
 
       return token;
     },
