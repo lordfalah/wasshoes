@@ -10,7 +10,8 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const { order_id, status_code, gross_amount, signature_key } = body;
+    const { order_id, status_code, gross_amount, signature_key, fraud_status } =
+      body;
 
     // Buat ulang signature_key untuk validasi
     const hash = crypto
@@ -42,27 +43,18 @@ export async function POST(req: Request) {
     }
 
     // Mapping status Midtrans ke sistem lokal kamu (TStatusOrder)
-    let newStatus: TStatusOrder | null = null;
+    let newStatus: TStatusOrder | undefined = undefined;
 
-    switch (status) {
-      case "settlement":
+    if (status == "capture") {
+      if (fraud_status == "accept") {
         newStatus = TStatusOrder.SETTLEMENT;
-        break;
-      case "pending":
-        newStatus = TStatusOrder.PENDING;
-        break;
-      case "expire":
-        newStatus = TStatusOrder.EXPIRE;
-        break;
-      case "cancel":
-        newStatus = TStatusOrder.CANCEL;
-        break;
-      case "deny":
-        newStatus = TStatusOrder.DENY;
-        break;
-      default:
-        // status lain seperti refund, chargeback, dll
-        newStatus = TStatusOrder.FAILURE;
+      }
+    } else if (status == "settlement") {
+      newStatus = TStatusOrder.SETTLEMENT;
+    } else if (status == "cancel" || status == "deny" || status == "expire") {
+      newStatus = TStatusOrder.FAILURE;
+    } else if (status == "pending") {
+      newStatus = TStatusOrder.PENDING;
     }
 
     // Update jika status berubah
