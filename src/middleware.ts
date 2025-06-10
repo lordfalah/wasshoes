@@ -62,7 +62,11 @@ export default auth((req, context) => {
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
   // Bypass middleware untuk route tertentu (contoh: upload, auth API)
-  if (isApiAuthRoute || nextUrl.pathname === "/api/uploadthing") {
+  if (
+    isApiAuthRoute ||
+    nextUrl.pathname === "/api/uploadthing" ||
+    nextUrl.pathname === "/api/transactions/notif"
+  ) {
     return NextResponse.next();
   }
 
