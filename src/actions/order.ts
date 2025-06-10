@@ -116,13 +116,14 @@ export async function getUnpaidOrderByStore(userId: string, storeId: string) {
 }
 
 export async function getUnpaidOrders(_isExpired?: boolean) {
+  const now = new Date();
+  const twentyFourHoursAgo = subHours(now, 24);
+  await connection();
   try {
     const session = await auth();
     if (!session) throw new Error("Not Authorized");
 
     const userId = session.user.id;
-    const now = new Date();
-    const twentyFourHoursAgo = subHours(now, 24);
 
     // 🔄 Update otomatis semua order PENDING yang lewat 24 jam jadi EXPIRED
     await db.order.updateMany({
@@ -173,6 +174,7 @@ export async function getUnpaidOrders(_isExpired?: boolean) {
 }
 
 export async function getHistoryOrder() {
+  await connection();
   try {
     const session = await auth();
     if (!session) throw new Error("Not Authorized");
@@ -212,7 +214,7 @@ export async function getHistoryOrder() {
 
     return { data: orderHistory, error: null };
   } catch (error) {
-    console.error("getOrderHistory error:", error);
+    console.error("getHistoryOrder error:", error);
     return { data: null, error: getErrorMessage(error) };
   }
 }
