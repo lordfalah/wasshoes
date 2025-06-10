@@ -3,7 +3,6 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { TStatusOrder } from "@prisma/client";
-import { coreApi } from "@/lib/midtrans";
 import { subHours } from "date-fns";
 import { connection } from "next/server";
 import { getErrorMessage } from "@/lib/handle-error";
@@ -34,22 +33,6 @@ export async function getOrderLineItems(input: { orderId: string }) {
     });
 
     if (!order) throw new Error("Order tidak ditemukan.");
-
-    // 2. Cek status pembayaran dari Midtrans
-    const transactionMidtrans = await coreApi.transaction.status(input.orderId);
-    const isPaid =
-      transactionMidtrans.transaction_status.toLowerCase() ===
-      TStatusOrder.SETTLEMENT.toLowerCase();
-
-    // 3. Jika sudah dibayar tapi status belum diperbarui, update
-    if (isPaid && order.status !== TStatusOrder.SETTLEMENT) {
-      await db.order.update({
-        where: { id: order.id },
-        data: {
-          status: TStatusOrder.SETTLEMENT,
-        },
-      });
-    }
 
     // 4. Format ulang item sebagai line items
     const lineItems = order.pakets.map((paketOrder) => ({
