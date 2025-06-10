@@ -23,14 +23,16 @@ export async function CheckoutCard({ storeId, userId }: CheckoutCardProps) {
 
   let redirectUrl = `/checkout/${storeId}`;
 
-  if (userId) {
-    const unpaidOrder = await getUnpaidOrderByStore(userId, storeId);
-    if (unpaidOrder) {
-      redirectUrl = `/payment/${unpaidOrder.id}`;
-    }
-  }
+  if (!userId) throw new Error("Id user required");
 
-  console.log(cartLineItems);
+  if (userId) {
+    const { data, error } = await getUnpaidOrderByStore(userId, storeId);
+    if (data !== null) {
+      redirectUrl = `/invoice`;
+    }
+
+    if (error) throw new Error(error);
+  }
 
   return (
     <Card
@@ -38,11 +40,6 @@ export async function CheckoutCard({ storeId, userId }: CheckoutCardProps) {
       as="section"
       id={`checkout-store-${storeId}`}
       aria-labelledby={`checkout-store-${storeId}-heading`}
-      // className={cn(
-      //   cartLineItems[0]?.storeStripeAccountId
-      //     ? "border-green-500"
-      //     : "border-destructive"
-      // )}
     >
       <CardHeader className="flex flex-row items-center space-x-4 py-4">
         <CardTitle className="line-clamp-1 flex-1">
@@ -57,8 +54,8 @@ export async function CheckoutCard({ storeId, userId }: CheckoutCardProps) {
             }),
           )}
         >
-          {redirectUrl.includes("/payment/")
-            ? "Selesaikan Pembayaran"
+          {redirectUrl.includes("/invoice")
+            ? "Selesaikan Pembayaran Terlebih dahulu!"
             : "Checkout"}
         </Link>
       </CardHeader>

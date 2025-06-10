@@ -34,23 +34,38 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getErrorMessage } from "@/lib/handle-error";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { uploadFiles } from "@/lib/uploadthing";
 import { TError, TSuccess } from "@/types/route-api";
 import { deleteFiles } from "@/app/api/uploadthing/helper-function";
 import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 
 interface CheckoutFormDetailProps
   extends React.ComponentPropsWithoutRef<"form"> {
   storeId: string;
   carts: CartLineItem[];
 }
-const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
+
+const paymentMethods = [
+  {
+    name: TPaymentMethod.AUTO,
+    description: "Bayar Otomatis",
+  },
+  {
+    name: TPaymentMethod.MANUAL,
+    description: "Bayar Manual",
+  },
+] as const;
+
+const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
   storeId,
   carts,
   className,
   ...props
 }) => {
+  const { data } = useSession();
+
   const total = carts.reduce(
     (total, item) => total + Number(item.quantity) * Number(item.price),
     0,
@@ -61,10 +76,10 @@ const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
     resolver: zodResolver(userCheckoutSchemaClient),
     defaultValues: {
       customer: {
-        first_name: "",
-        last_name: "",
-        email: "",
-        phone: "",
+        first_name: data?.user.firstName ?? "",
+        last_name: data?.user.lastName ?? "",
+        email: data?.user.email ?? "",
+        phone: data?.user.phone ?? "",
       },
       paymentMethod: TPaymentMethod.AUTO,
       grossAmount: total,
@@ -127,8 +142,9 @@ const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
 
             const resTransaction: TSuccess<Order> = await req.json();
             if (resTransaction.status === "existing") {
-              // testt
-              console.log(resTransaction);
+              throw new Error(
+                "Transaksi sudah ada selesaikan di halaman invoice",
+              );
             } else {
               console.log("BAYAR ORDER");
               window.snap.pay(resTransaction.data.paymentToken as string);
@@ -143,8 +159,8 @@ const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
           }
         })(),
         {
-          loading: "Saving Store...",
-          success: "Store saved successfully!",
+          loading: "Saving Checkout...",
+          success: "Checkout saved successfully!",
           error: (err) => getErrorMessage(err),
         },
       );
@@ -153,21 +169,28 @@ const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
   );
 
   return (
-    <Card className={cn("mx-auto w-full p-4", className)}>
+    <Card
+      className={cn("w-full bg-white p-4 text-black lg:max-w-lg", className)}
+    >
       <Form {...form}>
         <form
           {...props}
           onSubmit={form.handleSubmit(onSubmit)}
-          className="mx-auto grid max-w-md grid-cols-12 gap-x-3 gap-y-3.5"
+          className="w-full space-y-4"
         >
           <FormField
             control={form.control}
             name="customer.first_name"
             render={({ field }) => (
-              <FormItem className="col-span-12 space-y-2.5 lg:col-span-6">
+              <FormItem className="space-y-1">
                 <FormLabel>First Name</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="wasshoes" type="text" />
+                  <Input
+                    autoComplete="off"
+                    {...field}
+                    placeholder="wasshoes"
+                    type="text"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -178,10 +201,15 @@ const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
             control={form.control}
             name="customer.last_name"
             render={({ field }) => (
-              <FormItem className="col-span-12 space-y-2.5 lg:col-span-6">
+              <FormItem className="space-y-1">
                 <FormLabel>Last Name</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="wasshoes" type="tel" />
+                  <Input
+                    autoComplete="off"
+                    {...field}
+                    placeholder="wasshoes"
+                    type="tel"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -192,10 +220,15 @@ const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
             control={form.control}
             name="customer.email"
             render={({ field }) => (
-              <FormItem className="col-span-12 space-y-2.5 lg:col-span-6">
+              <FormItem className="space-y-1">
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="wasshoes" type="email" />
+                  <Input
+                    autoComplete="off"
+                    {...field}
+                    placeholder="wasshoes"
+                    type="email"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -206,10 +239,15 @@ const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
             control={form.control}
             name="customer.phone"
             render={({ field }) => (
-              <FormItem className="col-span-12 space-y-2.5 lg:col-span-6">
+              <FormItem className="space-y-1">
                 <FormLabel>Phone</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="wasshoes" type="tel" />
+                  <Input
+                    autoComplete="off"
+                    {...field}
+                    placeholder="wasshoes"
+                    type="tel"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -220,11 +258,12 @@ const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
             control={form.control}
             name="grossAmount"
             render={({ field }) => (
-              <FormItem className="col-span-12 space-y-2.5 lg:col-span-6">
+              <FormItem className="space-y-1">
                 <FormLabel>Price</FormLabel>
                 <FormControl>
                   <div className="relative z-10 h-fit after:absolute after:top-1/2 after:z-20 after:-translate-y-1/2 after:pl-2 after:text-sm after:content-['Rp.']">
                     <Input
+                      autoComplete="off"
                       className="!pl-8"
                       {...field}
                       placeholder="xxx"
@@ -250,27 +289,44 @@ const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
             name="paymentMethod"
             render={({ field }) => (
               <FormItem className="space-y-3">
-                <FormLabel>Notify me about...</FormLabel>
-                <FormControl>
+                <fieldset className="flex flex-col gap-1.5">
+                  <FormLabel className="text-sm font-medium">Plan</FormLabel>
+                  <FormDescription className="text-muted-foreground text-sm">
+                    Select the plan that best fits your needs.
+                  </FormDescription>
                   <RadioGroup
+                    className="flex flex-wrap gap-3 sm:flex-nowrap"
                     onValueChange={field.onChange}
                     defaultValue={field.value}
-                    className="flex flex-col space-y-1"
                   >
-                    <FormItem className="flex items-center space-y-0 space-x-3">
-                      <FormControl>
-                        <RadioGroupItem value={TPaymentMethod.AUTO} />
-                      </FormControl>
-                      <FormLabel className="font-normal">Auto</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-y-0 space-x-3">
-                      <FormControl>
-                        <RadioGroupItem value={TPaymentMethod.MANUAL} />
-                      </FormControl>
-                      <FormLabel className="font-normal">Manual</FormLabel>
-                    </FormItem>
+                    {paymentMethods.map(({ description, name }, idx) => (
+                      <FormItem
+                        key={idx}
+                        className="has-[[data-state=checked]]:border-ring flex w-full items-start gap-3 rounded-lg border has-[[data-state=checked]]:bg-black has-[[data-state=checked]]:text-white"
+                      >
+                        <FormLabel
+                          htmlFor={name}
+                          className="flex flex-grow cursor-pointer items-center gap-3 p-3"
+                        >
+                          <FormControl>
+                            <RadioGroupItem
+                              value={name}
+                              id={name}
+                              className="data-[state=checked]:border-primary"
+                            />
+                          </FormControl>
+                          <div className="grid gap-1 font-normal">
+                            <div className="font-medium">{name}</div>
+                            <div className="text-muted-foreground pr-2 text-xs leading-snug text-balance">
+                              {description}
+                            </div>
+                          </div>
+                        </FormLabel>
+                      </FormItem>
+                    ))}
                   </RadioGroup>
-                </FormControl>
+                </fieldset>
+
                 <FormMessage />
               </FormItem>
             )}
@@ -280,7 +336,7 @@ const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
             control={form.control}
             name="shoesImages"
             render={({ field }) => (
-              <FormItem className="col-span-12 space-y-2.5">
+              <FormItem className="space-y-1">
                 <FormLabel>Attachments</FormLabel>
                 <FormControl>
                   <FileUpload
@@ -300,7 +356,11 @@ const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
                       <CloudUpload className="size-4" />
                       Drag and drop or
                       <FileUploadTrigger asChild>
-                        <Button variant="link" size="sm" className="p-0">
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="text-muted p-0"
+                        >
                           choose files
                         </Button>
                       </FileUploadTrigger>
@@ -336,7 +396,8 @@ const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="col-span-12 mt-2.5"
+            className="mt-2.5 w-full border-2"
+            size="lg"
           >
             {isSubmitting ? (
               <Fragment>
@@ -353,4 +414,4 @@ const CheckoutFormDetail: React.FC<CheckoutFormDetailProps> = ({
   );
 };
 
-export default CheckoutFormDetail;
+export default CheckoutFormDetailAdmin;

@@ -4,7 +4,7 @@ import { MobileNav } from "./mobile-nav";
 import { ProductsCombobox } from "../products-combobox";
 import { CartSheet } from "../checkout/cart-sheet";
 import { AuthDropdown } from "./auth-dropdown";
-import InvoiceCart from "../invoice-cart";
+import InvoiceCart from "../../app/(checkout)/invoice/_components/invoice-cart";
 
 export function SiteHeader() {
   return (

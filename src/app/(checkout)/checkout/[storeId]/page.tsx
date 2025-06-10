@@ -4,14 +4,19 @@ import Link from "next/link";
 import { ArrowLeftIcon } from "@radix-ui/react-icons";
 import { formatToRupiah } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { CartLineItems } from "@/components/checkout/cart-line-items";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getCart } from "@/actions/cart";
 import { DialogTitle } from "@/components/ui/dialog";
-import CheckoutFormDetail from "@/components/checkout/checkout-form-detail";
+import CheckoutFormDetailUser from "@/components/checkout/checkout-form-detail-user";
 
 export const metadata: Metadata = {
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL}`),
@@ -28,10 +33,11 @@ interface CheckoutPageProps {
 export default async function CheckoutPage({ params }: CheckoutPageProps) {
   const storeId = decodeURIComponent((await params).storeId);
 
-  const store = await db.store.findFirst({
+  const store = await db.store.findUnique({
     select: {
       id: true,
       name: true,
+      mapEmbed: true,
     },
     where: {
       id: storeId,
@@ -43,6 +49,8 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   }
 
   const cartLineItems = await getCart({ storeId });
+
+  if (!cartLineItems || cartLineItems.length === 0) redirect("/invoice");
 
   const total = cartLineItems.reduce(
     (total, item) => total + Number(item.quantity) * Number(item.price),
@@ -77,16 +85,28 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
                 </Button>
               </DrawerTrigger>
               <DrawerContent
-                aria-describedby={"WOI ASU"}
-                className="mx-auto flex h-[82%] w-full max-w-4xl flex-col space-y-6 border pt-8 pb-6"
+                id="detail-content"
+                aria-describedby={"Detail Content"}
+                className="mx-auto flex h-[82%] w-full max-w-4xl flex-col space-y-6 border px-4 pt-8 pb-6"
               >
                 <CartLineItems
                   items={cartLineItems}
-                  variant="minimal"
+                  variant="default"
                   isEditable={false}
-                  className="container h-full flex-1 pr-8"
+                  className="container h-full flex-1"
                 />
-                <DialogTitle className="sr-only">Detail</DialogTitle>
+
+                <DialogTitle className="text-center">Location</DialogTitle>
+                <DrawerDescription>
+                  <iframe
+                    src={store.mapEmbed}
+                    allowFullScreen={false}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="h-[250px] w-full rounded-2xl border-0 border-none"
+                  />
+                </DrawerDescription>
+
                 <div className="container space-y-4 pr-8">
                   <Separator />
                   <div className="flex font-medium">
@@ -117,23 +137,10 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
           className="container hidden w-full max-w-xl lg:mr-0 lg:ml-auto lg:flex lg:max-h-[580px] lg:pr-[4.5rem]"
         />
       </div>
-      {/* <CheckoutShell
-        paymentIntentPromise={paymentIntentPromise}
-        storeStripeAccountId={store.stripeAccountId}
-        className="size-full flex-1 bg-white pb-12 pt-10 lg:flex-initial lg:pl-12 lg:pt-16"
-      >
-        <ScrollArea className="h-full">
-          <CheckoutForm
-            storeId={store.id}
-            className="container max-w-xl pr-6 lg:ml-0 lg:mr-auto"
-          />
-        </ScrollArea>
-      </CheckoutShell> */}
 
-      <section className="size-full flex-1 bg-white pt-10 pb-12 lg:flex-initial lg:px-12 lg:pt-16">
+      <section className="size-full flex-1 bg-white px-4 pt-10 pb-12 lg:flex-initial lg:px-12 lg:pt-16">
         <ScrollArea className="w-full">
-          <h2 className="text-black">Checkout</h2>
-          <CheckoutFormDetail carts={cartLineItems} storeId={store.id} />
+          <CheckoutFormDetailUser carts={cartLineItems} storeId={store.id} />
         </ScrollArea>
       </section>
     </section>

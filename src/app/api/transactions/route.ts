@@ -8,6 +8,7 @@ import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getTotalPriceAndItemDetails } from "@/actions/product";
+import { update } from "@/auth";
 
 export const POST = withAuth(async (req) => {
   try {
@@ -102,17 +103,30 @@ export const POST = withAuth(async (req) => {
         data.pakets,
       );
 
-      await db.user.update({
-        where: {
-          id: req.auth.user.id,
-        },
-        data: {
-          firstName: data.customer.first_name,
-          lastName: data.customer.last_name,
-          email: data.customer.email,
-          phone: data.customer.phone,
-        },
-      });
+      // Cek apakah profil belum lengkap (misalnya nama depan atau nomor HP kosong/null)
+      const isProfileIncomplete =
+        !req.auth.user?.firstName ||
+        !req.auth.user?.phone ||
+        !req.auth.user?.lastName;
+
+      // Jika profil belum lengkap, update user dari form yang dikirim frontend
+      if (isProfileIncomplete) {
+        await db.user.update({
+          where: { id: req.auth.user.id },
+          data: {
+            firstName: data.customer.first_name,
+            lastName: data.customer.last_name,
+            phone: data.customer.phone,
+          },
+        });
+        await update({
+          user: {
+            firstName: data.customer.first_name,
+            lastName: data.customer.last_name,
+            phone: data.customer.phone,
+          },
+        });
+      }
 
       const transaction = await snap.createTransaction({
         transaction_details: {
@@ -120,10 +134,16 @@ export const POST = withAuth(async (req) => {
           gross_amount: total,
         },
         customer_details: {
-          first_name: data.customer.first_name,
-          last_name: data.customer.last_name,
-          email: data.customer.email || "anonymous@example.com",
-          phone: data.customer.phone || "081000000000",
+          first_name: isProfileIncomplete
+            ? data.customer.first_name
+            : req.auth.user.firstName,
+          last_name: isProfileIncomplete
+            ? data.customer.last_name
+            : req.auth.user.lastName,
+          phone: isProfileIncomplete
+            ? data.customer.phone
+            : req.auth.user.phone,
+          email: data.customer.email ?? req.auth.user.email,
         },
 
         item_details,

@@ -6,6 +6,8 @@ import { TStatusOrder } from "@prisma/client";
 import { coreApi } from "@/lib/midtrans";
 import { subHours } from "date-fns";
 import { connection } from "next/server";
+import { getErrorMessage } from "@/lib/handle-error";
+import { revalidatePath } from "next/cache";
 
 export async function getOrderLineItems(input: { orderId: string }) {
   try {
@@ -55,10 +57,16 @@ export async function getOrderLineItems(input: { orderId: string }) {
       quantity: paketOrder.quantity,
     }));
 
-    return { lineItems, storeId: order.storeId };
+    return {
+      data: {
+        lineItems,
+        storeId: order.storeId,
+      },
+      error: null,
+    };
   } catch (err) {
     console.error("Error getOrderLineItems:", err);
-    return { lineItems: null, storeId: null };
+    return { data: null, error: getErrorMessage(err) };
   }
 }
 
@@ -66,17 +74,16 @@ export async function getCountOrder() {
   try {
     await connection();
     const session = await auth();
-    if (!session) return 0;
+    if (!session) throw new Error("Not Authorized");
     const countOrderUser = await db.order.count({
       where: {
         status: TStatusOrder.PENDING,
       },
     });
 
-    return countOrderUser;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (error) {
-    return 0;
+    return { data: countOrderUser, error: null };
+  } catch (err) {
+    return { data: null, error: getErrorMessage(err) };
   }
 }
 
@@ -102,18 +109,16 @@ export async function getUnpaidOrderByStore(userId: string, storeId: string) {
       },
     });
 
-    return unpaidOrder;
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return { data: unpaidOrder, error: null };
   } catch (error) {
-    return null;
+    return { data: null, error: getErrorMessage(error) };
   }
 }
 
 export async function getUnpaidOrders(_isExpired?: boolean) {
   try {
     const session = await auth();
-    if (!session) return null;
+    if (!session) throw new Error("Not Authorized");
 
     const userId = session.user.id;
     const now = new Date();
@@ -160,22 +165,37 @@ export async function getUnpaidOrders(_isExpired?: boolean) {
       },
     });
 
-    return unpaidOrders;
+    return { data: unpaidOrders, error: null };
   } catch (error) {
     console.error("getUnpaidOrders error:", error);
-    return null;
+    return { data: null, error: getErrorMessage(error) };
   }
 }
 
 export async function getHistoryOrder() {
   try {
     const session = await auth();
-
+    if (!session) throw new Error("Not Authorized");
     const orderHistory = await db.order.findMany({
       where: {
-        userId: session?.user.id,
-        status: TStatusOrder.SETTLEMENT,
+        OR: [
+          {
+            userId: session?.user.id,
+            status: TStatusOrder.SETTLEMENT,
+          },
+
+          {
+            userId: session?.user.id,
+            status: TStatusOrder.EXPIRE,
+          },
+          {
+            userId: session?.user.id,
+            status: TStatusOrder.CANCEL,
+          },
+        ],
       },
+
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
 
       include: {
         pakets: {
@@ -190,38 +210,35 @@ export async function getHistoryOrder() {
       },
     });
 
-    return orderHistory;
+    return { data: orderHistory, error: null };
   } catch (error) {
     console.error("getOrderHistory error:", error);
-    return null;
+    return { data: null, error: getErrorMessage(error) };
   }
 }
 
-export async function getUnpaidOrderAndClosedCart() {
+export async function cancelTransactionOrder(orderId: string) {
   try {
     const session = await auth();
-    if (!session || !session.user?.id) return { orders: [] };
+    if (!session) throw new Error("Not Authorized");
 
-    const userId = session.user.id;
-
-    // 1. Ambil order yang masih pending (belum dibayar)
-    const orders = await db.order.findMany({
+    const updateStatusOrder = await db.order.update({
       where: {
-        userId,
-        status: "PENDING",
+        id: orderId,
       },
-      include: {
-        pakets: {
-          include: {
-            paket: true,
-          },
-        },
+      data: {
+        status: TStatusOrder.CANCEL,
+      },
+
+      select: {
+        id: true,
+        status: true,
       },
     });
 
-    return { orders };
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    revalidatePath("/invoice");
+    return { data: updateStatusOrder, error: null };
   } catch (error) {
-    return { orders: [] };
+    return { data: null, error: getErrorMessage(error) };
   }
 }

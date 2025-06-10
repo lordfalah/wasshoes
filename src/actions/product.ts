@@ -83,6 +83,7 @@ export async function getTotalPriceAndItemDetails(pakets: PaketInput[]) {
       quantity,
       price: p.price,
       category: p.category?.name,
+      url: `${process.env.NEXT_PUBLIC_APP_URL}/product/${p.id}`,
     };
   });
 

@@ -1,12 +1,14 @@
 import { ShoppingBag } from "lucide-react";
-import { buttonVariants } from "./ui/button";
+import { buttonVariants } from "../../../../components/ui/button";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getCountOrder } from "@/actions/order";
 import { Fragment } from "react";
 
 const InvoiceCart: React.FC = async () => {
-  const totalOrderByCurrentUser = await getCountOrder();
+  const { data: totalOrderByCurrentUser, error } = await getCountOrder();
+  if (totalOrderByCurrentUser === null) throw new Error(error);
+
   return (
     <Link
       className={cn(

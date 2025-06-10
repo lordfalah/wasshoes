@@ -12,14 +12,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import HistoryOrderCard from "./_components/history-card";
+import { Badge } from "@/components/ui/badge";
 
 const viewContent = ["Invoice", "History"] as const;
 
 const InvoicePage: React.FC = async () => {
-  const [unpaidOrders, historyOrders] = await Promise.all([
-    getUnpaidOrders(),
-    getHistoryOrder(),
-  ]);
+  const [
+    { data: unpaidOrders, error: errorUnpaid },
+    { data: historyOrders, error: errorHistory },
+  ] = await Promise.all([getUnpaidOrders(), getHistoryOrder()]);
+
+  if (unpaidOrders === null || typeof errorUnpaid === "string") {
+    throw new Error(errorUnpaid);
+  } else if (historyOrders === null || typeof errorHistory === "string") {
+    throw new Error(errorHistory);
+  }
 
   return (
     <Shell>
@@ -42,14 +49,27 @@ const InvoicePage: React.FC = async () => {
 
               <TabsList className="flex">
                 {viewContent.map((value, idx) => (
-                  <TabsTrigger value={value} key={`${value}-${idx}`}>
+                  <TabsTrigger
+                    value={value}
+                    key={`${value}-${idx}`}
+                    className="relative"
+                  >
                     {value}
+
+                    {value === "History" && historyOrders.length > 0 && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-muted-foreground absolute -top-4 -right-2.5 size-4 justify-center rounded-full p-2.5"
+                      >
+                        {historyOrders.length}
+                      </Badge>
+                    )}
                   </TabsTrigger>
                 ))}
               </TabsList>
             </header>
 
-            {unpaidOrders ? (
+            {unpaidOrders.length > 0 ? (
               unpaidOrders.map(
                 (order) =>
                   order && <InvoiceCard key={order.id} order={order} />,
@@ -73,14 +93,27 @@ const InvoicePage: React.FC = async () => {
 
               <TabsList className="flex">
                 {viewContent.map((value, idx) => (
-                  <TabsTrigger value={value} key={`${value}-${idx}`}>
+                  <TabsTrigger
+                    className="relative"
+                    value={value}
+                    key={`${value}-${idx}`}
+                  >
                     {value}
+
+                    {value === "History" && historyOrders.length > 0 && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-muted-foreground absolute -top-4 -right-2.5 size-4 justify-center rounded-full p-2.5"
+                      >
+                        {historyOrders.length}
+                      </Badge>
+                    )}
                   </TabsTrigger>
                 ))}
               </TabsList>
             </header>
 
-            {historyOrders ? (
+            {historyOrders.length > 0 ? (
               historyOrders.map(
                 (order) =>
                   order && <HistoryOrderCard key={order.id} order={order} />,

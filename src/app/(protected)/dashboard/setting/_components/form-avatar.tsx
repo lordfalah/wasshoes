@@ -129,7 +129,7 @@ export function UploadAvatar({
   }, []);
 
   return (
-    <Card className="w-full">
+    <Card className="w-full space-y-5 p-4">
       <Image
         className="border-foreground mx-auto size-20 rounded-full border-2"
         {...avatar}

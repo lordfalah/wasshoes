@@ -113,7 +113,10 @@ export const {
         session.user.email = token.email as string;
         session.user.isOAuth = token.isOAuth as boolean;
         session.user.image = token.picture;
-        session.user.storeId = token.storeId as string;
+        session.user.storeId = token.storeId as string | undefined;
+        session.user.firstName = token.firstName as string | undefined;
+        session.user.lastName = token.lastName as string | undefined;
+        session.user.phone = token.phone as string | undefined;
       }
 
       return session;
@@ -134,6 +137,9 @@ export const {
       token.isTwoFactorEnabled = existingUser.isTwoFactorEnabled;
       token.picture = existingUser.image;
       token.storeId = existingUser.storeId;
+      token.firstName = existingUser.firstName;
+      token.lastName = existingUser.lastName;
+      token.phone = existingUser.phone;
 
       return token;
     },

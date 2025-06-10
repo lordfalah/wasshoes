@@ -1,5 +1,4 @@
 import { auth } from "@/auth";
-import { UserRole } from "@prisma/client";
 import { redirect } from "next/navigation";
 
 interface ProtectedLayoutProps {
@@ -8,9 +7,9 @@ interface ProtectedLayoutProps {
 
 const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
   const session = await auth();
-  if (session?.user.role.name === UserRole.USER) redirect("/");
+  if (!session) redirect("/");
   else {
-    return <>{children}</>;
+    return <main>{children}</main>;
   }
 };
 

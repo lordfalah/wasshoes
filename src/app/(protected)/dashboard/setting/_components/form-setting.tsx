@@ -50,6 +50,9 @@ const FormSetting: React.FC<{ user: ExtendedUser; roles: Role[] }> = ({
       email: user?.email || "",
       role: user.role.name,
       isTwoFactorEnabled: user?.isTwoFactorEnabled || undefined,
+      first_name: "",
+      last_name: "",
+      phone: "",
     },
   });
 
@@ -100,6 +103,62 @@ const FormSetting: React.FC<{ user: ExtendedUser; roles: Role[] }> = ({
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="first_name"
+              render={({ field }) => (
+                <FormItem className="col-span-12 space-y-2.5 md:col-span-6">
+                  <FormLabel>First Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="John Doe"
+                      disabled={isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="last_name"
+              render={({ field }) => (
+                <FormItem className="col-span-12 space-y-2.5 md:col-span-6">
+                  <FormLabel>Last Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="John Doe"
+                      disabled={isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem className="col-span-12 space-y-2.5 md:col-span-6">
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="John Doe"
+                      disabled={isPending}
+                      type="number"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {user?.isOAuth === false && (
               <>
                 <FormField
@@ -158,34 +217,37 @@ const FormSetting: React.FC<{ user: ExtendedUser; roles: Role[] }> = ({
                 />
               </>
             )}
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem className="col-span-12 space-y-2.5 md:col-span-6">
-                  <FormLabel>Role</FormLabel>
-                  <Select
-                    disabled={isPending}
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {roles.map(({ id, name }) => (
-                        <SelectItem key={id} value={name}>
-                          {name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+            {user.role.name === "SUPERADMIN" && (
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem className="col-span-12 space-y-2.5 md:col-span-6">
+                    <FormLabel>Role</FormLabel>
+                    <Select
+                      disabled={isPending}
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {roles.map(({ id, name }) => (
+                          <SelectItem key={id} value={name}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             {user?.isOAuth === false && (
               <FormField
                 control={form.control}
@@ -212,7 +274,7 @@ const FormSetting: React.FC<{ user: ExtendedUser; roles: Role[] }> = ({
 
             <FormError message={error} />
             <FormSuccess message={success} />
-            <Button disabled={isPending} type="submit">
+            <Button disabled={isPending} type="submit" className="col-span-12">
               Save
             </Button>
           </form>

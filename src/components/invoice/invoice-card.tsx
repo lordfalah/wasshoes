@@ -13,7 +13,14 @@ import { getStoreByStoreId } from "@/actions/store";
 import { Category, Order, Paket, PaketOrder } from "@prisma/client";
 import { InvoiceLineItems } from "./cart-line-items";
 import ShiftingCountdown from "../shifting-countdown";
-import ButtonPayTransaction from "./button-pay-transaction";
+import ButtonPayTransaction from "./pay-transaction";
+import BtnCancelTransaction from "./btn-cancel-transaction";
+import { cancelTransactionOrder } from "@/actions/order";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface InvoiceCardProps {
   order: Order & {
@@ -24,7 +31,19 @@ interface InvoiceCardProps {
 }
 
 const InvoiceCard: React.FC<InvoiceCardProps> = async ({ order }) => {
-  const store = await getStoreByStoreId(order.storeId);
+  const { data: storeData, error } = await getStoreByStoreId(order.storeId);
+  if (!storeData) throw new Error(error ?? "Error getStoreByStoreId");
+
+  const onCancelTransaction = async () => {
+    "use server";
+
+    try {
+      const { error } = await cancelTransactionOrder(order.id);
+      if (error) throw new Error(error);
+    } catch (error) {
+      throw error;
+    }
+  };
 
   return (
     <Card
@@ -34,17 +53,30 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({ order }) => {
       aria-labelledby={`checkout-store-${order.storeId}-heading`}
     >
       <CardHeader className="flex flex-row items-center justify-between space-x-4 py-4">
-        <CardTitle className="line-clamp-1">{store.data?.name}</CardTitle>
+        <CardTitle className="line-clamp-1">{storeData.name}</CardTitle>
 
         <ShiftingCountdown
           className="hidden sm:block"
           createdAt={order.createdAt}
         />
 
-        {store.data && order.paymentToken ? (
-          <ButtonPayTransaction paymentToken={order.paymentToken} />
+        {order.paymentToken ? (
+          <div className="flex flex-wrap gap-2">
+            <ButtonPayTransaction paymentToken={order.paymentToken} />
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <form action={onCancelTransaction}>
+                  <BtnCancelTransaction />
+                </form>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Cancel</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         ) : (
-          "Store Required"
+          "Token Required"
         )}
       </CardHeader>
       <Separator className="mb-4" />

@@ -9,7 +9,13 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatToRupiah } from "@/lib/utils";
-import { Category, Order, Paket, PaketOrder } from "@prisma/client";
+import {
+  Category,
+  Order,
+  Paket,
+  PaketOrder,
+  TStatusOrder,
+} from "@prisma/client";
 import React from "react";
 
 interface HistoryOrderCardProps {
@@ -28,9 +34,17 @@ const HistoryOrderCard: React.FC<HistoryOrderCardProps> = async ({ order }) => {
       as="section"
       id={`checkout-store-${order.storeId}`}
       aria-labelledby={`checkout-store-${order.storeId}-heading`}
+      className={
+        order.status === TStatusOrder.SETTLEMENT
+          ? "border-green-500"
+          : "border-destructive"
+      }
     >
       <CardHeader className="flex flex-row items-center justify-between space-x-4 py-4">
         <CardTitle className="line-clamp-1">{store.data?.name}</CardTitle>
+        <span className="text-muted-foreground line-clamp-1 font-semibold uppercase">
+          {order.status}
+        </span>
       </CardHeader>
       <Separator className="mb-4" />
       <CardContent className="space-y-1.5">

@@ -37,8 +37,8 @@ export default async function OrderSuccessPage({
 
   if (!order_id) throw Error("Order id is required!");
 
-  const { lineItems, storeId } = await getOrderLineItems({ orderId: order_id });
-  if (!lineItems) throw new Error("lineItems bukan array");
+  const { data, error } = await getOrderLineItems({ orderId: order_id });
+  if (!data || error) throw new Error(error);
 
   const store = await db.store.findUnique({
     select: {
@@ -46,7 +46,7 @@ export default async function OrderSuccessPage({
       name: true,
     },
     where: {
-      id: storeId,
+      id: data.storeId,
     },
   });
 
@@ -73,19 +73,23 @@ export default async function OrderSuccessPage({
           className="flex flex-col space-y-6 overflow-auto"
         >
           <CartLineItems
-            items={lineItems}
+            items={data.lineItems}
             isEditable={false}
             className="container max-w-7xl"
           />
           <div className="container flex w-full max-w-7xl items-center">
             <span className="flex-1">
               Total (
-              {lineItems.reduce((acc, item) => acc + Number(item.quantity), 0)})
+              {data.lineItems.reduce(
+                (acc, item) => acc + Number(item.quantity),
+                0,
+              )}
+              )
             </span>
             <span>
               Rp.{" "}
               {formatToRupiah(
-                lineItems.reduce(
+                data.lineItems.reduce(
                   (acc, item) =>
                     acc + Number(item.price) * Number(item.quantity),
                   0,
