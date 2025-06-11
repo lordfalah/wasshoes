@@ -99,27 +99,14 @@ export async function getUnpaidOrderByStore(userId: string, storeId: string) {
 }
 
 export async function getUnpaidOrders(_isExpired?: boolean) {
+  await connection();
   const now = new Date();
   const twentyFourHoursAgo = subHours(now, 24);
-  await connection();
   try {
     const session = await auth();
     if (!session) throw new Error("Not Authorized");
 
     const userId = session.user.id;
-
-    // 🔄 Update otomatis semua order PENDING yang lewat 24 jam jadi EXPIRED
-    await db.order.updateMany({
-      where: {
-        status: "PENDING",
-        createdAt: {
-          lt: twentyFourHoursAgo,
-        },
-      },
-      data: {
-        status: TStatusOrder.EXPIRE,
-      },
-    });
 
     // 🔍 Query kondisi sesuai filter
     let createdAtFilter: object | undefined = undefined;
