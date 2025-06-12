@@ -36,7 +36,7 @@ export default async function StoresPage() {
             <StoreCard
               key={store.id}
               store={store}
-              href={`/products?store_ids=${store.id}`}
+              href={`/stores/${store.slug}`}
             />
           ))
         ) : (

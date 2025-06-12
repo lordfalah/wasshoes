@@ -6,8 +6,7 @@ import { getCountOrder } from "@/actions/order";
 import { Fragment } from "react";
 
 const InvoiceCart: React.FC = async () => {
-  const { data: totalOrderByCurrentUser, error } = await getCountOrder();
-  if (totalOrderByCurrentUser === null) throw new Error(error);
+  const { data: totalOrderByCurrentUser } = await getCountOrder();
 
   return (
     <Link

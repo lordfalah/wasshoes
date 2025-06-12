@@ -196,7 +196,7 @@ export const POST = withAuth(async (req) => {
     }
 
     return NextResponse.json(
-      { status: "fail", message: "transaction fail", data: null },
+      { status: "fail", message: "Not Authorized", data: null },
       { status: 400 },
     );
   } catch (error) {

@@ -11,24 +11,28 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import { ClientUploadedFileData } from "uploadthing/types";
+import Autoplay from "embla-carousel-autoplay";
 
 type CarouselApi = UseEmblaCarouselType["1"];
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;
 type CarouselOptions = UseCarouselParameters["0"];
-
 interface ProductImageCarouselProps
   extends React.HTMLAttributes<HTMLDivElement> {
   images: ClientUploadedFileData<{ uploadedBy: string | undefined }>[];
   options?: CarouselOptions;
+  showChildImg?: boolean;
 }
 
 export function ProductImageCarousel({
   images,
   className,
   options,
+  showChildImg = false,
   ...props
 }: ProductImageCarouselProps) {
-  const [emblaRef, emblaApi] = useEmblaCarousel(options);
+  const [emblaRef, emblaApi] = useEmblaCarousel(options, [
+    Autoplay({ delay: 4000 }),
+  ]);
 
   const [prevBtnDisabled, setPrevBtnDisabled] = React.useState(true);
   const [nextBtnDisabled, setNextBtnDisabled] = React.useState(true);
@@ -125,7 +129,7 @@ export function ProductImageCarousel({
           ))}
         </div>
       </div>
-      {images.length > 1 ? (
+      {showChildImg && images.length > 1 ? (
         <div className="flex w-full items-center justify-center gap-2">
           <Button
             variant="outline"

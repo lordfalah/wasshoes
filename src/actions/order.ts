@@ -67,7 +67,7 @@ export async function getCountOrder() {
 
     return { data: countOrderUser, error: null };
   } catch (err) {
-    return { data: null, error: getErrorMessage(err) };
+    return { data: 0, error: getErrorMessage(err) };
   }
 }
 
@@ -108,6 +108,19 @@ export async function getUnpaidOrders(_isExpired?: boolean) {
     if (!session) redirect("/");
 
     const userId = session.user.id;
+
+    // 🔄 Update otomatis semua order PENDING yang lewat 24 jam jadi EXPIRED
+    await db.order.updateMany({
+      where: {
+        status: "PENDING",
+        createdAt: {
+          lt: twentyFourHoursAgo,
+        },
+      },
+      data: {
+        status: TStatusOrder.EXPIRE,
+      },
+    });
 
     // 🔍 Query kondisi sesuai filter
     let createdAtFilter: object | undefined = undefined;

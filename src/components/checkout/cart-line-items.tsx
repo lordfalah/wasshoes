@@ -5,7 +5,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { UpdateCart } from "@/components/checkout/update-cart";
 import { Icons } from "@/components/icons";
-
 import { Category, Paket, Store } from "@prisma/client";
 
 interface CartLineItemsProps extends React.HTMLAttributes<HTMLDivElement> {
