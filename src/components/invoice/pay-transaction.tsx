@@ -1,41 +1,51 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 import { FormEvent, Fragment, useState } from "react";
 import { Button } from "../ui/button";
-import { Loader2, HandCoins } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { toast } from "sonner";
-import { getErrorMessage } from "@/lib/handle-error";
+import { Loader2, HandCoins, X } from "lucide-react";
+import { showErrorToast } from "@/lib/handle-error";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const PayTransaction: React.FC<{ paymentToken: string }> = ({
   paymentToken,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const payTransaction = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    setIsOpen(true);
 
-    toast.promise(
-      (async () => {
-        try {
-          window.snap.pay(paymentToken);
-        } catch (error) {
-          throw error;
-        } finally {
-          setIsLoading(false);
-        }
-      })(),
-      {
-        loading: "Saving Transaction",
-        success: "Transaction pay successfully!",
-        error: (err) => getErrorMessage(err),
-      },
-    );
+    try {
+      // Sembunyikan Snap sebelumnya jika masih aktif
+      if (window.snap?.hide) {
+        window.snap.hide();
+      }
+
+      window.snap.embed(paymentToken, {
+        embedId: "snap-container",
+      });
+    } catch (error) {
+      console.log(error);
+      showErrorToast(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+      <AlertDialogTrigger asChild>
         <form onSubmit={payTransaction}>
           <Button
             aria-label="Checkout"
@@ -54,11 +64,38 @@ const PayTransaction: React.FC<{ paymentToken: string }> = ({
             )}
           </Button>
         </form>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>Pay</p>
-      </TooltipContent>
-    </Tooltip>
+      </AlertDialogTrigger>
+      <AlertDialogContent
+        id="snap-container"
+        aria-describedby="content-snap"
+        aria-description="desc-snap"
+        className="px-0 py-0 sm:p-6"
+      >
+        <VisuallyHidden>
+          <AlertDialogDescription id="snap-desc">
+            Snap UI
+          </AlertDialogDescription>
+          <AlertDialogTitle id="snap-title">Snap UI</AlertDialogTitle>
+        </VisuallyHidden>
+
+        <AlertDialogFooter className="flex flex-row justify-end">
+          <AlertDialogCancel asChild>
+            <Button
+              variant={"outline"}
+              size="icon"
+              type="button"
+              onClick={() => {
+                window.snap?.hide(); // Sembunyikan Snap secara eksplisit
+                setIsOpen(false); // Tutup AlertDialog
+              }}
+              className="group"
+            >
+              <X className="group-hover:stroke-red-400" />
+            </Button>
+          </AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 

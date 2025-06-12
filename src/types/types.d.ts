@@ -1,6 +1,7 @@
 import { TCartItemSchema } from "@/schemas/cart.schema";
 import { TCustomerSchema } from "@/schemas/checkout.schema";
 import { Role } from "@prisma/client";
+import { StatusTransactionResponse } from "midtrans-client";
 import { type DefaultSession } from "next-auth";
 import { ClientUploadedFileData } from "uploadthing/types";
 
@@ -36,16 +37,21 @@ declare module "next-auth/jwt" {
 }
 
 interface SnapPayOptions {
-  onSuccess?: (result: unknown) => void;
-  onPending?: (result: unknown) => void;
-  onError?: (result: unknown) => void;
+  onSuccess?: (result: StatusTransactionResponse) => void;
+  onPending?: (result: StatusTransactionResponse) => void;
+  onError?: (result: StatusTransactionResponse) => void;
   onClose?: () => void;
 }
 
 interface Snap {
   pay: (token: string, options?: SnapPayOptions) => void;
+  embed: (
+    token: string,
+    options?: SnapPayOptions & { embedId: string },
+  ) => void;
   // Jika ada fungsi lain di Snap.js, Anda bisa tambahkan di sini
   // Misalnya, Anda mungkin melihat `window.snap.hide()` atau lainnya
+  hide: () => void;
 }
 
 declare global {

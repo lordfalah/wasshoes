@@ -54,7 +54,8 @@ function AlertDialogContent({
     <AlertDialogPortal>
       <AlertDialogOverlay />
       <VisuallyHidden>
-        <AlertDialogTitle>TEST</AlertDialogTitle>
+        <AlertDialogTitle>TITLE</AlertDialogTitle>
+        <AlertDialogDescription>DESC</AlertDialogDescription>
       </VisuallyHidden>
       <AlertDialogPrimitive.Content
         id={id}

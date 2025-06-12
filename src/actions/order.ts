@@ -7,12 +7,12 @@ import { subHours } from "date-fns";
 import { connection } from "next/server";
 import { getErrorMessage } from "@/lib/handle-error";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export async function getOrderLineItems(input: { orderId: string }) {
   try {
     const session = await auth();
-    if (!session) throw new Error("Not Authorized");
-
+    if (!session) redirect("/");
     if (!input.orderId) throw new Error("orderId diperlukan.");
 
     // 1. Ambil order beserta paketnya
@@ -57,10 +57,11 @@ export async function getCountOrder() {
   try {
     await connection();
     const session = await auth();
-    if (!session) throw new Error("Not Authorized");
+    if (!session) redirect("/");
     const countOrderUser = await db.order.count({
       where: {
         status: TStatusOrder.PENDING,
+        userId: session.user.id,
       },
     });
 
@@ -104,7 +105,7 @@ export async function getUnpaidOrders(_isExpired?: boolean) {
   const twentyFourHoursAgo = subHours(now, 24);
   try {
     const session = await auth();
-    if (!session) throw new Error("Not Authorized");
+    if (!session) redirect("/");
 
     const userId = session.user.id;
 
@@ -147,7 +148,7 @@ export async function getHistoryOrder() {
   await connection();
   try {
     const session = await auth();
-    if (!session) throw new Error("Not Authorized");
+    if (!session) redirect("/");
     const orderHistory = await db.order.findMany({
       where: {
         OR: [
@@ -192,7 +193,7 @@ export async function getHistoryOrder() {
 export async function cancelTransactionOrder(orderId: string) {
   try {
     const session = await auth();
-    if (!session) throw new Error("Not Authorized");
+    if (!session) redirect("/");
 
     const updateStatusOrder = await db.order.update({
       where: {

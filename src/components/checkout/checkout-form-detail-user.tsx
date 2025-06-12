@@ -149,9 +149,11 @@ const CheckoutFormDetailUser: React.FC<CheckoutFormDetailProps> = ({
               );
             } else {
               console.log("BAYAR ORDER");
-              window.snap.pay(resTransaction.data.paymentToken as string);
-
-              router.push("/invoice");
+              window.snap.pay(resTransaction.data.paymentToken as string, {
+                onClose() {
+                  router.push("/invoice");
+                },
+              });
             }
           } catch (error) {
             console.log({ error });
@@ -172,7 +174,10 @@ const CheckoutFormDetailUser: React.FC<CheckoutFormDetailProps> = ({
 
   return (
     <Card
-      className={cn("w-full bg-white p-4 text-black lg:max-w-lg", className)}
+      className={cn(
+        "w-full bg-black p-4 text-white lg:max-w-lg dark:bg-white dark:text-black",
+        className,
+      )}
     >
       <Form {...form}>
         <form
@@ -319,7 +324,7 @@ const CheckoutFormDetailUser: React.FC<CheckoutFormDetailProps> = ({
                     {paymentMethods.map(({ description, name }, idx) => (
                       <FormItem
                         key={idx}
-                        className="has-[[data-state=checked]]:border-ring flex w-full items-start gap-3 rounded-lg border has-[[data-state=checked]]:bg-black has-[[data-state=checked]]:text-white"
+                        className="has-[[data-state=checked]]:border-ring flex w-full items-start gap-3 rounded-lg border has-[[data-state=checked]]:bg-white has-[[data-state=checked]]:text-black dark:has-[[data-state=checked]]:bg-black dark:has-[[data-state=checked]]:text-white"
                       >
                         <FormLabel
                           htmlFor={name}
@@ -329,7 +334,7 @@ const CheckoutFormDetailUser: React.FC<CheckoutFormDetailProps> = ({
                             <RadioGroupItem
                               value={name}
                               id={name}
-                              className="data-[state=checked]:border-primary"
+                              className="data-[state=checked]:border-primary bg-slate-400 dark:bg-auto"
                             />
                           </FormControl>
                           <div className="grid gap-1 font-normal">

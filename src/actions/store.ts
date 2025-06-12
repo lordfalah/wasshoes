@@ -63,7 +63,7 @@ export async function getStoreByStoreId(storeId: string | null) {
   try {
     if (!storeId) throw new Error("Store ID required!");
 
-    const store = await db.store.findFirst({
+    const store = await db.store.findUnique({
       where: {
         id: storeId,
       },

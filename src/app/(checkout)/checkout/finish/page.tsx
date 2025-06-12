@@ -12,6 +12,8 @@ import { db } from "@/lib/db";
 import { getOrderLineItems } from "@/actions/order";
 
 import { notFound } from "next/navigation";
+import { coreApi } from "@/lib/midtrans";
+import { TStatusOrder } from "@prisma/client";
 
 export const metadata: Metadata = {
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL}`),
@@ -19,7 +21,7 @@ export const metadata: Metadata = {
   description: "Order summary for your purchase",
 };
 
-interface OrderSuccessPageProps {
+interface FinishCheckoutPageProps {
   searchParams?: Promise<{
     order_id?: string;
     status_code?: string;
@@ -27,9 +29,9 @@ interface OrderSuccessPageProps {
   }>;
 }
 
-export default async function OrderSuccessPage({
+export default async function FinishCheckoutPage({
   searchParams: searchParamsMidtrans,
-}: OrderSuccessPageProps) {
+}: FinishCheckoutPageProps) {
   const searchParams = await searchParamsMidtrans;
   const order_id = searchParams?.order_id || "";
   // const status_code = searchParams?.status_code || "";
@@ -54,82 +56,116 @@ export default async function OrderSuccessPage({
     notFound();
   }
 
+  // Ambil status terbaru dari Midtrans
+  const { transaction_status, fraud_status } =
+    await coreApi.transaction.status(order_id);
+  const transactionStatus = transaction_status.toUpperCase();
+
   return (
     <div className="flex size-full max-h-dvh flex-col gap-10 overflow-hidden pt-6 pb-8 md:py-8">
-      <div className="grid gap-10 overflow-auto">
-        <PageHeader
-          id="order-success-page-header"
-          aria-labelledby="order-success-page-header-heading"
-          className="container flex max-w-7xl flex-col"
-        >
-          <PageHeaderHeading>Thank you for your order</PageHeaderHeading>
-          <PageHeaderDescription>
-            {store.name ?? "Store"} will be in touch with you shortly
-          </PageHeaderDescription>
-        </PageHeader>
-        <section
-          id="order-success-cart-line-items"
-          aria-labelledby="order-success-cart-line-items-heading"
-          className="flex flex-col space-y-6 overflow-auto"
-        >
-          <CartLineItems
-            items={data.lineItems}
-            isEditable={false}
-            className="container max-w-7xl"
-          />
-          <div className="container flex w-full max-w-7xl items-center">
-            <span className="flex-1">
-              Total (
-              {data.lineItems.reduce(
-                (acc, item) => acc + Number(item.quantity),
-                0,
-              )}
-              )
-            </span>
-            <span>
-              Rp.{" "}
-              {formatToRupiah(
-                data.lineItems.reduce(
-                  (acc, item) =>
-                    acc + Number(item.price) * Number(item.quantity),
-                  0,
-                ),
-              )}
-            </span>
-          </div>
-        </section>
-        <section
-          id="order-success-actions"
-          aria-labelledby="order-success-actions-heading"
-          className="container flex max-w-7xl items-center justify-center space-x-2.5"
-        >
-          <Link
-            aria-label="Continue shopping"
-            href="/products"
-            className={cn(
-              buttonVariants({
-                size: "sm",
-                className: "text-center",
-              }),
-            )}
+      {transactionStatus === TStatusOrder.SETTLEMENT ||
+      (transactionStatus === TStatusOrder.CAPTURE &&
+        fraud_status === "accept") ? (
+        <div className="grid gap-10 overflow-auto">
+          <PageHeader
+            id="order-success-page-header"
+            aria-labelledby="order-success-page-header-heading"
+            className="container flex max-w-7xl flex-col"
           >
-            Continue shopping
-          </Link>
+            <PageHeaderHeading>Thank you for your order</PageHeaderHeading>
+            <PageHeaderDescription>
+              {store.name ?? "Store"} will be in touch with you shortly
+            </PageHeaderDescription>
+          </PageHeader>
+          <section
+            id="order-success-cart-line-items"
+            aria-labelledby="order-success-cart-line-items-heading"
+            className="flex flex-col space-y-6 overflow-auto"
+          >
+            <CartLineItems
+              items={data.lineItems}
+              isEditable={false}
+              className="container max-w-7xl"
+            />
+            <div className="container flex w-full max-w-7xl items-center">
+              <span className="flex-1">
+                Total (
+                {data.lineItems.reduce(
+                  (acc, item) => acc + Number(item.quantity),
+                  0,
+                )}
+                )
+              </span>
+              <span>
+                Rp.{" "}
+                {formatToRupiah(
+                  data.lineItems.reduce(
+                    (acc, item) =>
+                      acc + Number(item.price) * Number(item.quantity),
+                    0,
+                  ),
+                )}
+              </span>
+            </div>
+          </section>
+          <section
+            id="order-success-actions"
+            aria-labelledby="order-success-actions-heading"
+            className="container flex max-w-7xl items-center justify-center space-x-2.5"
+          >
+            <Link
+              aria-label="Continue shopping"
+              href="/products"
+              className={cn(
+                buttonVariants({
+                  size: "sm",
+                  className: "text-center",
+                }),
+              )}
+            >
+              Continue shopping
+            </Link>
+            <Link
+              aria-label="Back to cart"
+              href="/cart"
+              className={cn(
+                buttonVariants({
+                  variant: "outline",
+                  size: "sm",
+                  className: "text-center",
+                }),
+              )}
+            >
+              Back to cart
+            </Link>
+          </section>
+        </div>
+      ) : (
+        <div className="container grid max-w-7xl gap-10">
+          <PageHeader
+            id="order-success-page-header"
+            aria-labelledby="order-success-page-header-heading"
+          >
+            <PageHeaderHeading>Thank you for your order</PageHeaderHeading>
+            <PageHeaderDescription>
+              Please completed you order on invoice
+            </PageHeaderDescription>
+          </PageHeader>
           <Link
-            aria-label="Back to cart"
-            href="/cart"
+            aria-label="invoice-pay"
+            href="/invoice"
             className={cn(
               buttonVariants({
                 variant: "outline",
-                size: "sm",
-                className: "text-center",
+                size: "lg",
+                className: "text-muted-foreground w-full text-xl",
               }),
             )}
           >
-            Back to cart
+            Invoice
           </Link>
-        </section>
-      </div>
+        </div>
+      )}
 
       {/* {isVerified ? (
         <div className="grid gap-10 overflow-auto">

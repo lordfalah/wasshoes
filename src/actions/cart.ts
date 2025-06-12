@@ -14,6 +14,7 @@ import { Category, Paket, Store } from "@prisma/client";
 import { auth } from "@/auth";
 import { connection } from "next/server";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export type CartLineItem = Paket & {
   quantity: number;
@@ -131,7 +132,7 @@ export async function addToCart(rawInput: z.infer<typeof cartItemSchema>) {
 
     const [session, cookieStore] = await Promise.all([auth(), cookies()]);
     const userId = session?.user?.id;
-    if (!userId) throw new Error("Not Authorized");
+    if (!userId) redirect("/");
 
     const cartIdFromCookie = cookieStore.get("cartId")?.value;
 

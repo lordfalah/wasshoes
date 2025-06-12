@@ -65,7 +65,8 @@ export default auth((req, context) => {
   if (
     isApiAuthRoute ||
     nextUrl.pathname === "/api/uploadthing" ||
-    nextUrl.pathname === "/api/transactions/notif"
+    nextUrl.pathname === "/api/transactions/notif" ||
+    nextUrl.pathname === "/api/cron"
   ) {
     return NextResponse.next();
   }

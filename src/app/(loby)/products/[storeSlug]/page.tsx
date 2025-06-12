@@ -7,25 +7,26 @@ import {
 import { Shell } from "@/components/shell";
 import { AlertCard } from "@/components/alert-card";
 import { notFound } from "next/navigation";
+
 import { db } from "@/lib/db";
 import { ProductCard } from "@/components/ui/product-card";
-import { getStoreByStoreId } from "@/actions/store";
+import { getStoreByStoreSlug } from "@/actions/store";
 
 export const metadata: Metadata = {
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL}`),
-  title: "Products",
+  title: "Product Store",
   description: "Buy products from our stores",
 };
 
-export default async function ProductsPage({
-  searchParams,
+export default async function ProductStoreSlugPage({
+  params,
 }: {
-  searchParams?: Promise<{
-    store_ids: string;
+  params: Promise<{
+    storeSlug: string;
   }>;
 }) {
-  const store_ids = (await searchParams)?.store_ids ?? null;
-  const { data: dataStore } = await getStoreByStoreId(store_ids);
+  const storeSlug = decodeURIComponent((await params)?.storeSlug);
+  const { data: dataStore } = await getStoreByStoreSlug(storeSlug);
 
   if (!dataStore) {
     notFound();

@@ -19,6 +19,7 @@ export default async function CheckoutLayout({
         src={process.env.NEXT_PUBLIC_MIDTRANS_SNAP_URL}
         data-client-key={`${process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}`}
         strategy="lazyOnload"
+        className="bg-black"
       />
       <main>{children}</main>
     </Fragment>
