@@ -21,8 +21,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { redirect } from "next/navigation";
+import { getMidtansStatus } from "@/actions/midtrans-status";
 
 interface InvoiceCardProps {
+  redirectUrl?: string;
   order: Order & {
     pakets: Array<
       PaketOrder & { paket: Paket & { category: Category | null } }
@@ -30,9 +33,14 @@ interface InvoiceCardProps {
   };
 }
 
-const InvoiceCard: React.FC<InvoiceCardProps> = async ({ order }) => {
+const InvoiceCard: React.FC<InvoiceCardProps> = async ({
+  order,
+  redirectUrl,
+}) => {
   const { data: storeData, error } = await getStoreByStoreId(order.storeId);
   if (!storeData) throw new Error(error ?? "Error getStoreByStoreId");
+
+  const { data: midtransStatusData } = await getMidtansStatus(order.id);
 
   const onCancelTransaction = async () => {
     "use server";
@@ -40,6 +48,7 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({ order }) => {
     try {
       const { error } = await cancelTransactionOrder(order.id);
       if (error) throw new Error(error);
+      if (redirectUrl) redirect(redirectUrl);
     } catch (error) {
       throw error;
     }
@@ -58,22 +67,28 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({ order }) => {
         <ShiftingCountdown
           className="hidden sm:block"
           createdAt={order.createdAt}
+          title={
+            midtransStatusData
+              ? `Selesaikan Pembayaran ${midtransStatusData.payment_type} Dalam Tempo`
+              : "Selesaikan Dalam Tempo"
+          }
         />
 
         {order.paymentToken ? (
           <div className="flex flex-wrap gap-2">
             <ButtonPayTransaction paymentToken={order.paymentToken} />
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <form action={onCancelTransaction}>
-                  <BtnCancelTransaction />
-                </form>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Cancel</p>
-              </TooltipContent>
-            </Tooltip>
+            {midtransStatusData && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <form action={onCancelTransaction}>
+                    <BtnCancelTransaction />
+                  </form>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Cancel</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         ) : (
           "Token Required"
@@ -84,6 +99,11 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({ order }) => {
         <ShiftingCountdown
           className="block sm:hidden"
           createdAt={order.createdAt}
+          title={
+            midtransStatusData
+              ? `Selesaikan Pembayaran ${midtransStatusData.payment_type} Dalam Tempo`
+              : "Selesaikan Dalam Tempo"
+          }
         />
         <InvoiceLineItems
           isEditable={false}

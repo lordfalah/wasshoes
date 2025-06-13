@@ -8,6 +8,7 @@ import { connection } from "next/server";
 import { getErrorMessage } from "@/lib/handle-error";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { coreApi } from "@/lib/midtrans";
 
 export async function getOrderLineItems(input: { orderId: string }) {
   try {
@@ -43,6 +44,7 @@ export async function getOrderLineItems(input: { orderId: string }) {
     return {
       data: {
         lineItems,
+        order,
         storeId: order.storeId,
       },
       error: null,
@@ -208,6 +210,8 @@ export async function cancelTransactionOrder(orderId: string) {
     const session = await auth();
     if (!session) redirect("/");
 
+    await coreApi.transaction.cancel(orderId);
+
     const updateStatusOrder = await db.order.update({
       where: {
         id: orderId,
@@ -225,6 +229,7 @@ export async function cancelTransactionOrder(orderId: string) {
     revalidatePath("/invoice");
     return { data: updateStatusOrder, error: null };
   } catch (error) {
+    console.log(error);
     return { data: null, error: getErrorMessage(error) };
   }
 }

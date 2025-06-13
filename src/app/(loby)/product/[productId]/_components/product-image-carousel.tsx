@@ -123,7 +123,7 @@ export function ProductImageCarousel({
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover"
-                priority={index === 0}
+                priority
               />
             </div>
           ))}
@@ -159,6 +159,7 @@ export function ProductImageCarousel({
                 alt={image.name}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 fill
+                priority
               />
               <span className="sr-only">
                 Slide {i + 1} of {images.length}

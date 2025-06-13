@@ -82,6 +82,20 @@ declare module "midtrans-client" {
       gross_amount: string;
     }
 
+    /**
+     * Represents a generic error response structure from Midtrans API.
+     * This is often found within the `ApiResponse` property of a `MidtransError`.
+     */
+    interface MidtransApiErrorResponse {
+      status_code: string;
+      status_message: string;
+      validation_messages?: string[]; // Array of validation error messages
+      // Tambahkan properti lain yang mungkin muncul di respons error Midtrans
+      // Misalnya, jika ada specific error_code, atau transaction_id jika relevan
+      transaction_id?: string;
+      order_id?: string;
+    }
+
     class Snap {
       constructor(config: {
         isProduction: boolean;
@@ -119,9 +133,16 @@ declare module "midtrans-client" {
       };
     }
 
+    /**
+     * Custom error class thrown by midtrans-client for API errors.
+     * Contains HTTP status code and the raw API response.
+     */
     class MidtransError extends Error {
       httpStatusCode: number;
-      ApiResponse: unknown;
+      // Properti ApiResponse akan berisi respons error dari Midtrans
+      ApiResponse: MidtransApiErrorResponse | unknown; // <--- UPDATE DI SINI
+      message: string; // Error message
+      name: string; // Error name, usually "MidtransError"
     }
   }
 

@@ -15,10 +15,12 @@ import { Button } from "../ui/button";
 import { Loader2, HandCoins, X } from "lucide-react";
 import { showErrorToast } from "@/lib/handle-error";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useRouter } from "next/navigation";
 
 const PayTransaction: React.FC<{ paymentToken: string }> = ({
   paymentToken,
 }) => {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const payTransaction = (e: FormEvent<HTMLFormElement>) => {
@@ -85,6 +87,7 @@ const PayTransaction: React.FC<{ paymentToken: string }> = ({
               size="icon"
               type="button"
               onClick={() => {
+                router.refresh();
                 window.snap?.hide(); // Sembunyikan Snap secara eksplisit
                 setIsOpen(false); // Tutup AlertDialog
               }}

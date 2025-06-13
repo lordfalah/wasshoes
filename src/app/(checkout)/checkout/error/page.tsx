@@ -9,24 +9,19 @@ import {
   PageHeaderHeading,
 } from "@/components/page-header";
 import { db } from "@/lib/db";
-import { getOrderLineItems, getUnpaidOrders } from "@/actions/order";
+import { getOrderLineItems } from "@/actions/order";
 import { notFound } from "next/navigation";
-import { TStatusOrder } from "@prisma/client";
 import { getMidtansStatus } from "@/actions/midtrans-status";
-import InvoiceCard from "@/components/invoice/invoice-card";
-import { EmptyContent } from "../../invoice/_components/empty-content";
 
 export const metadata: Metadata = {
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL}`),
-  title: "Order Success",
+  title: "Order Error",
   description: "Order summary for your purchase",
 };
 
 interface FinishCheckoutPageProps {
   searchParams?: Promise<{
     order_id?: string;
-    status_code?: string;
-    transaction_status?: string;
   }>;
 }
 
@@ -38,19 +33,8 @@ export default async function FinishCheckoutPage({
 
   if (!order_id) throw Error("Order id is required!");
 
-  const [
-    { data: unpaidOrders, error: errorUnpaid },
-    { data: orderLineItems, error: errorLineItems },
-  ] = await Promise.all([
-    getUnpaidOrders(),
-    getOrderLineItems({ orderId: order_id }),
-  ]);
-
-  if (unpaidOrders === null || typeof errorUnpaid === "string") {
-    throw new Error(errorUnpaid);
-  } else if (!orderLineItems || errorLineItems) {
-    throw new Error(errorLineItems);
-  }
+  const { data, error } = await getOrderLineItems({ orderId: order_id });
+  if (!data || error) throw new Error(error);
 
   const store = await db.store.findUnique({
     select: {
@@ -58,7 +42,7 @@ export default async function FinishCheckoutPage({
       name: true,
     },
     where: {
-      id: orderLineItems.storeId,
+      id: data.storeId,
     },
   });
 
@@ -66,7 +50,6 @@ export default async function FinishCheckoutPage({
     notFound();
   }
 
-  // --- BAGIAN PENTING: Penanganan Status Midtrans dan Fallback ---
   let transactionStatus: string;
 
   const {
@@ -84,23 +67,24 @@ export default async function FinishCheckoutPage({
     );
 
     // Gunakan status dari order di database sebagai fallback
-    transactionStatus = orderLineItems.order.status.toUpperCase();
+    transactionStatus = data.order.status.toUpperCase();
   }
 
   return (
     <div className="flex size-full max-h-dvh flex-col gap-10 overflow-hidden pt-6 pb-8 md:py-8">
-      {(midtransStatusData && transactionStatus === TStatusOrder.SETTLEMENT) ||
-      (transactionStatus === TStatusOrder.CAPTURE &&
-        midtransStatusData?.fraud_status === "accept") ? (
+      {midtransStatusData ? (
         <div className="grid gap-10 overflow-auto">
           <PageHeader
             id="order-success-page-header"
             aria-labelledby="order-success-page-header-heading"
             className="container flex max-w-7xl flex-col"
           >
-            <PageHeaderHeading>Thank you for your order</PageHeaderHeading>
+            <PageHeaderHeading>
+              Sory you order is {transactionStatus}
+            </PageHeaderHeading>
             <PageHeaderDescription>
-              {store.name ?? "Store"} will be in touch with you shortly
+              <span className="font-semibold">Midtrans</span>-
+              {typeof midtransErrorMessage === "string" && midtransErrorMessage}
             </PageHeaderDescription>
           </PageHeader>
           <section
@@ -109,14 +93,14 @@ export default async function FinishCheckoutPage({
             className="flex flex-col space-y-6 overflow-auto"
           >
             <CartLineItems
-              items={orderLineItems.lineItems}
+              items={data.lineItems}
               isEditable={false}
               className="container max-w-7xl"
             />
             <div className="container flex w-full max-w-7xl items-center">
               <span className="flex-1">
                 Total (
-                {orderLineItems.lineItems.reduce(
+                {data.lineItems.reduce(
                   (acc, item) => acc + Number(item.quantity),
                   0,
                 )}
@@ -125,7 +109,7 @@ export default async function FinishCheckoutPage({
               <span>
                 Rp.{" "}
                 {formatToRupiah(
-                  orderLineItems.lineItems.reduce(
+                  data.lineItems.reduce(
                     (acc, item) =>
                       acc + Number(item.price) * Number(item.quantity),
                     0,
@@ -172,7 +156,9 @@ export default async function FinishCheckoutPage({
             id="order-success-page-header"
             aria-labelledby="order-success-page-header-heading"
           >
-            <PageHeaderHeading>Please completed your order</PageHeaderHeading>
+            <PageHeaderHeading>
+              Sory you order is {transactionStatus}
+            </PageHeaderHeading>
             <PageHeaderDescription>
               <span className="font-semibold">Fallback</span>-
               {typeof midtransErrorMessage === "object"
@@ -180,25 +166,37 @@ export default async function FinishCheckoutPage({
                 : midtransErrorMessage.toString()}
             </PageHeaderDescription>
           </PageHeader>
+
           <section
             id="order-success-cart-line-items"
             aria-labelledby="order-success-cart-line-items-heading"
             className="flex flex-col space-y-6 overflow-auto"
           >
-            {unpaidOrders && unpaidOrders.length > 0 ? (
-              unpaidOrders.map(
-                (order) =>
-                  order && (
-                    <InvoiceCard
-                      redirectUrl="/checkout/finish"
-                      key={order.id}
-                      order={order}
-                    />
+            <CartLineItems
+              items={data.lineItems}
+              isEditable={false}
+              className="container max-w-7xl"
+            />
+            <div className="container flex w-full max-w-7xl items-center">
+              <span className="flex-1">
+                Total (
+                {data.lineItems.reduce(
+                  (acc, item) => acc + Number(item.quantity),
+                  0,
+                )}
+                )
+              </span>
+              <span>
+                Rp.{" "}
+                {formatToRupiah(
+                  data.lineItems.reduce(
+                    (acc, item) =>
+                      acc + Number(item.price) * Number(item.quantity),
+                    0,
                   ),
-              )
-            ) : (
-              <EmptyContent text="Your data is empty" />
-            )}
+                )}
+              </span>
+            </div>
           </section>
           <section
             id="order-success-actions"
