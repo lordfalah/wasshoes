@@ -9,7 +9,7 @@ import {
   PageHeaderHeading,
 } from "@/components/page-header";
 import { db } from "@/lib/db";
-import { getOrderLineItems, getUnpaidOrders } from "@/actions/order";
+import { getOrderLineItems } from "@/actions/order";
 import { notFound } from "next/navigation";
 import { TStatusOrder } from "@prisma/client";
 import { getMidtansStatus } from "@/actions/midtrans-status";
@@ -38,17 +38,10 @@ export default async function FinishCheckoutPage({
 
   if (!order_id) throw Error("Order id is required!");
 
-  const [
-    { data: unpaidOrders, error: errorUnpaid },
-    { data: orderLineItems, error: errorLineItems },
-  ] = await Promise.all([
-    getUnpaidOrders(),
-    getOrderLineItems({ orderId: order_id }),
-  ]);
+  const { data: orderLineItems, error: errorLineItems } =
+    await getOrderLineItems({ orderId: order_id });
 
-  if (unpaidOrders === null || typeof errorUnpaid === "string") {
-    throw new Error(errorUnpaid);
-  } else if (!orderLineItems || errorLineItems) {
+  if (!orderLineItems || errorLineItems) {
     throw new Error(errorLineItems);
   }
 
@@ -185,17 +178,11 @@ export default async function FinishCheckoutPage({
             aria-labelledby="order-success-cart-line-items-heading"
             className="flex flex-col space-y-6 overflow-auto"
           >
-            {unpaidOrders && unpaidOrders.length > 0 ? (
-              unpaidOrders.map(
-                (order) =>
-                  order && (
-                    <InvoiceCard
-                      redirectUrl="/checkout/finish"
-                      key={order.id}
-                      order={order}
-                    />
-                  ),
-              )
+            {orderLineItems.order ? (
+              <InvoiceCard
+                redirectUrl="/checkout/finish"
+                order={orderLineItems.order}
+              />
             ) : (
               <EmptyContent text="Your data is empty" />
             )}
