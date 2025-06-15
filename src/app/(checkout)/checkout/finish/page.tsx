@@ -180,11 +180,11 @@ export default async function FinishCheckoutPage({
           >
             {orderLineItems.order ? (
               <InvoiceCard
-                redirectUrl="/checkout/finish"
+                redirectUrl={`/checkout/finish?order_id=${order_id}`}
                 order={orderLineItems.order}
               />
             ) : (
-              <EmptyContent text="Your data is empty" />
+              <EmptyContent text="Your order is empty" />
             )}
           </section>
           <section

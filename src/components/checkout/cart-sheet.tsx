@@ -29,6 +29,39 @@ export async function CartSheet() {
     0,
   );
 
+  // --- Perhitungan Total yang Didefinisikan di Awal ---
+  const totalQuantity = cartLineItems.reduce(
+    (acc, item) => acc + item.quantity,
+    0,
+  );
+
+  const subtotalPrice = cartLineItems.reduce((acc, item) => {
+    return acc + item.price * item.quantity;
+  }, 0);
+
+  const finalPrice = cartLineItems.reduce((acc, item) => {
+    // Jika item.priceOrder ada dan bukan null/undefined, gunakan itu.
+    // Jika tidak, gunakan item.price * item.quantity.
+    return (
+      acc +
+      (item.priceOrder !== undefined && item.priceOrder !== null
+        ? item.priceOrder
+        : item.price * item.quantity)
+    );
+  }, 0);
+
+  // --- LOGIKA DISKON/BIAYA TAMBAHAN BARU DI SINI ---
+  let adjustmentText: string | null = null;
+  let adjustmentAmount = 0;
+
+  if (finalPrice > subtotalPrice) {
+    adjustmentAmount = finalPrice - subtotalPrice;
+    adjustmentText = `Biaya Tambahan: ${formatToRupiah(adjustmentAmount)}`;
+  } else if (finalPrice < subtotalPrice) {
+    adjustmentAmount = subtotalPrice - finalPrice;
+    adjustmentText = `Diskon Biaya: ${formatToRupiah(adjustmentAmount)}`;
+  }
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -61,13 +94,23 @@ export async function CartSheet() {
               <Separator />
               <div className="space-y-1.5 text-sm">
                 <div className="flex">
-                  <span className="flex-1">Shipping</span>
-                  <span>Free</span>
+                  <span className="flex-1">Subtotal ({totalQuantity}) </span>
+                  <span>{formatToRupiah(subtotalPrice)}</span>
                 </div>
-                <div className="flex">
-                  <span className="flex-1">Taxes</span>
-                  <span>Calculated at checkout</span>
-                </div>
+
+                {adjustmentText && ( // Hanya render jika ada penyesuaian
+                  <div className="text-muted-foreground flex w-full text-sm">
+                    <span className="flex-1">
+                      {adjustmentText.split(":")[0]}:
+                    </span>{" "}
+                    {/* Ambil label "Biaya Tambahan" atau "Diskon Biaya" */}
+                    <span className="font-medium">
+                      {adjustmentText.split(":")[1]}
+                    </span>{" "}
+                    {/* Ambil nilai yang sudah diformat */}
+                  </div>
+                )}
+
                 <div className="flex">
                   <span className="flex-1">Total</span>
                   <span>Rp. {formatToRupiah(cartTotal)}</span>

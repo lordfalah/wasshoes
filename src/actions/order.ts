@@ -73,11 +73,14 @@ export async function getCountOrder() {
   }
 }
 
-export async function getUnpaidOrderByStore(userId: string, storeId: string) {
+export async function getUnpaidOrderByStore(storeId: string) {
   try {
+    const session = await auth();
+    if (!session) throw new Error("Not Authorized");
+
     const unpaidOrder = await db.order.findFirst({
       where: {
-        userId,
+        userId: session.user.id,
         status: TStatusOrder.PENDING, // atau sesuaikan status dari Midtrans
         pakets: {
           some: {

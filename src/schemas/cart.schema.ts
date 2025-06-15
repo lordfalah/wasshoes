@@ -7,6 +7,7 @@ export const updateCartItemSchema = z.object({
 export const cartItemSchema = z.object({
   productId: z.string(),
   quantity: z.number().min(0),
+  priceOrder: z.number().min(0).optional(),
 });
 
 export const checkoutItemSchema = cartItemSchema.extend({

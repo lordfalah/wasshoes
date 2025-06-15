@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/form";
 import { Fragment, useCallback, useState } from "react";
 import {
+  adminCheckoutSchemaClient,
+  TAdminCheckoutSchemaClient,
   TUserCheckoutSchemaClient,
-  userCheckoutSchemaClient,
 } from "@/schemas/checkout.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Order, TPaymentMethod } from "@prisma/client";
@@ -38,8 +39,9 @@ import { uploadFiles } from "@/lib/uploadthing";
 import { TError, TSuccess } from "@/types/route-api";
 import { deleteFiles } from "@/app/api/uploadthing/helper-function";
 import { cn } from "@/lib/utils";
-import { useSession } from "next-auth/react";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { NumericFormat, PatternFormat } from "react-number-format";
+import { useRouter } from "next/navigation";
 
 interface CheckoutFormDetailProps
   extends React.ComponentPropsWithoutRef<"form"> {
@@ -64,30 +66,29 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
   className,
   ...props
 }) => {
-  const { data } = useSession();
-
-  const total = carts.reduce(
-    (total, item) => total + Number(item.quantity) * Number(item.price),
+  const initialDefaultPriceOrder = carts.reduce(
+    (total, item) => total + (item.priceOrder ?? item.price * item.quantity), // Menggunakan nullish coalescing operator
     0,
   );
-
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const form = useForm<TUserCheckoutSchemaClient>({
-    resolver: zodResolver(userCheckoutSchemaClient),
+  const form = useForm<TAdminCheckoutSchemaClient>({
+    resolver: zodResolver(adminCheckoutSchemaClient),
     defaultValues: {
       customer: {
-        first_name: data?.user.firstName ?? "",
-        last_name: data?.user.lastName ?? "",
-        email: data?.user.email ?? "",
-        phone: data?.user.phone ?? "",
+        first_name: "",
+        last_name: "",
+        email: "",
+        phone: "",
       },
       paymentMethod: TPaymentMethod.AUTO,
-      grossAmount: total,
+      grossAmount: initialDefaultPriceOrder,
       storeId: storeId,
       shoesImages: [],
       pakets: carts.map((paket) => ({
         paketId: paket.id,
         price: paket.price,
+        priceOrder: paket.priceOrder ?? paket.price * paket.quantity,
         quantity: paket.quantity,
       })),
     },
@@ -147,9 +148,11 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
               );
             } else {
               console.log("BAYAR ORDER");
-              window.snap.pay(resTransaction.data.paymentToken as string);
-
-              form.reset();
+              window.snap.pay(resTransaction.data.paymentToken as string, {
+                onClose() {
+                  router.push("/invoice");
+                },
+              });
             }
           } catch (error) {
             console.log({ error });
@@ -165,12 +168,15 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
         },
       );
     },
-    [form],
+    [form, router],
   );
 
   return (
     <Card
-      className={cn("w-full bg-white p-4 text-black lg:max-w-lg", className)}
+      className={cn(
+        "w-full bg-black p-4 text-white lg:max-w-lg dark:bg-white dark:text-black",
+        className,
+      )}
     >
       <Form {...form}>
         <form
@@ -242,11 +248,22 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
               <FormItem className="space-y-1">
                 <FormLabel>Phone</FormLabel>
                 <FormControl>
-                  <Input
-                    autoComplete="off"
-                    {...field}
-                    placeholder="wasshoes"
+                  <PatternFormat
+                    value={field.value}
+                    onValueChange={(values) => {
+                      form.setValue("customer.phone", values.value, {
+                        shouldValidate: true,
+                      });
+                    }}
+                    mask="_"
                     type="tel"
+                    format="####-####-####"
+                    placeholder="0812-3456-7890"
+                    className={cn(
+                      "border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+                      "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+                      "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+                    )}
                   />
                 </FormControl>
                 <FormMessage />
@@ -262,20 +279,25 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
                 <FormLabel>Price</FormLabel>
                 <FormControl>
                   <div className="relative z-10 h-fit after:absolute after:top-1/2 after:z-20 after:-translate-y-1/2 after:pl-2 after:text-sm after:content-['Rp.']">
-                    <Input
+                    <NumericFormat
+                      disabled={true}
                       autoComplete="off"
-                      className="!pl-8"
-                      {...field}
-                      placeholder="xxx"
-                      type="number"
-                      onFocus={() => {
-                        if (form.getValues("grossAmount") === 0) {
-                          form.setValue(
-                            "grossAmount",
-                            "" as never satisfies number,
-                          );
-                        }
+                      value={field.value}
+                      onValueChange={(values) => {
+                        form.setValue("grossAmount", Number(values.value), {
+                          shouldValidate: true,
+                        });
                       }}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      allowNegative={false}
+                      allowLeadingZeros={false}
+                      placeholder="10.000"
+                      className={cn(
+                        "border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 pl-8 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+                        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+                        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive cursor-not-allowed",
+                      )}
                     />
                   </div>
                 </FormControl>
@@ -302,7 +324,7 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
                     {paymentMethods.map(({ description, name }, idx) => (
                       <FormItem
                         key={idx}
-                        className="has-[[data-state=checked]]:border-ring flex w-full items-start gap-3 rounded-lg border has-[[data-state=checked]]:bg-black has-[[data-state=checked]]:text-white"
+                        className="has-[[data-state=checked]]:border-ring flex w-full items-start gap-3 rounded-lg border has-[[data-state=checked]]:bg-white has-[[data-state=checked]]:text-black dark:has-[[data-state=checked]]:bg-black dark:has-[[data-state=checked]]:text-white"
                       >
                         <FormLabel
                           htmlFor={name}
@@ -312,7 +334,7 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
                             <RadioGroupItem
                               value={name}
                               id={name}
-                              className="data-[state=checked]:border-primary"
+                              className="data-[state=checked]:border-primary bg-slate-400 dark:bg-auto"
                             />
                           </FormControl>
                           <div className="grid gap-1 font-normal">

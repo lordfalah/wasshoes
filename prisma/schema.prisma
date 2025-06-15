@@ -39,9 +39,6 @@ model User {
   lastName  String?
   phone     String?
 
-  /// InformationCustomers
-  informationCustomers Json[]
-
   email                 String?                @unique
   emailVerified         DateTime?
   image                 String?
@@ -173,6 +170,9 @@ model Order {
   pakets PaketOrder[]
   user   User         @relation(fields: [userId], references: [id])
   userId String
+
+  /// InformationCustomer
+  informationCustomer Json?
 
   storeId String // ✅ Foreign key ke Store
   store   Store  @relation(fields: [storeId], references: [id])

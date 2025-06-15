@@ -7,14 +7,14 @@ import {
   CardTitle,
 } from "../ui/card";
 
-import { formatToRupiah } from "@/lib/utils";
+import { cn, formatToRupiah } from "@/lib/utils";
 import { Separator } from "../ui/separator";
 import { getStoreByStoreId } from "@/actions/store";
 import { Category, Order, Paket, PaketOrder } from "@prisma/client";
 import { InvoiceLineItems } from "./cart-line-items";
 import ShiftingCountdown from "../shifting-countdown";
 import ButtonPayTransaction from "./pay-transaction";
-import BtnCancelTransaction from "./btn-cancel-transaction";
+import BtnCancelTransaction from "./btn-submit-load";
 import { cancelTransactionOrder } from "@/actions/order";
 import {
   Tooltip,
@@ -53,6 +53,34 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
       throw error;
     }
   };
+
+  // --- Perhitungan Total ---
+  const totalQuantity = order.pakets.reduce(
+    (acc, item) => acc + item.quantity,
+    0,
+  );
+
+  const subtotalPrice = order.pakets.reduce((acc, item) => {
+    // Gunakan harga asli paket dari item.paket.price
+    return acc + item.paket.price * item.quantity;
+  }, 0);
+
+  // Menggunakan order.totalPrice sebagai harga final
+  // Ini adalah harga total yang sudah termasuk penyesuaian jika ada
+  const finalPrice = order.totalPrice;
+
+  // --- LOGIKA DISKON/BIAYA TAMBAHAN ---
+  let adjustmentText: string | null = null;
+  let adjustmentAmount = 0;
+
+  if (finalPrice > subtotalPrice) {
+    adjustmentAmount = finalPrice - subtotalPrice;
+    adjustmentText = `Biaya Tambahan: ${formatToRupiah(adjustmentAmount)}`;
+  } else if (finalPrice < subtotalPrice) {
+    adjustmentAmount = subtotalPrice - finalPrice;
+    adjustmentText = `Diskon Biaya: ${formatToRupiah(adjustmentAmount)}`;
+  }
+  console.log(order);
 
   return (
     <Card
@@ -112,11 +140,39 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
         />
       </CardContent>
       <Separator className="mb-4" />
-      <CardFooter className="space-x-4">
-        <span className="flex-1">
-          Total ({order.pakets.reduce((acc, item) => acc + item.quantity, 0)})
-        </span>
-        <span>Rp. {formatToRupiah(order.totalPrice)}</span>
+      <CardFooter className="flex-col justify-between space-y-2">
+        {" "}
+        {/* Tambahkan space-y-2 untuk jarak antar baris */}
+        {/* Baris untuk Subtotal (Total Harga Barang Asli) */}
+        <div className="flex w-full items-center justify-between">
+          <p>Subtotal ({totalQuantity}) </p>
+          <p>{formatToRupiah(subtotalPrice)}</p>
+        </div>
+        {/* Baris untuk Biaya Tambahan / Diskon Biaya (jika ada) */}
+        {adjustmentText && ( // Hanya render jika ada penyesuaian
+          <div className="flex w-full items-center justify-between text-sm">
+            <p className="text-muted-foreground">
+              {adjustmentText.split(":")[0]}:
+            </p>{" "}
+            {/* Ambil label "Biaya Tambahan" atau "Diskon Biaya" */}
+            <p
+              className={cn(
+                "font-medium",
+                finalPrice > subtotalPrice
+                  ? "text-destructive"
+                  : "text-emerald-500",
+              )}
+            >
+              {adjustmentText.split(":")[1]}
+            </p>{" "}
+            {/* Ambil nilai yang sudah diformat */}
+          </div>
+        )}
+        {/* Baris untuk Harga Final */}
+        <div className="flex w-full items-center justify-between font-semibold">
+          <p>Total</p>
+          <p>{formatToRupiah(finalPrice)}</p>
+        </div>
       </CardFooter>
     </Card>
   );

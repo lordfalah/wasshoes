@@ -2,6 +2,26 @@ import { TPaymentMethod } from "@prisma/client";
 import { ClientUploadedFileData } from "uploadthing/types";
 import { z } from "zod";
 
+// price validation
+
+export const priceValidation = z.preprocess(
+  (val) => {
+    if (typeof val === "string" && val.trim() !== "") {
+      // Hapus titik ribuan lalu parse jadi angka
+      const cleaned = val.replace(/\./g, "");
+      const num = Number(cleaned);
+      return isNaN(num) ? val : num;
+    }
+    return val;
+  },
+  z
+    .number({
+      required_error: "Harga wajib diisi",
+      invalid_type_error: "Harga harus berupa angka",
+    })
+    .min(1000, { message: "Harga tidak boleh di bawah 1.000" }),
+);
+
 // Data form konsumen (manual input dari Admin)
 export const customerSchema = z.object({
   first_name: z.string().min(1, "Nama wajib diisi"),
@@ -23,7 +43,9 @@ export const customerSchema = z.object({
 // Digunakan saat user login & checkout paket sendiri lewat aplikasi/web
 export const userCheckoutSchemaServer = z.object({
   storeId: z.string().cuid(),
-  paymentMethod: z.enum([TPaymentMethod.MANUAL, TPaymentMethod.AUTO]),
+  paymentMethod: z
+    .enum([TPaymentMethod.MANUAL, TPaymentMethod.AUTO])
+    .default(TPaymentMethod.AUTO),
   grossAmount: z.number(),
   shoesImages: z
     .array(
@@ -41,23 +63,7 @@ export const userCheckoutSchemaServer = z.object({
       z.object({
         paketId: z.string().cuid(),
         quantity: z.number().min(1).default(1),
-        price: z.preprocess(
-          (val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-              // Hapus titik ribuan lalu parse jadi angka
-              const cleaned = val.replace(/\./g, "");
-              const num = Number(cleaned);
-              return isNaN(num) ? val : num;
-            }
-            return val;
-          },
-          z
-            .number({
-              required_error: "Harga wajib diisi",
-              invalid_type_error: "Harga harus berupa angka",
-            })
-            .min(1000, { message: "Harga tidak boleh di bawah 1.000" }),
-        ),
+        price: priceValidation,
       }),
     )
     .min(1, "Minimal 1 paket harus dipilih"),
@@ -82,23 +88,7 @@ export const userCheckoutSchemaClient = z.object({
       z.object({
         paketId: z.string().cuid(),
         quantity: z.number().min(1).default(1),
-        price: z.preprocess(
-          (val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-              // Hapus titik ribuan lalu parse jadi angka
-              const cleaned = val.replace(/\./g, "");
-              const num = Number(cleaned);
-              return isNaN(num) ? val : num;
-            }
-            return val;
-          },
-          z
-            .number({
-              required_error: "Harga wajib diisi",
-              invalid_type_error: "Harga harus berupa angka",
-            })
-            .min(1000, { message: "Harga tidak boleh di bawah 1.000" }),
-        ),
+        price: priceValidation,
       }),
     )
     .min(1, "Minimal 1 paket harus dipilih")
@@ -107,56 +97,51 @@ export const userCheckoutSchemaClient = z.object({
 });
 
 export const adminCheckoutSchemaClient = z.object({
-  orderId: z.string().cuid(),
+  storeId: z.string().cuid(),
   customer: customerSchema,
   paymentMethod: z.enum([TPaymentMethod.MANUAL, TPaymentMethod.AUTO]),
+  grossAmount: z.number(),
+  shoesImages: z
+    .array(z.custom<File>())
+    .min(1, "Minimal 1 gambar sepatu")
+    .max(2, "Maksimal 2 gambar sepatu")
+    .refine((files) => files.every((file) => file.size <= 4 * 1024 * 1024), {
+      message: "Ukuran file maksimal 4MB",
+    }),
+
   pakets: z
     .array(
       z.object({
         paketId: z.string().cuid(),
-        priceOrder: z.number().min(0).optional(),
+        priceOrder: priceValidation.optional(),
+        price: priceValidation,
         quantity: z.number().min(1).default(1),
-        shoesImages: z
-          .array(z.custom<File>())
-          .min(1, "Minimal 1 gambar sepatu")
-          .max(2, "Maksimal 2 gambar sepatu")
-          .refine(
-            (files) => files.every((file) => file.size <= 4 * 1024 * 1024),
-            {
-              message: "Ukuran file maksimal 4MB",
-            },
-          ),
       }),
     )
     .min(1, "Minimal 1 paket harus dipilih"),
 });
 
 export const adminCheckoutSchemaServer = z.object({
-  orderId: z.string().cuid(),
+  storeId: z.string().cuid(),
   customer: customerSchema,
   paymentMethod: z.enum([TPaymentMethod.MANUAL, TPaymentMethod.AUTO]),
+  shoesImages: z
+    .array(
+      z.custom<ClientUploadedFileData<{ uploadedBy: string | undefined }>>(),
+    )
+    .min(1, "File is required")
+    .nonempty("BannerStore must have at least one image")
+    .max(2, "Please select up to 2 files")
+    .refine((files) => files.every((file) => file.size <= 4 * 1024 * 1024), {
+      message: "File size must be less than 4MB",
+      path: ["shoesImages"],
+    }),
   pakets: z
     .array(
       z.object({
         paketId: z.string().cuid(),
-        priceOrder: z.number().min(0).optional(),
+        priceOrder: priceValidation.optional(),
         quantity: z.number().min(1).default(1),
-        shoesImages: z
-          .array(
-            z.custom<
-              ClientUploadedFileData<{ uploadedBy: string | undefined }>
-            >(),
-          )
-          .min(1, "File is required")
-          .nonempty("BannerStore must have at least one image")
-          .max(2, "Please select up to 2 files")
-          .refine(
-            (files) => files.every((file) => file.size <= 4 * 1024 * 1024),
-            {
-              message: "File size must be less than 4MB",
-              path: ["shoesImages"],
-            },
-          ),
       }),
     )
     .min(1, "Minimal 1 paket harus dipilih"),

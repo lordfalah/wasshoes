@@ -63,6 +63,6 @@ declare global {
   namespace PrismaJson {
     type Image = ClientUploadedFileData<{ uploadedBy: string | undefined }>;
     type ItemsPaket = TCartItemSchema;
-    type InformationCustomers = TCustomerSchema;
+    type InformationCustomer = TCustomerSchema;
   }
 }

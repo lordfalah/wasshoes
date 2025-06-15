@@ -10,7 +10,7 @@ import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getErrorMessage } from "@/lib/handle-error";
-import { Category, Paket, Store } from "@prisma/client";
+import { Category, Paket, Store, UserRole } from "@prisma/client";
 import { auth } from "@/auth";
 import { connection } from "next/server";
 import { cookies } from "next/headers";
@@ -18,6 +18,7 @@ import { redirect } from "next/navigation";
 
 export type CartLineItem = Paket & {
   quantity: number;
+  priceOrder?: number;
   stores: Store[];
   category: Category | null;
 };
@@ -73,11 +74,15 @@ export async function getCart(input?: {
       },
     });
 
-    return pakets.map((paket) => ({
-      ...paket,
-      quantity:
-        items.find((item) => item.productId === paket.id)?.quantity ?? 0,
-    }));
+    return pakets.map((paket) => {
+      const item = items.find((item) => item.productId === paket.id);
+
+      return {
+        ...paket,
+        quantity: item?.quantity ?? 0,
+        priceOrder: item?.priceOrder, // tambahkan ini
+      };
+    });
   } catch (error) {
     console.error("GET_CART_ERROR:", error);
     return [];
@@ -220,6 +225,7 @@ export async function updateCartItem(rawInput: TCartItemSchema) {
     const input = cartItemSchema.parse(rawInput);
 
     const userId = session?.user.id;
+    const isAdmin = session?.user.role?.name === UserRole.ADMIN;
     const cartId = cookieStore.get("cartId")?.value;
 
     const cart = await db.cart.findFirst({
@@ -234,24 +240,38 @@ export async function updateCartItem(rawInput: TCartItemSchema) {
     let updatedItems: TCartItemSchema[] = [];
     const currentItems = Array.isArray(cart.items) ? cart.items : [];
 
-    if (input.quantity === 0) {
+    const existingItem = currentItems.find(
+      (item) => item.productId === input.productId,
+    );
+
+    if (input.quantity === 0 && !isAdmin) {
+      // Hapus item jika quantity 0, hanya untuk user
       updatedItems = currentItems.filter(
         (item) => item.productId !== input.productId,
       );
+    } else if (existingItem) {
+      updatedItems = currentItems.map((item) => {
+        if (item.productId === input.productId) {
+          return {
+            ...item,
+            quantity: input.quantity,
+            ...(isAdmin && input.priceOrder !== undefined
+              ? { priceOrder: input.priceOrder }
+              : {}),
+          };
+        }
+        return item;
+      });
     } else {
-      const existingItem = currentItems.find(
-        (item) => item.productId === input.productId,
-      );
-
-      if (existingItem) {
-        updatedItems = currentItems.map((item) =>
-          item.productId === input.productId
-            ? { ...item, quantity: input.quantity }
-            : item,
-        );
-      } else {
-        updatedItems = [...currentItems, input];
-      }
+      updatedItems = [
+        ...currentItems,
+        {
+          ...input,
+          ...(isAdmin && input.priceOrder !== undefined
+            ? { priceOrder: input.priceOrder }
+            : {}),
+        },
+      ];
     }
 
     await db.cart.update({

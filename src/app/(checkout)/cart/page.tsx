@@ -11,7 +11,6 @@ import {
 import { Shell } from "@/components/shell";
 import { getUniqueStoreIds } from "@/actions/cart";
 import { CheckoutCard } from "@/components/checkout/checkout-card";
-import { auth } from "@/auth";
 
 export const metadata: Metadata = {
   metadataBase: new URL(String(process.env.NEXT_PUBLIC_APP_URL)),
@@ -20,10 +19,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CartPage() {
-  const [uniqueStoreIds, session] = await Promise.all([
-    getUniqueStoreIds(),
-    auth(),
-  ]);
+  const uniqueStoreIds = await getUniqueStoreIds();
 
   return (
     <Shell>
@@ -39,13 +35,7 @@ export default async function CartPage() {
       {uniqueStoreIds.length > 0 ? (
         uniqueStoreIds.map(
           (storeId) =>
-            storeId && (
-              <CheckoutCard
-                key={storeId}
-                storeId={storeId}
-                userId={session?.user.id || ""}
-              />
-            ),
+            storeId && <CheckoutCard key={storeId} storeId={storeId} />,
         )
       ) : (
         <section

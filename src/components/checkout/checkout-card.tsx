@@ -15,24 +15,52 @@ import { getUnpaidOrderByStore } from "@/actions/order";
 
 interface CheckoutCardProps {
   storeId: string;
-  userId: string;
 }
 
-export async function CheckoutCard({ storeId, userId }: CheckoutCardProps) {
+export async function CheckoutCard({ storeId }: CheckoutCardProps) {
   const cartLineItems = await getCart({ storeId });
 
   let redirectUrl = `/checkout/${storeId}`;
-
-  if (!userId) throw new Error("Id user required");
-
-  if (userId) {
-    const { data, error } = await getUnpaidOrderByStore(userId, storeId);
-    if (data !== null) {
-      redirectUrl = `/invoice`;
-    }
-
-    if (error) throw new Error(error);
+  const { data, error } = await getUnpaidOrderByStore(storeId);
+  if (data !== null) {
+    redirectUrl = `/invoice`;
   }
+
+  if (error) throw new Error(error);
+
+  // --- Perhitungan Total yang Didefinisikan di Awal ---
+  const totalQuantity = cartLineItems.reduce(
+    (acc, item) => acc + item.quantity,
+    0,
+  );
+
+  const subtotalPrice = cartLineItems.reduce((acc, item) => {
+    return acc + item.price * item.quantity;
+  }, 0);
+
+  const finalPrice = cartLineItems.reduce((acc, item) => {
+    // Jika item.priceOrder ada dan bukan null/undefined, gunakan itu.
+    // Jika tidak, gunakan item.price * item.quantity.
+    return (
+      acc +
+      (item.priceOrder !== undefined && item.priceOrder !== null
+        ? item.priceOrder
+        : item.price * item.quantity)
+    );
+  }, 0);
+
+  // --- LOGIKA DISKON/BIAYA TAMBAHAN BARU DI SINI ---
+  let adjustmentText: string | null = null;
+  let adjustmentAmount = 0;
+
+  if (finalPrice > subtotalPrice) {
+    adjustmentAmount = finalPrice - subtotalPrice;
+    adjustmentText = `Biaya Tambahan: ${formatToRupiah(adjustmentAmount)}`;
+  } else if (finalPrice < subtotalPrice) {
+    adjustmentAmount = subtotalPrice - finalPrice;
+    adjustmentText = `Diskon Biaya: ${formatToRupiah(adjustmentAmount)}`;
+  }
+  // Tidak perlu else jika finalPrice === subtotalPrice, karena tidak ada penyesuaian
 
   return (
     <Card
@@ -64,18 +92,33 @@ export async function CheckoutCard({ storeId, userId }: CheckoutCardProps) {
         <CartLineItems items={cartLineItems} className="max-h-[280px]" />
       </CardContent>
       <Separator className="mb-4" />
-      <CardFooter className="space-x-4">
-        <span className="flex-1">
-          Total ({cartLineItems.reduce((acc, item) => acc + item.quantity, 0)})
-        </span>
-        <span>
-          {formatToRupiah(
-            cartLineItems.reduce(
-              (acc, item) => acc + Number(item.price) * item.quantity,
-              0,
-            ),
-          )}
-        </span>
+      <CardFooter className="flex-col justify-between space-y-2">
+        {" "}
+        {/* Tambahkan space-y-2 untuk jarak antar baris */}
+        {/* Baris untuk Subtotal (Total Harga Barang Asli) */}
+        <div className="flex w-full items-center justify-between">
+          <p>
+            Subtotal ({totalQuantity}){" "}
+            {/* Menggunakan totalQuantity yang sudah dihitung */}
+          </p>
+          <p>{formatToRupiah(subtotalPrice)}</p>
+        </div>
+        {/* Baris untuk Biaya Tambahan / Diskon Biaya (jika ada) */}
+        {adjustmentText && ( // Hanya render jika ada penyesuaian
+          <div className="text-muted-foreground flex w-full items-center justify-between text-sm">
+            <p>{adjustmentText.split(":")[0]}:</p>{" "}
+            {/* Ambil label "Biaya Tambahan" atau "Diskon Biaya" */}
+            <p className="font-medium">{adjustmentText.split(":")[1]}</p>{" "}
+            {/* Ambil nilai yang sudah diformat */}
+          </div>
+        )}
+        {/* Baris untuk Harga Final */}
+        <div className="flex w-full items-center justify-between font-semibold">
+          {" "}
+          {/* Tambahkan font-semibold untuk menonjolkan Harga Final */}
+          <p>Total</p>
+          <p>{formatToRupiah(finalPrice)}</p>
+        </div>
       </CardFooter>
     </Card>
   );

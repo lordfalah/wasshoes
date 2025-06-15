@@ -17,6 +17,8 @@ import { notFound, redirect } from "next/navigation";
 import { getCart } from "@/actions/cart";
 import { DialogTitle } from "@/components/ui/dialog";
 import CheckoutFormDetailUser from "@/components/checkout/checkout-form-detail-user";
+import { auth } from "@/auth";
+import CheckoutFormDetailAdmin from "@/components/checkout/checkout-form-detail-admin";
 
 export const metadata: Metadata = {
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL}`),
@@ -32,6 +34,8 @@ interface CheckoutPageProps {
 
 export default async function CheckoutPage({ params }: CheckoutPageProps) {
   const storeId = decodeURIComponent((await params).storeId);
+
+  const session = await auth();
 
   const store = await db.store.findUnique({
     select: {
@@ -52,10 +56,31 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
 
   if (!cartLineItems || cartLineItems.length === 0) redirect("/invoice");
 
-  const total = cartLineItems.reduce(
-    (total, item) => total + Number(item.quantity) * Number(item.price),
-    0,
-  );
+  const subtotalPrice = cartLineItems.reduce((acc, item) => {
+    return acc + item.price * item.quantity;
+  }, 0);
+
+  const finalPrice = cartLineItems.reduce((acc, item) => {
+    // Jika item.priceOrder ada dan bukan null/undefined, gunakan itu.
+    // Jika tidak, gunakan item.price * item.quantity.
+    return (
+      acc +
+      (item.priceOrder !== undefined && item.priceOrder !== null
+        ? item.priceOrder
+        : item.price * item.quantity)
+    );
+  }, 0);
+
+  let itemAdjustmentText: string | null = null;
+  let itemAdjustmentAmount = 0;
+
+  if (finalPrice > subtotalPrice) {
+    itemAdjustmentAmount = finalPrice - subtotalPrice;
+    itemAdjustmentText = `Biaya Tambahan: ${formatToRupiah(itemAdjustmentAmount)}`;
+  } else if (finalPrice < subtotalPrice) {
+    itemAdjustmentAmount = subtotalPrice - finalPrice;
+    itemAdjustmentText = `Diskon Biaya: ${formatToRupiah(itemAdjustmentAmount)}`;
+  }
 
   return (
     <section className="relative flex h-full min-h-dvh flex-col items-start justify-center lg:h-dvh lg:flex-row lg:overflow-hidden">
@@ -111,14 +136,30 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
                   <Separator />
                   <div className="flex font-medium">
                     <div className="flex-1">
-                      Total (
+                      SubTotal (
                       {cartLineItems.reduce(
                         (acc, item) => acc + Number(item.quantity),
                         0,
                       )}
                       )
                     </div>
-                    <div>Rp. {formatToRupiah(total)}</div>
+                    <div>Rp. {formatToRupiah(subtotalPrice)}</div>
+                  </div>
+
+                  {itemAdjustmentText && ( // Hanya render jika ada penyesuaian
+                    <div className="text-muted-foreground flex font-medium">
+                      <div className="flex-1">
+                        {itemAdjustmentText.split(":")[0]}:
+                      </div>{" "}
+                      {/* Ambil label "Biaya Tambahan" atau "Diskon Biaya" */}
+                      <div>{itemAdjustmentText.split(":")[1]}</div>{" "}
+                      {/* Ambil nilai yang sudah diformat */}
+                    </div>
+                  )}
+
+                  <div className="flex font-medium">
+                    <div className="flex-1">Final</div>
+                    <div>Rp. {formatToRupiah(finalPrice)}</div>
                   </div>
                 </div>
               </DrawerContent>
@@ -129,7 +170,9 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
           <div className="text-muted-foreground line-clamp-1 font-semibold">
             Pay {store.name}
           </div>
-          <div className="text-3xl font-bold">Rp. {formatToRupiah(total)}</div>
+          <div className="text-3xl font-bold">
+            Rp. {formatToRupiah(finalPrice)}
+          </div>
         </div>
         <CartLineItems
           items={cartLineItems}
@@ -139,9 +182,23 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
       </div>
 
       <section className="size-full flex-1 bg-[#09090b] px-4 pt-10 pb-12 lg:flex-initial lg:px-12 lg:pt-16 dark:bg-white">
-        <ScrollArea className="w-full">
-          <CheckoutFormDetailUser carts={cartLineItems} storeId={store.id} />
-        </ScrollArea>
+        {session && (
+          <ScrollArea className="h-full w-auto pr-0 lg:w-fit lg:pr-6">
+            {session.user.role.name === "USER" && (
+              <CheckoutFormDetailUser
+                carts={cartLineItems}
+                storeId={store.id}
+              />
+            )}
+
+            {session.user.role.name === "ADMIN" && (
+              <CheckoutFormDetailAdmin
+                carts={cartLineItems}
+                storeId={store.id}
+              />
+            )}
+          </ScrollArea>
+        )}
       </section>
     </section>
   );

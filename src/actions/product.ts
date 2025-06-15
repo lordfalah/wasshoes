@@ -46,9 +46,13 @@ export async function filterPakets({ query }: { query: string }) {
 type PaketInput = {
   paketId: string;
   quantity: number;
+  priceOrder?: number;
 };
 
-export async function getTotalPriceAndItemDetails(pakets: PaketInput[]) {
+export async function getTotalPriceAndItemDetails(
+  pakets: PaketInput[],
+  isAdmin = false, // tambahkan parameter
+) {
   const paketMap = new Map(pakets.map((p) => [p.paketId, p.quantity]));
 
   const foundPakets = await db.paket.findMany({
@@ -74,17 +78,35 @@ export async function getTotalPriceAndItemDetails(pakets: PaketInput[]) {
   let total = 0;
   const item_details = foundPakets.map((p) => {
     const quantity = paketMap.get(p.id) ?? 0;
-    const subtotal = p.price * quantity;
-    total += subtotal;
+    const inputPaket = pakets.find((pkt) => pkt.paketId === p.id);
+    const customPrice = inputPaket?.priceOrder;
+    const basePrice = p.price;
 
-    return {
-      id: p.id,
-      name: p.name,
-      quantity,
-      price: p.price,
-      category: p.category?.name,
-      url: `${process.env.NEXT_PUBLIC_APP_URL}/product/${p.id}`,
-    };
+    if (isAdmin && customPrice) {
+      total += customPrice;
+
+      return {
+        id: p.id,
+        name: p.name,
+        quantity: 1, // treat as single subtotal
+        price: customPrice, // this is total price already
+        category: p.category?.name,
+        url: `${process.env.NEXT_PUBLIC_APP_URL}/product/${p.id}`,
+      };
+    } else {
+      const price = customPrice ?? basePrice;
+      const subtotal = price * quantity;
+      total += subtotal;
+
+      return {
+        id: p.id,
+        name: p.name,
+        quantity,
+        price,
+        category: p.category?.name,
+        url: `${process.env.NEXT_PUBLIC_APP_URL}/product/${p.id}`,
+      };
+    }
   });
 
   return { total, item_details };
