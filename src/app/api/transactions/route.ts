@@ -151,6 +151,7 @@ export const POST = withAuth(async (req) => {
 
       const { total, item_details } = await getTotalPriceAndItemDetails(
         data.pakets,
+        false,
       );
 
       // Cek apakah profil belum lengkap (misalnya nama depan atau nomor HP kosong/null)

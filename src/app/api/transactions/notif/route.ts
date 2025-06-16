@@ -80,7 +80,7 @@ export async function POST(req: Request) {
         message: "transaction status updated",
         data: midtransStatus,
       },
-      { status: 201 },
+      { status: 200 },
     );
   } catch (err) {
     console.error("Notifikasi Midtrans Error:", err);

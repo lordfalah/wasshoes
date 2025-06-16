@@ -18,7 +18,7 @@ import { redirect } from "next/navigation";
 
 export type CartLineItem = Paket & {
   quantity: number;
-  priceOrder?: number;
+  priceOrder?: number | null;
   stores: Store[];
   category: Category | null;
 };

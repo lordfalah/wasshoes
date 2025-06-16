@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { CartLineItems } from "@/components/checkout/cart-line-items";
 import { getCart } from "@/actions/cart";
 import { getUnpaidOrderByStore } from "@/actions/order";
+import { auth } from "@/auth";
 
 interface CheckoutCardProps {
   storeId: string;
@@ -19,6 +20,7 @@ interface CheckoutCardProps {
 
 export async function CheckoutCard({ storeId }: CheckoutCardProps) {
   const cartLineItems = await getCart({ storeId });
+  const session = await auth();
 
   let redirectUrl = `/checkout/${storeId}`;
   const { data, error } = await getUnpaidOrderByStore(storeId);
@@ -89,7 +91,11 @@ export async function CheckoutCard({ storeId }: CheckoutCardProps) {
       </CardHeader>
       <Separator className="mb-4" />
       <CardContent className="pr-0 pb-6 pl-6">
-        <CartLineItems items={cartLineItems} className="max-h-[280px]" />
+        <CartLineItems
+          isAdmin={session?.user.role.name === "ADMIN" ? true : false}
+          items={cartLineItems}
+          className="max-h-[280px]"
+        />
       </CardContent>
       <Separator className="mb-4" />
       <CardFooter className="flex-col justify-between space-y-2">

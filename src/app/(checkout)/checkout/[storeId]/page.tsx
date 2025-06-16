@@ -58,30 +58,33 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   if (!cartLineItems || cartLineItems.length === 0) redirect("/invoice");
 
   const subtotalPrice = cartLineItems.reduce((acc, item) => {
-    return acc + item.price * item.quantity;
+    return acc + Number(item.price) * Number(item.quantity);
   }, 0);
 
   const finalPrice = cartLineItems.reduce((acc, item) => {
-    // Jika item.priceOrder ada dan bukan null/undefined, gunakan itu.
-    // Jika tidak, gunakan item.price * item.quantity.
+    // Jika item.priceOrder sudah merupakan TOTAL untuk item tersebut,
+    // maka cukup gunakan nilai itu tanpa dikalikan quantity lagi.
     return (
       acc +
       (item.priceOrder !== undefined && item.priceOrder !== null
-        ? item.priceOrder
-        : item.price * item.quantity)
+        ? Number(item.priceOrder) // HANYA gunakan nilai ini
+        : Number(item.price) * Number(item.quantity)) // Jika priceOrder tidak ada, hitung dari harga paket asli
     );
   }, 0);
 
-  let itemAdjustmentText: string | null = null;
-  let itemAdjustmentAmount = 0;
+  // --- LOGIKA DISKON/BIAYA TAMBAHAN ---
+  let adjustmentText: string | null = null;
+  let adjustmentAmount = 0;
 
   if (finalPrice > subtotalPrice) {
-    itemAdjustmentAmount = finalPrice - subtotalPrice;
-    itemAdjustmentText = `Biaya Tambahan: ${formatToRupiah(itemAdjustmentAmount)}`;
+    adjustmentAmount = finalPrice - subtotalPrice;
+    console.log({ adjustmentAmount });
+    adjustmentText = `Biaya Tambahan: ${formatToRupiah(adjustmentAmount)}`;
   } else if (finalPrice < subtotalPrice) {
-    itemAdjustmentAmount = subtotalPrice - finalPrice;
-    itemAdjustmentText = `Diskon Biaya: ${formatToRupiah(itemAdjustmentAmount)}`;
+    adjustmentAmount = subtotalPrice - finalPrice;
+    adjustmentText = `Diskon Biaya: ${formatToRupiah(adjustmentAmount)}`;
   }
+  // console.log({ subtotalPrice, finalPrice });
 
   return (
     <section className="relative flex h-full min-h-dvh flex-col items-start justify-center lg:h-dvh lg:flex-row lg:overflow-hidden">
@@ -147,14 +150,14 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
                     <div>Rp. {formatToRupiah(subtotalPrice)}</div>
                   </div>
 
-                  {itemAdjustmentText && ( // Hanya render jika ada penyesuaian
+                  {adjustmentText && ( // Hanya render jika ada penyesuaian
                     <Fragment>
                       <div className="text-muted-foreground flex font-medium">
                         <div className="flex-1">
-                          {itemAdjustmentText.split(":")[0]}:
+                          {adjustmentText.split(":")[0]}:
                         </div>{" "}
                         {/* Ambil label "Biaya Tambahan" atau "Diskon Biaya" */}
-                        <div>{itemAdjustmentText.split(":")[1]}</div>{" "}
+                        <div>{adjustmentText.split(":")[1]}</div>{" "}
                         {/* Ambil nilai yang sudah diformat */}
                       </div>
 

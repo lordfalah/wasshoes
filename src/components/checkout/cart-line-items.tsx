@@ -13,7 +13,7 @@ interface CartLineItemsProps extends React.HTMLAttributes<HTMLDivElement> {
   items: Array<
     Paket & {
       stores: Store[];
-      priceOrder?: number;
+      priceOrder?: number | null;
       quantity: number;
       category: Category | null;
     }
@@ -47,24 +47,27 @@ export async function CartLineItems({
       >
         {items.map((item) => {
           // --- Hitung subtotal dan harga final per item untuk tampilan invoice ---
-          const itemSubtotal = Number(item.price) * Number(item.quantity);
-          // item.priceOrder datang dari PaketOrder, yang merupakan harga yang disimpan di order
+          const itemSubtotal = Number(item.price) * Number(item.quantity); // Ini adalah harga dasar * kuantitas
+
+          // PERBAIKAN PENTING DI SINI:
+          // Jika item.priceOrder ada, itu adalah TOTAL FINAL untuk item ini.
+          // JANGAN dikalikan lagi dengan quantity.
           const itemFinalPrice =
-            (item.priceOrder ?? Number(item.price)) * Number(item.quantity); // Pastikan itemFinalPrice dihitung berdasarkan total quantity
-          const itemOriginalTotalPerItem =
-            Number(item.price) * Number(item.quantity); // Total harga asli per item
+            item.priceOrder !== undefined && item.priceOrder !== null
+              ? Number(item.priceOrder) // Jika priceOrder ada, gunakan langsung sebagai total final
+              : itemSubtotal; // Jika tidak ada, final sama dengan subtotal (harga dasar * quantity)
 
           let itemAdjustmentText: string | null = null;
           let itemAdjustmentAmount = 0;
 
-          // HANYA hitung penyesuaian jika priceOrder berbeda dari paket.price
-          if (item.priceOrder !== item.price) {
-            // Perubahan utama di sini
-            if (itemFinalPrice > itemOriginalTotalPerItem) {
-              itemAdjustmentAmount = itemFinalPrice - itemOriginalTotalPerItem;
+          // HANYA hitung penyesuaian jika itemFinalPrice berbeda dari itemSubtotal
+          // (itemSubtotal adalah total harga asli berdasarkan price * quantity)
+          if (item.price !== item.priceOrder) {
+            if (itemFinalPrice > itemSubtotal) {
+              itemAdjustmentAmount = itemFinalPrice - itemSubtotal;
               itemAdjustmentText = `Biaya Tambahan: ${formatToRupiah(itemAdjustmentAmount)}`;
-            } else if (itemFinalPrice < itemOriginalTotalPerItem) {
-              itemAdjustmentAmount = itemOriginalTotalPerItem - itemFinalPrice;
+            } else if (itemFinalPrice < itemSubtotal) {
+              itemAdjustmentAmount = itemSubtotal - itemFinalPrice;
               itemAdjustmentText = `Diskon Biaya: ${formatToRupiah(itemAdjustmentAmount)}`;
             }
           }

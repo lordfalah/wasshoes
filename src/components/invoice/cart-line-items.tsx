@@ -36,25 +36,27 @@ export function InvoiceLineItems({
       >
         {items.map((item) => {
           // --- Hitung subtotal dan harga final per item untuk tampilan invoice ---
+          // itemSubtotal adalah total harga dasar (harga paket * quantity)
           const itemSubtotal = Number(item.paket.price) * Number(item.quantity);
-          // item.priceOrder datang dari PaketOrder, yang merupakan harga yang disimpan di order
+
+          // PERBAIKAN PENTING DI SINI:
+          // itemFinalPrice adalah total harga item yang sudah dimodifikasi (priceOrder)
+          // Jika item.priceOrder ada, gunakan langsung nilainya. JANGAN dikalikan lagi dengan quantity.
           const itemFinalPrice =
-            (item.priceOrder ?? Number(item.paket.price)) *
-            Number(item.quantity); // Pastikan itemFinalPrice dihitung berdasarkan total quantity
-          const itemOriginalTotalPerItem =
-            Number(item.paket.price) * Number(item.quantity); // Total harga asli per item
+            item.priceOrder !== undefined && item.priceOrder !== null
+              ? Number(item.priceOrder) // Ini sudah harga TOTAL untuk item tersebut
+              : itemSubtotal; // Jika priceOrder tidak ada, maka final sama dengan subtotal
 
           let itemAdjustmentText: string | null = null;
           let itemAdjustmentAmount = 0;
 
-          // HANYA hitung penyesuaian jika priceOrder berbeda dari paket.price
-          if (item.priceOrder !== item.paket.price) {
-            // Perubahan utama di sini
-            if (itemFinalPrice > itemOriginalTotalPerItem) {
-              itemAdjustmentAmount = itemFinalPrice - itemOriginalTotalPerItem;
+          // HANYA hitung penyesuaian jika itemFinalPrice berbeda dari itemSubtotal
+          if (item.paket.price !== item.priceOrder) {
+            if (itemFinalPrice > itemSubtotal) {
+              itemAdjustmentAmount = itemFinalPrice - itemSubtotal;
               itemAdjustmentText = `Biaya Tambahan: ${formatToRupiah(itemAdjustmentAmount)}`;
-            } else if (itemFinalPrice < itemOriginalTotalPerItem) {
-              itemAdjustmentAmount = itemOriginalTotalPerItem - itemFinalPrice;
+            } else if (itemFinalPrice < itemSubtotal) {
+              itemAdjustmentAmount = itemSubtotal - itemFinalPrice;
               itemAdjustmentText = `Diskon Biaya: ${formatToRupiah(itemAdjustmentAmount)}`;
             }
           }

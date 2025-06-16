@@ -37,8 +37,20 @@ export async function getOrderLineItems(input: { orderId: string }) {
 
     // 4. Format ulang item sebagai line items
     const lineItems = order.pakets.map((paketOrder) => ({
-      ...paketOrder.paket,
-      quantity: paketOrder.quantity,
+      id: paketOrder.id, // Atau paketOrder.paket.id, tergantung kebutuhan ID unik di array
+      name: paketOrder.paket.name,
+      description: paketOrder.paket.description,
+      price: paketOrder.paket.price, // Harga dasar dari paket
+      image: paketOrder.paket.image,
+      isVisible: paketOrder.paket.isVisible,
+      rating: paketOrder.paket.rating,
+      categoryId: paketOrder.paket.categoryId,
+      category: paketOrder.paket.category,
+      stores: paketOrder.paket.stores,
+      quantity: paketOrder.quantity, // Kuantitas dari paketOrder
+      priceOrder: paketOrder.priceOrder, // <--- EXPLICITLY MENAMBAHKAN priceOrder dari paketOrder
+      createdAt: paketOrder.paket.createdAt, // <--- TAMBAH INI
+      updatedAt: paketOrder.paket.updatedAt, // <--- TAMBAH INI
     }));
 
     return {
@@ -182,6 +194,10 @@ export async function getHistoryOrder() {
           {
             userId: session?.user.id,
             status: TStatusOrder.CANCEL,
+          },
+          {
+            userId: session?.user.id,
+            status: TStatusOrder.FAILURE,
           },
         ],
       },
