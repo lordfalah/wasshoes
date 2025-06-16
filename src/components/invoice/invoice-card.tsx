@@ -80,7 +80,6 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
     adjustmentAmount = subtotalPrice - finalPrice;
     adjustmentText = `Diskon Biaya: ${formatToRupiah(adjustmentAmount)}`;
   }
-  console.log(order);
 
   return (
     <Card

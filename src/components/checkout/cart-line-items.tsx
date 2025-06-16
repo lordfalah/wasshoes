@@ -5,9 +5,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { UpdateCart } from "@/components/checkout/update-cart";
 import { Icons } from "@/components/icons";
-import { Category, Paket, Store, UserRole } from "@prisma/client";
+import { Category, Paket, Store } from "@prisma/client";
 import UpdatePriceItemCart from "./update-price-item-cart";
-import { auth } from "@/auth";
+import { Fragment } from "react";
 
 interface CartLineItemsProps extends React.HTMLAttributes<HTMLDivElement> {
   items: Array<
@@ -20,6 +20,7 @@ interface CartLineItemsProps extends React.HTMLAttributes<HTMLDivElement> {
   >;
   isScrollable?: boolean;
   isEditable?: boolean;
+  isAdmin?: boolean;
   variant?: "default" | "minimal";
 }
 
@@ -27,12 +28,12 @@ export async function CartLineItems({
   items,
   isScrollable = true,
   isEditable = true,
+  isAdmin = false,
   variant = "default",
   className,
   ...props
 }: CartLineItemsProps) {
   const Comp = isScrollable ? ScrollArea : Slot;
-  const session = await auth();
 
   return (
     <Comp className="h-full">
@@ -45,19 +46,27 @@ export async function CartLineItems({
         {...props}
       >
         {items.map((item) => {
-          // --- Hitung subtotal dan harga final per item ---
+          // --- Hitung subtotal dan harga final per item untuk tampilan invoice ---
           const itemSubtotal = Number(item.price) * Number(item.quantity);
-          const itemFinalPrice = item.priceOrder ?? itemSubtotal;
+          // item.priceOrder datang dari PaketOrder, yang merupakan harga yang disimpan di order
+          const itemFinalPrice =
+            (item.priceOrder ?? Number(item.price)) * Number(item.quantity); // Pastikan itemFinalPrice dihitung berdasarkan total quantity
+          const itemOriginalTotalPerItem =
+            Number(item.price) * Number(item.quantity); // Total harga asli per item
 
           let itemAdjustmentText: string | null = null;
           let itemAdjustmentAmount = 0;
 
-          if (itemFinalPrice > itemSubtotal) {
-            itemAdjustmentAmount = itemFinalPrice - itemSubtotal;
-            itemAdjustmentText = `Biaya Tambahan: ${formatToRupiah(itemAdjustmentAmount)}`;
-          } else if (itemFinalPrice < itemSubtotal) {
-            itemAdjustmentAmount = itemSubtotal - itemFinalPrice;
-            itemAdjustmentText = `Diskon Biaya: ${formatToRupiah(itemAdjustmentAmount)}`;
+          // HANYA hitung penyesuaian jika priceOrder berbeda dari paket.price
+          if (item.priceOrder !== item.price) {
+            // Perubahan utama di sini
+            if (itemFinalPrice > itemOriginalTotalPerItem) {
+              itemAdjustmentAmount = itemFinalPrice - itemOriginalTotalPerItem;
+              itemAdjustmentText = `Biaya Tambahan: ${formatToRupiah(itemAdjustmentAmount)}`;
+            } else if (itemFinalPrice < itemOriginalTotalPerItem) {
+              itemAdjustmentAmount = itemOriginalTotalPerItem - itemFinalPrice;
+              itemAdjustmentText = `Diskon Biaya: ${formatToRupiah(itemAdjustmentAmount)}`;
+            }
           }
           // --- Akhir perhitungan per item ---
 
@@ -114,9 +123,7 @@ export async function CartLineItems({
                 {isEditable ? (
                   <div className="flex flex-col gap-2.5">
                     <UpdateCart cartLineItem={item} />
-                    {session && session.user?.role.name === UserRole.ADMIN && (
-                      <UpdatePriceItemCart cartLineItem={item} />
-                    )}
+                    {isAdmin && <UpdatePriceItemCart cartLineItem={item} />}
                   </div>
                 ) : (
                   <div className="flex flex-col items-end space-y-1 font-medium">
@@ -133,38 +140,41 @@ export async function CartLineItems({
                     </div>
                     {/* Biaya Tambahan / Diskon Biaya (jika ada) */}
                     {itemAdjustmentText && (
-                      <div className="flex items-center gap-x-2 text-sm">
-                        <span
-                          className={cn(
-                            "text-xs",
-                            itemFinalPrice > itemSubtotal
-                              ? "text-destructive"
-                              : "text-emerald-500", // Warna untuk biaya tambahan/diskon
-                          )}
-                        >
-                          {itemAdjustmentText.split(":")[0]}
-                        </span>
-                        <span
-                          className={cn(
-                            "line-clamp-1 text-sm",
-                            itemFinalPrice > itemSubtotal
-                              ? "text-destructive"
-                              : "text-emerald-500",
-                          )}
-                        >
-                          {itemAdjustmentText.split(":")[1]}
-                        </span>
-                      </div>
+                      <Fragment>
+                        <div className="flex items-center gap-x-2 text-sm">
+                          <span
+                            className={cn(
+                              "text-xs",
+                              itemFinalPrice > itemSubtotal
+                                ? "text-destructive"
+                                : "text-emerald-500", // Warna untuk biaya tambahan/diskon
+                            )}
+                          >
+                            {itemAdjustmentText.split(":")[0]}
+                          </span>
+                          <span
+                            className={cn(
+                              "line-clamp-1 text-sm",
+                              itemFinalPrice > itemSubtotal
+                                ? "text-destructive"
+                                : "text-emerald-500",
+                            )}
+                          >
+                            {itemAdjustmentText.split(":")[1]}
+                          </span>
+                        </div>
+
+                        {/* Harga Final Item */}
+                        <div className="flex items-center gap-x-2">
+                          <span className="text-muted-foreground text-xs">
+                            Final:
+                          </span>
+                          <span className="line-clamp-1 text-sm">
+                            {formatToRupiah(itemFinalPrice)}
+                          </span>
+                        </div>
+                      </Fragment>
                     )}
-                    {/* Harga Final Item */}
-                    <div className="flex items-center gap-x-2">
-                      <span className="text-muted-foreground text-xs">
-                        Final:
-                      </span>
-                      <span className="line-clamp-1 text-sm">
-                        {formatToRupiah(itemFinalPrice)}
-                      </span>
-                    </div>
                   </div>
                 )}
               </div>

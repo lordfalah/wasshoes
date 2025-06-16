@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Icons } from "@/components/icons";
 import { Category, Paket, PaketOrder } from "@prisma/client";
+import { Fragment } from "react";
 
 interface InvoiceItemsProps extends React.HTMLAttributes<HTMLDivElement> {
   items: Array<PaketOrder & { paket: Paket & { category: Category | null } }>;
@@ -37,17 +38,25 @@ export function InvoiceLineItems({
           // --- Hitung subtotal dan harga final per item untuk tampilan invoice ---
           const itemSubtotal = Number(item.paket.price) * Number(item.quantity);
           // item.priceOrder datang dari PaketOrder, yang merupakan harga yang disimpan di order
-          const itemFinalPrice = item.priceOrder ?? itemSubtotal;
+          const itemFinalPrice =
+            (item.priceOrder ?? Number(item.paket.price)) *
+            Number(item.quantity); // Pastikan itemFinalPrice dihitung berdasarkan total quantity
+          const itemOriginalTotalPerItem =
+            Number(item.paket.price) * Number(item.quantity); // Total harga asli per item
 
           let itemAdjustmentText: string | null = null;
           let itemAdjustmentAmount = 0;
 
-          if (itemFinalPrice > itemSubtotal) {
-            itemAdjustmentAmount = itemFinalPrice - itemSubtotal;
-            itemAdjustmentText = `Biaya Tambahan: ${formatToRupiah(itemAdjustmentAmount)}`;
-          } else if (itemFinalPrice < itemSubtotal) {
-            itemAdjustmentAmount = itemSubtotal - itemFinalPrice;
-            itemAdjustmentText = `Diskon Biaya: ${formatToRupiah(itemAdjustmentAmount)}`;
+          // HANYA hitung penyesuaian jika priceOrder berbeda dari paket.price
+          if (item.priceOrder !== item.paket.price) {
+            // Perubahan utama di sini
+            if (itemFinalPrice > itemOriginalTotalPerItem) {
+              itemAdjustmentAmount = itemFinalPrice - itemOriginalTotalPerItem;
+              itemAdjustmentText = `Biaya Tambahan: ${formatToRupiah(itemAdjustmentAmount)}`;
+            } else if (itemFinalPrice < itemOriginalTotalPerItem) {
+              itemAdjustmentAmount = itemOriginalTotalPerItem - itemFinalPrice;
+              itemAdjustmentText = `Diskon Biaya: ${formatToRupiah(itemAdjustmentAmount)}`;
+            }
           }
           // --- Akhir perhitungan per item ---
 
@@ -128,39 +137,41 @@ export function InvoiceLineItems({
 
                     {/* Biaya Tambahan / Diskon Biaya (jika ada) */}
                     {itemAdjustmentText && (
-                      <div className="flex items-center gap-x-2 text-sm">
-                        <span
-                          className={cn(
-                            "text-xs",
-                            itemFinalPrice > itemSubtotal
-                              ? "text-destructive"
-                              : "text-emerald-500", // Warna untuk biaya tambahan/diskon
-                          )}
-                        >
-                          {itemAdjustmentText.split(":")[0]}
-                        </span>
-                        <span
-                          className={cn(
-                            "line-clamp-1 text-sm",
-                            itemFinalPrice > itemSubtotal
-                              ? "text-destructive"
-                              : "text-emerald-500",
-                          )}
-                        >
-                          {itemAdjustmentText.split(":")[1]}
-                        </span>
-                      </div>
-                    )}
+                      <Fragment>
+                        <div className="flex items-center gap-x-2 text-sm">
+                          <span
+                            className={cn(
+                              "text-xs",
+                              itemFinalPrice > itemSubtotal
+                                ? "text-destructive"
+                                : "text-emerald-500", // Warna untuk biaya tambahan/diskon
+                            )}
+                          >
+                            {itemAdjustmentText.split(":")[0]}
+                          </span>
+                          <span
+                            className={cn(
+                              "line-clamp-1 text-sm",
+                              itemFinalPrice > itemSubtotal
+                                ? "text-destructive"
+                                : "text-emerald-500",
+                            )}
+                          >
+                            {itemAdjustmentText.split(":")[1]}
+                          </span>
+                        </div>
 
-                    {/* Harga Final Item */}
-                    <div className="flex items-center gap-x-2">
-                      <span className="text-muted-foreground text-xs">
-                        Final:
-                      </span>
-                      <span className="line-clamp-1 text-sm">
-                        {formatToRupiah(itemFinalPrice)}
-                      </span>
-                    </div>
+                        {/* Harga Final Item */}
+                        <div className="flex items-center gap-x-2">
+                          <span className="text-muted-foreground text-xs">
+                            Final:
+                          </span>
+                          <span className="line-clamp-1 text-sm">
+                            {formatToRupiah(itemFinalPrice)}
+                          </span>
+                        </div>
+                      </Fragment>
+                    )}
                   </div>
                 )}
               </div>

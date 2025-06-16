@@ -19,6 +19,7 @@ import { DialogTitle } from "@/components/ui/dialog";
 import CheckoutFormDetailUser from "@/components/checkout/checkout-form-detail-user";
 import { auth } from "@/auth";
 import CheckoutFormDetailAdmin from "@/components/checkout/checkout-form-detail-admin";
+import { Fragment } from "react";
 
 export const metadata: Metadata = {
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL}`),
@@ -147,20 +148,22 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
                   </div>
 
                   {itemAdjustmentText && ( // Hanya render jika ada penyesuaian
-                    <div className="text-muted-foreground flex font-medium">
-                      <div className="flex-1">
-                        {itemAdjustmentText.split(":")[0]}:
-                      </div>{" "}
-                      {/* Ambil label "Biaya Tambahan" atau "Diskon Biaya" */}
-                      <div>{itemAdjustmentText.split(":")[1]}</div>{" "}
-                      {/* Ambil nilai yang sudah diformat */}
-                    </div>
-                  )}
+                    <Fragment>
+                      <div className="text-muted-foreground flex font-medium">
+                        <div className="flex-1">
+                          {itemAdjustmentText.split(":")[0]}:
+                        </div>{" "}
+                        {/* Ambil label "Biaya Tambahan" atau "Diskon Biaya" */}
+                        <div>{itemAdjustmentText.split(":")[1]}</div>{" "}
+                        {/* Ambil nilai yang sudah diformat */}
+                      </div>
 
-                  <div className="flex font-medium">
-                    <div className="flex-1">Final</div>
-                    <div>Rp. {formatToRupiah(finalPrice)}</div>
-                  </div>
+                      <div className="flex font-medium">
+                        <div className="flex-1">Final</div>
+                        <div>Rp. {formatToRupiah(finalPrice)}</div>
+                      </div>
+                    </Fragment>
+                  )}
                 </div>
               </DrawerContent>
             </Drawer>

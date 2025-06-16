@@ -25,6 +25,8 @@ const InvoicePage: React.FC = async () => {
     throw new Error(errorHistory);
   }
 
+  console.log(unpaidOrders);
+
   return (
     <Shell>
       <div>

@@ -13,8 +13,9 @@ import { getOrderLineItems } from "@/actions/order";
 import { notFound } from "next/navigation";
 import { TStatusOrder } from "@prisma/client";
 import { getMidtansStatus } from "@/actions/midtrans-status";
-import InvoiceCard from "@/components/invoice/invoice-card";
 import { EmptyContent } from "../../invoice/_components/empty-content";
+import { Fragment } from "react";
+import InvoiceCard from "@/components/invoice/invoice-card";
 
 export const metadata: Metadata = {
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL}`),
@@ -79,6 +80,8 @@ export default async function FinishCheckoutPage({
     // Gunakan status dari order di database sebagai fallback
     transactionStatus = orderLineItems.order.status.toUpperCase();
   }
+
+  console.log({ midtransStatusData, transactionStatus });
 
   return (
     <div className="flex size-full max-h-dvh flex-col gap-10 overflow-hidden pt-6 pb-8 md:py-8">
@@ -161,32 +164,72 @@ export default async function FinishCheckoutPage({
         </div>
       ) : (
         <div className="container grid max-w-7xl gap-10">
-          <PageHeader
-            id="order-success-page-header"
-            aria-labelledby="order-success-page-header-heading"
-          >
-            <PageHeaderHeading>Please completed your order</PageHeaderHeading>
-            <PageHeaderDescription>
-              <span className="font-semibold">Fallback</span>-
-              {typeof midtransErrorMessage === "object"
-                ? JSON.stringify(midtransErrorMessage)
-                : midtransErrorMessage.toString()}
-            </PageHeaderDescription>
-          </PageHeader>
-          <section
-            id="order-success-cart-line-items"
-            aria-labelledby="order-success-cart-line-items-heading"
-            className="flex flex-col space-y-6 overflow-auto"
-          >
-            {orderLineItems.order ? (
-              <InvoiceCard
-                redirectUrl={`/checkout/finish?order_id=${order_id}`}
-                order={orderLineItems.order}
-              />
-            ) : (
-              <EmptyContent text="Your order is empty" />
-            )}
-          </section>
+          {transactionStatus === TStatusOrder.CANCEL ||
+          transactionStatus === TStatusOrder.EXPIRE ||
+          transactionStatus === TStatusOrder.DENY ? (
+            <Fragment>
+              <PageHeader
+                id="order-failed-page-header"
+                aria-labelledby="order-failed-page-header-heading"
+              >
+                <PageHeaderHeading>
+                  Transaction is {transactionStatus}
+                </PageHeaderHeading>
+                <PageHeaderDescription>
+                  <span className="font-semibold">Fallback</span>-
+                  {typeof midtransErrorMessage === "object"
+                    ? JSON.stringify(midtransErrorMessage)
+                    : midtransErrorMessage.toString()}
+                </PageHeaderDescription>
+              </PageHeader>
+              <section
+                id="order-failed-cart-line-items"
+                aria-labelledby="order-failed-cart-line-items-heading"
+                className="flex flex-col space-y-6 overflow-auto"
+              >
+                {orderLineItems.order ? (
+                  <CartLineItems
+                    items={orderLineItems.lineItems}
+                    variant="default"
+                    isEditable={false}
+                    className="container h-full flex-1"
+                  />
+                ) : (
+                  <EmptyContent text="Your order is empty" />
+                )}
+              </section>
+            </Fragment>
+          ) : (
+            <Fragment>
+              <PageHeader
+                id="order-success-page-header"
+                aria-labelledby="order-success-page-header-heading"
+              >
+                <PageHeaderHeading>
+                  Please completed your order
+                </PageHeaderHeading>
+                <PageHeaderDescription>
+                  <span className="font-semibold">Fallback</span>-
+                  {typeof midtransErrorMessage === "object"
+                    ? JSON.stringify(midtransErrorMessage)
+                    : midtransErrorMessage.toString()}
+                </PageHeaderDescription>
+              </PageHeader>
+
+              <section
+                id="order-pending-cart-line-items"
+                aria-labelledby="order-pending-cart-line-items-heading"
+                className="flex flex-col space-y-6 overflow-auto"
+              >
+                {orderLineItems.order ? (
+                  <InvoiceCard order={orderLineItems.order} />
+                ) : (
+                  <EmptyContent text="Your order is empty" />
+                )}
+              </section>
+            </Fragment>
+          )}
+
           <section
             id="order-success-actions"
             aria-labelledby="order-success-actions-heading"
