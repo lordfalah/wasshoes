@@ -154,8 +154,6 @@ export default async function FinishCheckoutPage({
     adjustmentText = `Diskon Biaya: ${formatToRupiah(adjustmentAmount)}`;
   }
 
-  console.log({ finalPrice, subtotalPrice });
-
   return (
     <div className="flex size-full max-h-dvh flex-col gap-10 overflow-hidden pt-6 pb-8 md:py-8">
       {isPaymentSuccessful ? (
