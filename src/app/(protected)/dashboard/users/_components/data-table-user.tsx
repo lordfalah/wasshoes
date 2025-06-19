@@ -3,7 +3,7 @@
 import { DataTableColumnHeader } from "@/components/tables/data-table-column-header";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Text, BadgeCheck, BadgeX } from "lucide-react";
+import { MoreHorizontal, BadgeCheck, BadgeX } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -99,17 +99,6 @@ const DataTableUser: React.FC<{ data: TDataUsersRole[] }> = ({ data }) => {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Name" />
         ),
-        // Optional: Custom cell component
-        // cell: ({ row }) => <div>{row.getValue("title")}</div>,
-        // Optional: Meta options for filtering, sorting, and view options
-        meta: {
-          label: "Name",
-          placeholder: "Search names...",
-          variant: "text",
-          icon: Text,
-        },
-        // By default, the column will not be filtered. Set to `true` to enable filtering.
-        enableColumnFilter: true,
       },
 
       {
@@ -176,22 +165,6 @@ const DataTableUser: React.FC<{ data: TDataUsersRole[] }> = ({ data }) => {
         enableSorting: false,
         enableHiding: false,
       },
-
-      // {
-      //   id: "status",
-      //   // Access nested data using `accessorFn`
-      //   accessorFn: (row) => row.lineItem.status,
-      //   header: "Status",
-      //   meta: {
-      //     label: "Status",
-      //     variant: "select",
-      //     options: [
-      //       { label: "Active", value: "active" },
-      //       { label: "Inactive", value: "inactive" },
-      //     ],
-      //   },
-      //   enableColumnFilter: true,
-      // },
 
       {
         id: "actions",
@@ -270,7 +243,6 @@ const DataTableUser: React.FC<{ data: TDataUsersRole[] }> = ({ data }) => {
               <DropdownMenuContent align="end">
                 <Dialog>
                   <DialogTrigger asChild>
-                    {/* <DropdownMenuItem>Edit</DropdownMenuItem> */}
                     <Button
                       className="w-full text-left"
                       variant="ghost"

@@ -80,13 +80,11 @@ const UpdatePriceItemCart: React.FC<{ cartLineItem: CartLineItem }> = ({
   const onSubmit = (data: TFormSchema) => {
     startTransition(async () => {
       try {
-        const cartItem = await updateCartItem({
+        await updateCartItem({
           productId: cartLineItem.id,
           quantity: cartLineItem.quantity,
-          priceOrder: data.priceOrder, // ← ini dari input admin
+          priceOrder: data.priceOrder,
         });
-
-        console.log(cartItem);
       } catch (error) {
         console.log(error);
       }

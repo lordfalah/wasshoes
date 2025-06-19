@@ -2,13 +2,20 @@
 
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { Order, Prisma, TStatusOrder, UserRole } from "@prisma/client";
+import {
+  LaundryStatus,
+  Order,
+  Prisma,
+  TStatusOrder,
+  UserRole,
+} from "@prisma/client";
 import { subHours } from "date-fns";
 import { connection } from "next/server";
 import { getErrorMessage } from "@/lib/handle-error";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { coreApi } from "@/lib/midtrans";
+import { orderSchema } from "@/schemas/order.schema";
 
 export async function getOrderLineItems(input: { orderId: string }) {
   try {
@@ -141,6 +148,141 @@ export async function getAllOrdersForSuperadmin({
       data: null,
       error: getErrorMessage(error),
     };
+  }
+}
+
+type GetAllOrdersForAdminParams = {
+  page: number;
+  perPage: number;
+  sort: { id: string; desc: boolean }[];
+  status: TStatusOrder[];
+  storeId: string;
+  nameUser: string;
+};
+
+export async function getAllOrdersForAdmin({
+  page,
+  perPage,
+  sort = [],
+  status = [],
+  storeId,
+  nameUser = "",
+}: GetAllOrdersForAdminParams) {
+  try {
+    const skip = (page - 1) * perPage;
+
+    const orderBy = sort.length
+      ? sort.map(({ id, desc }) => ({
+          [id]: desc ? "desc" : "asc",
+        }))
+      : [{ createdAt: "desc" }];
+
+    // Filter pencarian namaUser
+    const nameFilter: Prisma.OrderWhereInput[] = nameUser
+      ? [
+          {
+            user: {
+              OR: [
+                { name: { contains: nameUser, mode: "insensitive" } },
+                { firstName: { contains: nameUser, mode: "insensitive" } },
+                { lastName: { contains: nameUser, mode: "insensitive" } },
+              ],
+            },
+          },
+          {
+            informationCustomer: {
+              path: ["first_name"],
+              string_contains: nameUser,
+              mode: "insensitive",
+            },
+          },
+          {
+            informationCustomer: {
+              path: ["last_name"],
+              string_contains: nameUser,
+              mode: "insensitive",
+            },
+          },
+        ]
+      : [];
+
+    const where: Prisma.OrderWhereInput = {
+      storeId,
+      ...(status.length > 0 && {
+        status: {
+          in: status,
+        },
+      }),
+      ...(nameFilter.length > 0 && {
+        OR: nameFilter,
+      }),
+    };
+
+    const [orders, total] = await Promise.all([
+      db.order.findMany({
+        where,
+        skip,
+        take: perPage,
+        orderBy,
+        include: {
+          user: true,
+          store: true,
+          pakets: {
+            include: {
+              paket: true,
+            },
+          },
+        },
+      }),
+      db.order.count({ where }),
+    ]);
+
+    return {
+      data: orders,
+      total,
+      page,
+      perPage,
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error getAllOrdersForAdmin:", error);
+    return {
+      data: null,
+      total: 0,
+      page,
+      perPage,
+      error: getErrorMessage(error),
+    };
+  }
+}
+
+export async function updateStatusLaundry(status: LaundryStatus, id: string) {
+  try {
+    const { success, error, data } = orderSchema.safeParse({
+      statusLaundry: status,
+    });
+
+    if (!success) {
+      return { data: null, error: getErrorMessage(error) };
+    }
+
+    const updateStatus = await db.order.update({
+      where: {
+        id,
+      },
+
+      data: {
+        laundryStatus: data.statusLaundry,
+      },
+
+      select: {
+        laundryStatus: true,
+      },
+    });
+
+    return { data: updateStatus, error: null };
+  } catch (error) {
+    return { data: null, error: getErrorMessage(error) };
   }
 }
 

@@ -40,7 +40,7 @@ import { TError, TSuccess } from "@/types/route-api";
 import { deleteFiles } from "@/app/api/uploadthing/helper-function";
 import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { NumericFormat, PatternFormat } from "react-number-format";
+import { PatternFormat } from "react-number-format";
 import { useRouter } from "next/navigation";
 
 interface CheckoutFormDetailProps
@@ -265,41 +265,6 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
                       "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
                     )}
                   />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="grossAmount"
-            render={({ field }) => (
-              <FormItem className="space-y-1">
-                <FormLabel>Price</FormLabel>
-                <FormControl>
-                  <div className="relative z-10 h-fit after:absolute after:top-1/2 after:z-20 after:-translate-y-1/2 after:pl-2 after:text-sm after:content-['Rp.']">
-                    <NumericFormat
-                      disabled={true}
-                      autoComplete="off"
-                      value={field.value}
-                      onValueChange={(values) => {
-                        form.setValue("grossAmount", Number(values.value), {
-                          shouldValidate: true,
-                        });
-                      }}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      allowNegative={false}
-                      allowLeadingZeros={false}
-                      placeholder="10.000"
-                      className={cn(
-                        "border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 pl-8 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-                        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-                        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive cursor-not-allowed",
-                      )}
-                    />
-                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>

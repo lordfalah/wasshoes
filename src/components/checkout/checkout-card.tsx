@@ -32,8 +32,6 @@ export async function CheckoutCard({
 
   if (error) throw new Error(error);
 
-  console.log(cartLineItems);
-
   // --- Gunakan fungsi reusable untuk perhitungan total ---
   const { totalQuantity, subtotalPrice, finalPrice, adjustmentText } =
     calculateOrderTotals(cartLineItems);

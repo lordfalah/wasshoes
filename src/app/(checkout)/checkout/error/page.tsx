@@ -11,7 +11,7 @@ import {
 import { db } from "@/lib/db";
 import { getOrderLineItems } from "@/actions/order";
 import { notFound } from "next/navigation";
-import { getMidtansStatus } from "@/actions/midtrans-status";
+import { getMidtransStatus } from "@/actions/midtrans-status";
 
 export const metadata: Metadata = {
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL}`),
@@ -56,7 +56,7 @@ export default async function FinishCheckoutPage({
     data: midtransStatusData,
     error: midtransApiError,
     message: midtransErrorMessage,
-  } = await getMidtansStatus(order_id);
+  } = await getMidtransStatus(order_id);
 
   if (midtransStatusData) {
     transactionStatus = midtransStatusData.transaction_status.toUpperCase();

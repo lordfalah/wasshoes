@@ -51,7 +51,6 @@ import { StoreSchemaClient, TStoreSchemaClient } from "@/schemas/store.schema";
 import { getErrorMessage } from "@/lib/handle-error";
 import { TError } from "@/types/route-api";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
 import { uploadFiles } from "@/lib/uploadthing";
 import { deleteFiles } from "@/app/api/uploadthing/helper-function";
 import { ClientUploadedFileData } from "uploadthing/types";
@@ -95,7 +94,6 @@ const DetailStore: React.FC<{ dataStore: Store; dataAdmins: User[] }> = ({
   dataStore,
   dataAdmins,
 }) => {
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [currentStep, setCurrentStep] = React.useState(1);
   const [prevStep, setPrevStep] = React.useState(1);
@@ -243,7 +241,7 @@ const DetailStore: React.FC<{ dataStore: Store; dataAdmins: User[] }> = ({
         },
       );
     },
-    [form, router, dataStore],
+    [form, dataStore],
   );
 
   return (

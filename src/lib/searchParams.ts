@@ -1,10 +1,8 @@
 import {
   createLoader,
-  parseAsArrayOf,
   parseAsInteger,
   parseAsJson,
   parseAsString,
-  SearchParams,
 } from "nuqs/server";
 import { z } from "zod";
 
@@ -19,19 +17,34 @@ const SortOptionSchema = z.array(
   }),
 );
 
-export const dataDashboardSearchParams = {
+const PaginationNuqs = {
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
+};
+
+// SuperAdmin / Owner
+export const dataDashboardSearchParamsOwner = {
+  ...PaginationNuqs,
   sort: parseAsJson(SortOptionSchema.parse).withDefault([]),
   nameAdmin: parseAsString.withDefault(""),
   status: parseAsString.withDefault(""),
 };
-
-// ✅ Loader siap pakai di server component
-export const loadSearchParamsDataDashboard = createLoader(
-  dataDashboardSearchParams,
+export const loadSearchParamsDataDashboardOwner = createLoader(
+  dataDashboardSearchParamsOwner,
 );
 
 export const loadSearchParamsDataDashboardCategory = createLoader(
   dataDashboardCategory,
+);
+
+// Admin / Employer
+export const dataDashboardSearchParamsEmployer = {
+  ...PaginationNuqs,
+  sort: parseAsJson(SortOptionSchema.parse).withDefault([]),
+  status: parseAsString.withDefault(""),
+  customer: parseAsString.withDefault(""),
+};
+
+export const loadSearchParamsDataDashboardEmployer = createLoader(
+  dataDashboardSearchParamsEmployer,
 );

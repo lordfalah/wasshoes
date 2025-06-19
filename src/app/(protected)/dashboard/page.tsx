@@ -1,89 +1,27 @@
-import { SectionCards } from "./_components/section-cards";
-import { ChartAreaInteractive } from "./_components/chart-area-interactive";
-import { cookies } from "next/headers";
-import { TError, TSuccess } from "@/types/route-api";
-import { Category, Paket, TStatusOrder } from "@prisma/client";
-import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
-import DataTableCategorys from "./_components/data-table-category";
-import { TabsContent } from "@/components/ui/tabs";
-import PageTabs from "./_components/page-tabs";
-import { getAllOrdersForSuperadmin } from "@/actions/order";
-import DataTableOrder from "./_components/data-table-order";
 import { SearchParams } from "nuqs";
-import { loadSearchParamsDataDashboard } from "@/lib/searchParams";
+import { auth } from "@/auth";
+import OwnerContent from "./_components/owner-content";
+import { UserRole } from "@prisma/client";
+import EmployerContent from "./_components/employer-content";
 
 type PageProps = {
   searchParams: Promise<SearchParams>;
 };
 
-const fetchCategorys = async (cookieAuth: ReadonlyRequestCookies) => {
-  try {
-    const req = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL}/api/store/category`,
-      {
-        headers: {
-          Cookie: cookieAuth.toString(),
-        },
-      },
-    );
-    const res = (await req.json()) as
-      | TSuccess<Array<Category & { pakets: Paket[] }>>
-      | TError<{
-          code?: number;
-          description?: string;
-        }>;
-
-    if (!res.data) {
-      throw new Error(res.message || res.errors.description);
-    }
-
-    return res;
-  } catch (error) {
-    throw error;
-  }
-};
-
 export default async function PageDashboard({ searchParams }: PageProps) {
-  const cookieStore = await cookies();
+  const session = await auth();
+  if (!session) throw new Error("Unauthorized");
 
-  const { nameAdmin, page, perPage, sort, status } =
-    await loadSearchParamsDataDashboard(searchParams);
-
-  const [{ data: dataCategorys }, { data: dataOrders, error: errorOrder }] =
-    await Promise.all([
-      fetchCategorys(cookieStore),
-      getAllOrdersForSuperadmin({
-        page,
-        perPage,
-        sort,
-        nameAdmin,
-        status: status
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean) as TStatusOrder[],
-      }),
-    ]);
-
-  if (!dataOrders || errorOrder) throw new Error(errorOrder);
-
-  return (
-    <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      <SectionCards />
-      <div className="px-4 lg:px-6">
-        <ChartAreaInteractive />
-      </div>
-
-      <div className="px-4 lg:px-6">
-        <DataTableOrder data={dataOrders} />
-      </div>
-
-      <PageTabs className="flex flex-col px-4 lg:px-6">
-        <TabsContent value="categorys">
-          <DataTableCategorys data={dataCategorys} />
-        </TabsContent>
-
-        <TabsContent value="users">Users</TabsContent>
-      </PageTabs>
-    </div>
-  );
+  if (session.user.role.name === UserRole.SUPERADMIN) {
+    return <OwnerContent searchParams={searchParams} />;
+  } else if (session.user.role.name === UserRole.ADMIN) {
+    return (
+      <EmployerContent
+        storeId={session.user.storeId}
+        searchParams={searchParams}
+      />
+    );
+  } else {
+    return "asas";
+  }
 }

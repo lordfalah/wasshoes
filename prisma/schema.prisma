@@ -156,13 +156,28 @@ enum TPaymentMethod {
   AUTO
 }
 
+enum LaundryStatus {
+  // Status awal setelah pesanan dikonfirmasi/dibayar
+  AWAITING_PROCESSING // Menunggu untuk diproses/dikerjakan
+  // Status pengerjaan
+  IN_PROGRESS // Sedang dalam pengerjaan (laundry)
+  QUALITY_CHECK // Pemeriksaan kualitas (setelah pengerjaan selesai)
+  // Status siap diambil
+  READY_FOR_COLLECTION // Pesanan sudah siap dan menunggu diambil oleh pelanggan di lokasi
+  // Status selesai
+  COMPLETED // Pesanan telah diambil oleh pelanggan dan dianggap selesai sepenuhnya
+  // Status bermasalah/penundaan
+  ON_HOLD // Ditahan karena alasan tertentu (misal: menunggu konfirmasi pelanggan, masalah pada sepatu)
+}
+
 model Order {
   id            String         @id @default(cuid())
   totalPrice    Int            @db.Integer
   paymentMethod TPaymentMethod @default(MANUAL)
   paymentToken  String? // Token Snap (WAJIB)
   redirectUrl   String?
-  status        TStatusOrder   @default(PENDING)
+  status        TStatusOrder   @default(PENDING) // transaction
+  laundryStatus LaundryStatus  @default(AWAITING_PROCESSING)
 
   /// [Image]
   shoesImages Json[]

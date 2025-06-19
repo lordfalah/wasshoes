@@ -5,6 +5,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import {
   CheckCircle,
   CheckCircle2Icon,
+  ClipboardCheck,
+  Contact,
   Loader2,
   MoreHorizontal,
   Text,
@@ -20,7 +22,14 @@ import { Button } from "@/components/ui/button";
 import { useMemo } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
 import { DataTable } from "@/components/tables/data-table";
-import { Order, PaketOrder, Store, TStatusOrder, User } from "@prisma/client";
+import {
+  LaundryStatus,
+  Order,
+  PaketOrder,
+  Store,
+  TStatusOrder,
+  User,
+} from "@prisma/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,7 +55,7 @@ import { DataTableToolbar } from "@/components/tables/data-table-toolbar";
 import { LapTimerIcon } from "@radix-ui/react-icons";
 import { DataTableColumnHeader } from "@/components/tables/data-table-column-header";
 
-const DataTableOrder: React.FC<{
+const DataTableOrderOwner: React.FC<{
   data: Array<
     Order & { user: User; store: Store & { admin: User }; pakets: PaketOrder[] }
   >;
@@ -142,7 +151,7 @@ const DataTableOrder: React.FC<{
         id: "status",
         accessorKey: "status",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Status" />
+          <DataTableColumnHeader column={column} title="Status Transaction" />
         ),
 
         cell: ({ row }) => (
@@ -240,6 +249,35 @@ const DataTableOrder: React.FC<{
       },
 
       {
+        id: "status_laundry",
+        accessorKey: "laundryStatus",
+        header: "Status Laundry",
+        cell: ({ row }) => (
+          <Badge
+            variant="outline"
+            className="text-muted-foreground flex gap-1 px-1.5 capitalize [&_svg]:size-3"
+          >
+            {row.original.laundryStatus === LaundryStatus.COMPLETED && (
+              <CheckCircle2Icon className="text-green-500 dark:text-green-400" />
+            )}
+            {row.original.laundryStatus === LaundryStatus.ON_HOLD && (
+              <XCircle />
+            )}
+            {row.original.laundryStatus === LaundryStatus.IN_PROGRESS && (
+              <Loader2 />
+            )}
+            {row.original.laundryStatus === LaundryStatus.QUALITY_CHECK && (
+              <ClipboardCheck />
+            )}
+
+            {row.original.laundryStatus ===
+              LaundryStatus.READY_FOR_COLLECTION && <Contact />}
+            {row.original.laundryStatus}
+          </Badge>
+        ),
+      },
+
+      {
         id: "actions",
         cell: function Cell({}) {
           return (
@@ -326,4 +364,4 @@ const DataTableOrder: React.FC<{
   );
 };
 
-export default DataTableOrder;
+export default DataTableOrderOwner;

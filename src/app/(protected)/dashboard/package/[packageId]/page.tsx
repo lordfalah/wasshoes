@@ -3,7 +3,6 @@ import { Category, Paket, Store } from "@prisma/client";
 import { TError, TSuccess } from "@/types/route-api";
 import { cookies } from "next/headers";
 import EditPackage from "./_components/edit-package";
-import { ClientUploadedFileData } from "uploadthing/types";
 
 const fetchCategoryDetail = async (
   cookieAuth: ReadonlyRequestCookies,
@@ -102,12 +101,7 @@ export default async function PageDashboardPackageEdit({
   return (
     <div className="flex flex-col gap-4 px-4 py-4 md:gap-6 md:py-6 lg:px-6">
       <EditPackage
-        dataPackage={{
-          ...dataPaket,
-          image: dataPaket.image as unknown as ClientUploadedFileData<{
-            uploadedBy: string | undefined;
-          }>,
-        }}
+        dataPackage={dataPaket}
         dataCategorys={dataCategorys}
         dataStores={dataStores}
       />
