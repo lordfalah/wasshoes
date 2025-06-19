@@ -3,6 +3,17 @@
 import { db } from "@/lib/db";
 import { getErrorMessage } from "@/lib/handle-error";
 
+type TItemDetail = {
+  id?: string;
+  name: string;
+  price: number;
+  quantity: number;
+  brand?: string;
+  category?: string;
+  merchant_name?: string;
+  url?: string;
+};
+
 export async function filterPakets({ query }: { query: string }) {
   try {
     if (query.trim().length === 0) {
@@ -46,14 +57,14 @@ export async function filterPakets({ query }: { query: string }) {
 type PaketInput = {
   paketId: string;
   quantity: number;
-  priceOrder?: number;
+  priceOrder?: number | null;
 };
 
 export async function getTotalPriceAndItemDetails(
-  pakets: PaketInput[],
-  isAdmin = false, // tambahkan parameter
-) {
-  const paketMap = new Map(pakets.map((p) => [p.paketId, p.quantity]));
+  paketsInput: PaketInput[],
+  isAdmin = false,
+): Promise<{ total: number; item_details: TItemDetail[] }> {
+  const paketMap = new Map(paketsInput.map((p) => [p.paketId, p.quantity]));
 
   const foundPakets = await db.paket.findMany({
     where: {
@@ -62,7 +73,7 @@ export async function getTotalPriceAndItemDetails(
     select: {
       id: true,
       name: true,
-      price: true,
+      price: true, // Ini adalah harga dasar PER UNIT dari DB
       category: {
         select: {
           name: true,
@@ -72,42 +83,58 @@ export async function getTotalPriceAndItemDetails(
   });
 
   if (foundPakets.length !== paketMap.size) {
-    throw new Error("Beberapa paket tidak ditemukan di database");
+    throw new Error("Beberapa paket tidak ditemukan di database.");
   }
 
-  let total = 0;
-  const item_details = foundPakets.map((p) => {
-    const quantity = paketMap.get(p.id) ?? 0;
-    const inputPaket = pakets.find((pkt) => pkt.paketId === p.id);
-    const customPrice = inputPaket?.priceOrder;
-    const basePrice = p.price;
+  const { totalGrossAmount, item_details } = foundPakets.reduce(
+    (acc, p) => {
+      const quantity = paketMap.get(p.id) ?? 0;
+      if (quantity === 0) return acc;
 
-    if (isAdmin && customPrice) {
-      total += customPrice;
+      const inputPaket = paketsInput.find((pkt) => pkt.paketId === p.id);
+      const customTotalPrice = inputPaket?.priceOrder; // <-- Ini adalah harga TOTAL dari input
 
-      return {
+      let effectivePriceForMidtrans: number; // Ini akan menjadi 'price' di Midtrans ItemDetails
+      let actualQuantityForMidtrans: number; // Ini akan menjadi 'quantity' di Midtrans ItemDetails
+
+      // Logika khusus untuk ADMIN jika ada customTotalPrice
+      if (
+        isAdmin &&
+        customTotalPrice !== undefined &&
+        customTotalPrice !== null
+      ) {
+        // Jika admin memberikan harga total, kirimkan ke Midtrans sebagai 1 unit dengan harga total tersebut.
+        effectivePriceForMidtrans = Number(customTotalPrice);
+        actualQuantityForMidtrans = 1;
+      } else {
+        // Untuk user biasa, atau admin yang tidak memberikan customTotalPrice,
+        // gunakan harga dasar per unit dan quantity sebenarnya.
+        effectivePriceForMidtrans = Number(p.price); // Harga dasar per unit
+        actualQuantityForMidtrans = quantity; // Quantity sebenarnya
+      }
+
+      // Hitung total harga untuk baris item ini
+      // Selalu (effectivePriceForMidtrans * actualQuantityForMidtrans)
+      const itemCalculatedTotalPrice =
+        effectivePriceForMidtrans * actualQuantityForMidtrans;
+
+      // Tambahkan ke total keseluruhan
+      acc.totalGrossAmount += itemCalculatedTotalPrice;
+
+      // Tambahkan ke item_details untuk Midtrans
+      acc.item_details.push({
         id: p.id,
         name: p.name,
-        quantity: 1, // treat as single subtotal
-        price: customPrice, // this is total price already
+        quantity: actualQuantityForMidtrans, // Quantity untuk Midtrans
+        price: effectivePriceForMidtrans, // Harga PER UNIT untuk Midtrans
         category: p.category?.name,
         url: `${process.env.NEXT_PUBLIC_APP_URL}/product/${p.id}`,
-      };
-    } else {
-      const price = customPrice ?? basePrice;
-      const subtotal = price * quantity;
-      total += subtotal;
+      });
 
-      return {
-        id: p.id,
-        name: p.name,
-        quantity,
-        price,
-        category: p.category?.name,
-        url: `${process.env.NEXT_PUBLIC_APP_URL}/product/${p.id}`,
-      };
-    }
-  });
+      return acc;
+    },
+    { totalGrossAmount: 0, item_details: [] as TItemDetail[] },
+  );
 
-  return { total, item_details };
+  return { total: totalGrossAmount, item_details };
 }

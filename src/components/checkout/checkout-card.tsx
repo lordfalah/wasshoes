@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { cn, formatToRupiah } from "@/lib/utils";
+import { calculateOrderTotals, cn, formatToRupiah } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -12,15 +12,17 @@ import { Separator } from "@/components/ui/separator";
 import { CartLineItems } from "@/components/checkout/cart-line-items";
 import { getCart } from "@/actions/cart";
 import { getUnpaidOrderByStore } from "@/actions/order";
-import { auth } from "@/auth";
 
 interface CheckoutCardProps {
   storeId: string;
+  isAdmin?: boolean;
 }
 
-export async function CheckoutCard({ storeId }: CheckoutCardProps) {
+export async function CheckoutCard({
+  storeId,
+  isAdmin = false,
+}: CheckoutCardProps) {
   const cartLineItems = await getCart({ storeId });
-  const session = await auth();
 
   let redirectUrl = `/checkout/${storeId}`;
   const { data, error } = await getUnpaidOrderByStore(storeId);
@@ -30,39 +32,12 @@ export async function CheckoutCard({ storeId }: CheckoutCardProps) {
 
   if (error) throw new Error(error);
 
-  // --- Perhitungan Total yang Didefinisikan di Awal ---
-  const totalQuantity = cartLineItems.reduce(
-    (acc, item) => acc + item.quantity,
-    0,
-  );
+  console.log(cartLineItems);
 
-  const subtotalPrice = cartLineItems.reduce((acc, item) => {
-    return acc + item.price * item.quantity;
-  }, 0);
-
-  const finalPrice = cartLineItems.reduce((acc, item) => {
-    // Jika item.priceOrder ada dan bukan null/undefined, gunakan itu.
-    // Jika tidak, gunakan item.price * item.quantity.
-    return (
-      acc +
-      (item.priceOrder !== undefined && item.priceOrder !== null
-        ? item.priceOrder
-        : item.price * item.quantity)
-    );
-  }, 0);
-
-  // --- LOGIKA DISKON/BIAYA TAMBAHAN BARU DI SINI ---
-  let adjustmentText: string | null = null;
-  let adjustmentAmount = 0;
-
-  if (finalPrice > subtotalPrice) {
-    adjustmentAmount = finalPrice - subtotalPrice;
-    adjustmentText = `Biaya Tambahan: ${formatToRupiah(adjustmentAmount)}`;
-  } else if (finalPrice < subtotalPrice) {
-    adjustmentAmount = subtotalPrice - finalPrice;
-    adjustmentText = `Diskon Biaya: ${formatToRupiah(adjustmentAmount)}`;
-  }
-  // Tidak perlu else jika finalPrice === subtotalPrice, karena tidak ada penyesuaian
+  // --- Gunakan fungsi reusable untuk perhitungan total ---
+  const { totalQuantity, subtotalPrice, finalPrice, adjustmentText } =
+    calculateOrderTotals(cartLineItems);
+  // --- Akhir penggunaan fungsi reusable ---
 
   return (
     <Card
@@ -92,7 +67,7 @@ export async function CheckoutCard({ storeId }: CheckoutCardProps) {
       <Separator className="mb-4" />
       <CardContent className="pr-0 pb-6 pl-6">
         <CartLineItems
-          isAdmin={session?.user.role.name === "ADMIN" ? true : false}
+          isAdmin={isAdmin}
           items={cartLineItems}
           className="max-h-[280px]"
         />

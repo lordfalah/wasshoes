@@ -47,6 +47,8 @@ import {
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { NumericFormat } from "react-number-format";
+import { cn } from "@/lib/utils";
 
 const CreatePackage: React.FC<{
   categorys: Category[];
@@ -60,7 +62,7 @@ const CreatePackage: React.FC<{
       name: "",
       image: [],
       description: "",
-      price: 0,
+      price: 1000,
       categoryId: "",
       isVisible: true,
       nameStore: [],
@@ -125,8 +127,8 @@ const CreatePackage: React.FC<{
           }
         })(),
         {
-          loading: "Saving Store...",
-          success: "Store saved successfully!",
+          loading: "Saving Paket...",
+          success: "Paket saved successfully!",
           error: (err) => getErrorMessage(err),
         },
       );
@@ -163,16 +165,24 @@ const CreatePackage: React.FC<{
                 <FormLabel>Price</FormLabel>
                 <FormControl>
                   <div className="relative z-10 h-fit after:absolute after:top-1/2 after:z-20 after:-translate-y-1/2 after:pl-2 after:text-sm after:content-['Rp.']">
-                    <Input
-                      className="!pl-8"
-                      {...field}
-                      placeholder="xxx"
-                      type="number"
-                      onFocus={() => {
-                        if (form.getValues("price") === 0) {
-                          form.setValue("price", "" as never satisfies number);
-                        }
+                    <NumericFormat
+                      autoComplete="off"
+                      value={field.value}
+                      onValueChange={(values) => {
+                        form.setValue("price", Number(values.value), {
+                          shouldValidate: true,
+                        });
                       }}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      allowNegative={false}
+                      allowLeadingZeros={false}
+                      placeholder="10.000"
+                      className={cn(
+                        "border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 pl-8 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+                        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+                        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+                      )}
                     />
                   </div>
                 </FormControl>
@@ -310,14 +320,14 @@ const CreatePackage: React.FC<{
                     value={field.value}
                     onValueChange={field.onChange}
                     accept="image/*"
-                    maxFiles={1}
+                    maxFiles={3}
                     maxSize={4 * 1024 * 1024}
                     onFileReject={(_, message) => {
                       form.setError("image", {
                         message,
                       });
                     }}
-                    multiple={false}
+                    multiple={true}
                   >
                     <FileUploadDropzone className="flex-row flex-wrap border-dotted text-center">
                       <CloudUpload className="size-4" />

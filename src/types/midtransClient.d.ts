@@ -13,6 +13,7 @@ declare module "midtrans-client" {
         brand?: string;
         category?: string;
         merchant_name?: string;
+        url?: string;
       }[];
       customer_details?: {
         first_name?: string;

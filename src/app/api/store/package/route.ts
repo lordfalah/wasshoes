@@ -18,7 +18,7 @@ export const POST = withAuth(async (req) => {
         name: data.name,
         price: data.price,
         description: data.description,
-        image: data.image[0],
+        image: data.image,
         category: {
           connect: {
             id: data.categoryId,

@@ -75,19 +75,20 @@ const EditPackage: React.FC<{
 
   React.useEffect(() => {
     const convertToFiles = async () => {
-      const res = await fetch(dataPackage.image.ufsUrl);
-      const blob = await res.blob();
-      const files = [
-        new File([blob], dataPackage.image.name, {
-          type: dataPackage.image.type,
-          lastModified: dataPackage.image.lastModified,
+      const files = await Promise.all(
+        dataPackage.image.map(async ({ ufsUrl, name, type, lastModified }) => {
+          const res = await fetch(ufsUrl);
+          const blob = await res.blob();
+          return new File([blob], name, {
+            type,
+            lastModified,
+          });
         }),
-      ];
-
+      );
       form.setValue("image", files);
     };
 
-    if (dataPackage.image.ufsUrl) convertToFiles();
+    if (dataPackage.image.length) convertToFiles();
   }, [dataPackage.image, form]);
 
   const onSubmit = React.useCallback(
@@ -96,7 +97,7 @@ const EditPackage: React.FC<{
         (async () => {
           setIsSubmitting(true);
 
-          const prevFiles = [dataPackage.image];
+          const prevFiles = dataPackage.image;
           const currentFiles = data.image;
 
           // Cek apakah file berubah (jika sama, skip upload)
@@ -137,8 +138,6 @@ const EditPackage: React.FC<{
             } else {
               console.log("No file changes detected, skipping upload");
             }
-
-            console.log(data);
 
             const req = await fetch(
               `${process.env.NEXT_PUBLIC_APP_URL}/api/store/package/${dataPackage.id}`,

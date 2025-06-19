@@ -1,7 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CloudUpload, Loader2, X, Info } from "lucide-react";
+import {
+  CloudUpload,
+  Loader2,
+  X,
+  Info,
+  ChevronsUpDown,
+  Check,
+} from "lucide-react";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -24,6 +31,14 @@ import {
   FileUploadList,
   FileUploadTrigger,
 } from "@/components/ui/file-upload";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -52,7 +67,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { AnimatePresence, motion } from "motion/react";
-import { slugify } from "@/lib/utils";
+import { cn, slugify } from "@/lib/utils";
+import { User } from "@prisma/client";
 
 const steps = [
   {
@@ -75,12 +91,11 @@ const steps = [
   },
 ] as const;
 
-const CreateStore: React.FC = () => {
+const CreateStore: React.FC<{ admins: User[] }> = ({ admins }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [currentStep, setCurrentStep] = React.useState(1);
   const [prevStep, setPrevStep] = React.useState(1);
-  const [isSlugModified, setIsSlugModified] = React.useState(false);
   const current = steps.find((s) => s.step === currentStep);
   const direction = currentStep > prevStep ? 1 : -1; // 1 = next, -1 = prev
   const handleStepChange = (step: number) => {
@@ -92,15 +107,12 @@ const CreateStore: React.FC = () => {
     resolver: zodResolver(StoreSchemaClient),
     defaultValues: {
       name: "",
-      slug: "",
       bannerImgs: [],
       description: "",
       mapEmbed: "",
+      adminId: "",
     },
   });
-
-  // Watch current values of slug
-  const slugValue = form.watch("slug");
 
   const onSubmit = React.useCallback(
     (data: TStoreSchemaClient) => {
@@ -124,6 +136,7 @@ const CreateStore: React.FC = () => {
                 body: JSON.stringify({
                   ...data,
                   bannerImgs: resFile,
+                  slug: slugify(data.name),
                 }),
               },
             );
@@ -187,47 +200,11 @@ const CreateStore: React.FC = () => {
                 <FormLabel>Name Store</FormLabel>
                 <FormControl>
                   <Input
+                    autoComplete="off"
                     placeholder="wasshoes..."
                     {...field}
-                    onFocus={() => {
-                      if (form.formState.errors.slug) {
-                        setIsSlugModified(false);
-                      }
-                    }}
-                    onChange={(e) => {
-                      field.onChange(e); // Update name
-                      const newName = e.target.value;
-
-                      if (newName === "" && slugValue === "") {
-                        setIsSlugModified(false); // Reset isSlugModified if both fields are empty
-                      } else if (!isSlugModified) {
-                        form.setValue("slug", slugify(newName)); // Auto-generate slug
-                      }
-                    }}
                   />
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="slug"
-            render={({ field }) => (
-              <FormItem className="sr-only space-y-2.5">
-                <FormLabel>Slug</FormLabel>
-                <FormControl>
-                  <Input
-                    className="pointer-events-none cursor-not-allowed"
-                    disabled={true}
-                    placeholder="falxxxx"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  This is your public display link.
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -241,6 +218,7 @@ const CreateStore: React.FC = () => {
                 <FormLabel>Description</FormLabel>
                 <FormControl>
                   <AutosizeTextarea
+                    autoComplete="off"
                     placeholder="This textarea with min height 52 and max height 200."
                     maxHeight={200}
                     {...field}
@@ -250,7 +228,71 @@ const CreateStore: React.FC = () => {
               </FormItem>
             )}
           />
-
+          <FormField
+            control={form.control}
+            name="adminId"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Head Store</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "w-full justify-between",
+                          !field.value && "text-muted-foreground",
+                        )}
+                      >
+                        {field.value
+                          ? admins.find((admin) => admin.id === field.value)
+                              ?.name
+                          : "Select head store"}
+                        <ChevronsUpDown className="opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent align="center" className="w-full p-0">
+                    <Command>
+                      <CommandInput
+                        placeholder="Search framework..."
+                        className="h-9"
+                      />
+                      <CommandList>
+                        <CommandEmpty>Please add employers</CommandEmpty>
+                        <CommandGroup>
+                          {admins.map((admin) => (
+                            <CommandItem
+                              value={admin.id}
+                              key={admin.id}
+                              onSelect={() => {
+                                form.setValue("adminId", admin.id);
+                              }}
+                            >
+                              {admin.name}
+                              <Check
+                                className={cn(
+                                  "ml-auto",
+                                  admin.id === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <FormDescription>
+                  This is the language that will be used in the dashboard.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="mapEmbed"
@@ -317,6 +359,7 @@ const CreateStore: React.FC = () => {
                 <FormControl>
                   <Input
                     {...field}
+                    autoComplete="off"
                     placeholder="<iframe src=https://www.google.com/maps/embed"
                     type="text"
                   />
@@ -325,7 +368,6 @@ const CreateStore: React.FC = () => {
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="bannerImgs"

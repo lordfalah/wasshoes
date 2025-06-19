@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { AlertDialog as AlertDialogPrimitive, VisuallyHidden } from "radix-ui";
+
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -53,10 +53,10 @@ function AlertDialogContent({
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
-      <VisuallyHidden>
+      <VisuallyHidden.Root>
         <AlertDialogTitle>TITLE</AlertDialogTitle>
         <AlertDialogDescription>DESC</AlertDialogDescription>
-      </VisuallyHidden>
+      </VisuallyHidden.Root>
       <AlertDialogPrimitive.Content
         id={id}
         aria-describedby={id}

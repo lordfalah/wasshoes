@@ -54,6 +54,8 @@ export const POST = withAuth(async (req) => {
         true, // karena admin
       );
 
+      console.log({ item_details });
+
       const transaction = await snap.createTransaction({
         transaction_details: {
           order_id: uuidOrderId, // ID order unik
@@ -90,7 +92,7 @@ export const POST = withAuth(async (req) => {
             create: data.pakets.map((paket) => ({
               paketId: paket.paketId,
               quantity: paket.quantity,
-              priceOrder: paket.priceOrder,
+              priceOrder: paket.priceOrder ?? null,
             })),
           },
 
@@ -215,7 +217,6 @@ export const POST = withAuth(async (req) => {
             create: data.pakets.map((paket) => ({
               paketId: paket.paketId,
               quantity: paket.quantity,
-              priceOrder: paket.price,
             })),
           },
 

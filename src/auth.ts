@@ -136,7 +136,7 @@ export const {
       token.role = existingUser.role;
       token.isTwoFactorEnabled = existingUser.isTwoFactorEnabled;
       token.picture = existingUser.image;
-      token.storeId = existingUser.storeId;
+      token.storeId = existingUser.store?.id ?? null;
       token.firstName = existingUser.firstName;
       token.lastName = existingUser.lastName;
       token.phone = existingUser.phone;

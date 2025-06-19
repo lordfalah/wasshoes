@@ -9,15 +9,6 @@ export const StoreSchemaClient = z.object({
     .min(1, "Name is required")
     .max(150, "Name must be at most 150 characters"),
 
-  slug: z
-    .string()
-    .min(1, { message: "Slug is required" })
-    .toLowerCase()
-    .refine((value) => isValidSlug(value), {
-      message:
-        "Invalid slug format. Slug must contain only lowercase letters, numbers, and hyphens.",
-    }),
-
   description: z
     .string({ required_error: "description is required" })
     .min(1, "description is required")
@@ -46,6 +37,8 @@ export const StoreSchemaClient = z.object({
       }
       return mapUrl;
     }),
+
+  adminId: z.string().cuid(),
 });
 
 export const StoreSchemaServer = z.object({
@@ -85,6 +78,8 @@ export const StoreSchemaServer = z.object({
     .refine((val) => val.includes("https://www.google.com/maps/embed"), {
       message: "URL harus berasal dari Google Maps Embed",
     }),
+
+  adminId: z.string().cuid(),
 });
 
 export type TStoreSchemaClient = z.infer<typeof StoreSchemaClient>;

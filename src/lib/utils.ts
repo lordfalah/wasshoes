@@ -130,3 +130,113 @@ export function extractMapUrlFromIframe(iframeHtml: string): string | null {
   const match = iframeHtml.match(/<iframe[^>]+src\s*=\s*"(.*?)"/i);
   return match ? match[1] : null;
 }
+
+// Definisikan tipe input dan output untuk fungsi ini
+interface CalculateItemPriceDetailsInput {
+  price: number;
+  quantity: number;
+  priceOrder?: number | null;
+}
+
+interface CalculateItemPriceDetailsOutput {
+  itemSubtotal: number;
+  itemFinalPrice: number;
+  itemAdjustmentAmount: number;
+  itemAdjustmentText: string | null;
+}
+
+export function calculateItemPriceDetails(
+  item: CalculateItemPriceDetailsInput,
+): CalculateItemPriceDetailsOutput {
+  // itemSubtotal selalu berdasarkan harga dasar (item.price dari DB Paket) * kuantitas
+  const itemSubtotal = Number(item.price) * Number(item.quantity);
+
+  // itemFinalPrice:
+  // Jika priceOrder ada (tidak undefined dan tidak null), gunakan priceOrder sebagai harga TOTAL baris item.
+  // Jika priceOrder tidak ada, gunakan itemSubtotal.
+  const itemFinalPrice =
+    item.priceOrder !== undefined && item.priceOrder !== null
+      ? Number(item.priceOrder)
+      : itemSubtotal;
+
+  let itemAdjustmentAmount = 0;
+  let itemAdjustmentText: string | null = null;
+
+  // Hanya hitung penyesuaian jika itemFinalPrice berbeda dari itemSubtotal
+  if (itemFinalPrice !== itemSubtotal) {
+    if (itemFinalPrice > itemSubtotal) {
+      itemAdjustmentAmount = itemFinalPrice - itemSubtotal;
+      itemAdjustmentText = `Biaya Tambahan: ${formatToRupiah(itemAdjustmentAmount)}`;
+    } else if (itemFinalPrice < itemSubtotal) {
+      itemAdjustmentAmount = itemSubtotal - itemFinalPrice;
+      itemAdjustmentText = `Diskon Biaya: ${formatToRupiah(itemAdjustmentAmount)}`;
+    }
+  }
+
+  return {
+    itemSubtotal,
+    itemFinalPrice,
+    itemAdjustmentAmount,
+    itemAdjustmentText,
+  };
+}
+
+// Item standar yang akan digunakan untuk perhitungan harga (output normalisasi)
+export interface ItemPriceDetails {
+  price: number; // Harga dasar per unit
+  quantity: number; // Kuantitas item
+  priceOrder?: number | null; // Harga total item yang disepakati (sudah termasuk quantity)
+}
+
+// Tipe output untuk fungsi perhitungan total keranjang/order
+export interface CalculateOrderTotalsOutput {
+  totalQuantity: number;
+  subtotalPrice: number;
+  finalPrice: number;
+  adjustmentAmount: number;
+  adjustmentText: string | null;
+}
+
+export function calculateOrderTotals(
+  items: ItemPriceDetails[],
+): CalculateOrderTotalsOutput {
+  const totalQuantity = items.reduce((acc, item) => acc + item.quantity, 0);
+
+  const subtotalPrice = items.reduce((acc, item) => {
+    // Subtotal selalu berdasarkan harga dasar (price dari Paket DB) * kuantitas
+    return acc + Number(item.price) * Number(item.quantity);
+  }, 0);
+
+  const finalPrice = items.reduce((acc, item) => {
+    // Harga final per item:
+    // Jika priceOrder ada (tidak undefined dan tidak null), gunakan priceOrder sebagai harga TOTAL baris item.
+    // Jika priceOrder tidak ada, gunakan harga dasar (item.price) * kuantitas.
+    return (
+      acc +
+      (item.priceOrder !== undefined && item.priceOrder !== null
+        ? Number(item.priceOrder) // Ini adalah harga TOTAL untuk item ini
+        : Number(item.price) * Number(item.quantity))
+    );
+  }, 0);
+
+  let adjustmentAmount = 0;
+  let adjustmentText: string | null = null;
+
+  if (finalPrice !== subtotalPrice) {
+    if (finalPrice > subtotalPrice) {
+      adjustmentAmount = finalPrice - subtotalPrice;
+      adjustmentText = `Biaya Tambahan: ${formatToRupiah(adjustmentAmount)}`;
+    } else if (finalPrice < subtotalPrice) {
+      adjustmentAmount = subtotalPrice - finalPrice;
+      adjustmentText = `Diskon Biaya: ${formatToRupiah(adjustmentAmount)}`;
+    }
+  }
+
+  return {
+    totalQuantity,
+    subtotalPrice,
+    finalPrice,
+    adjustmentAmount,
+    adjustmentText,
+  };
+}

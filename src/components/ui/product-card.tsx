@@ -52,10 +52,12 @@ export function ProductCard({
       <Link aria-label={product.name} href={`/product/${product.id}`}>
         <CardHeader className="border-b p-0">
           <AspectRatio ratio={4 / 3}>
-            {product.image ? (
+            {product.image.length > 0 ? (
               <Image
-                src={product.image.ufsUrl ?? "/images/product-placeholder.webp"}
-                alt={product.image.name ?? product.name}
+                src={
+                  product.image[0].ufsUrl ?? "/images/product-placeholder.webp"
+                }
+                alt={product.image[0].name ?? product.name}
                 className="object-cover"
                 sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, (min-width: 475px) 50vw, 100vw"
                 fill

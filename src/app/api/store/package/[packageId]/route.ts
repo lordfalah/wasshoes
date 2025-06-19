@@ -49,7 +49,7 @@ export const PATCH = withAuth(async (req) => {
         name: data.name,
         description: data.description,
         price: data.price,
-        image: data.image[0],
+        image: data.image,
         stores:
           Array.isArray(data.nameStore) && data.nameStore.length > 0
             ? {

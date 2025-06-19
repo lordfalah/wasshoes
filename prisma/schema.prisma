@@ -49,10 +49,9 @@ model User {
   isTwoFactorEnabled    Boolean                @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
 
-  orders  Order[]
-  store   Store?  @relation(fields: [storeId], references: [id])
-  storeId String?
-  carts   Cart[]
+  orders Order[]
+  store  Store?  @relation("AdminOfStore") // 1-to-1, opsional hanya jika dia admin
+  carts  Cart[]
 
   @@map("users")
 }
@@ -125,7 +124,8 @@ model Store {
   mapEmbed    String  @db.Text
   /// [Image]
   bannerImgs  Json[]
-  users       User[]
+  adminId     String  @unique
+  admin       User    @relation("AdminOfStore", fields: [adminId], references: [id])
   pakets      Paket[]
   order       Order[]
 
@@ -171,7 +171,7 @@ model Order {
   user   User         @relation(fields: [userId], references: [id])
   userId String
 
-  /// InformationCustomer
+  /// [InformationCustomer]
   informationCustomer Json?
 
   storeId String // ✅ Foreign key ke Store
@@ -189,7 +189,7 @@ model Paket {
   description String       @db.Text
   price       Int          @db.Integer
   /// [Image]
-  image       Json
+  image       Json[]
   isVisible   Boolean      @default(true)
   rating      Int          @default(0) @db.SmallInt
   stores      Store[]

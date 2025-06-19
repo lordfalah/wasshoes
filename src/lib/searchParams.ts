@@ -1,13 +1,37 @@
-import { createLoader, parseAsString } from "nuqs/server";
+import {
+  createLoader,
+  parseAsArrayOf,
+  parseAsInteger,
+  parseAsJson,
+  parseAsString,
+  SearchParams,
+} from "nuqs/server";
+import { z } from "zod";
 
-// Describe your search params, and reuse this in useQueryStates / createSerializer:
-export const nameUser = {
-  name: parseAsString.withDefault(""),
-};
-
-export const dataDashboard = {
+export const dataDashboardCategory = {
   data: parseAsString.withDefault("categorys"),
 };
 
-export const loadSearchParamsDataDashboard = createLoader(dataDashboard);
-export const loadSearchParams = createLoader(nameUser);
+const SortOptionSchema = z.array(
+  z.object({
+    id: z.enum(["totalPrice", "status"]), // ✅ tambahkan opsi lain jika perlu
+    desc: z.boolean(),
+  }),
+);
+
+export const dataDashboardSearchParams = {
+  page: parseAsInteger.withDefault(1),
+  perPage: parseAsInteger.withDefault(10),
+  sort: parseAsJson(SortOptionSchema.parse).withDefault([]),
+  nameAdmin: parseAsString.withDefault(""),
+  status: parseAsString.withDefault(""),
+};
+
+// ✅ Loader siap pakai di server component
+export const loadSearchParamsDataDashboard = createLoader(
+  dataDashboardSearchParams,
+);
+
+export const loadSearchParamsDataDashboardCategory = createLoader(
+  dataDashboardCategory,
+);

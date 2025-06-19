@@ -8,11 +8,7 @@ export const GET = withAuthRole(async () => {
   try {
     const stores = await db.store.findMany({
       include: {
-        users: {
-          include: {
-            role: true,
-          },
-        },
+        admin: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -44,6 +40,7 @@ export const POST = withAuthRole(async (req) => {
         bannerImgs: data.bannerImgs,
         description: data.description,
         mapEmbed: data.mapEmbed,
+        adminId: data.adminId,
       },
     });
 

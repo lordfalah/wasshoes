@@ -1,12 +1,13 @@
 import Link from "next/link";
 
-import { cn, formatToRupiah } from "@/lib/utils";
+import { calculateOrderTotals, cn, formatToRupiah } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
@@ -15,6 +16,7 @@ import {
 import { CartLineItems } from "@/components/checkout/cart-line-items";
 import { Icons } from "@/components/icons";
 import { getCart } from "@/actions/cart";
+import { VisuallyHidden } from "radix-ui";
 
 export async function CartSheet() {
   const cartLineItems = await getCart();
@@ -24,43 +26,18 @@ export async function CartSheet() {
     0,
   );
 
-  const cartTotal = cartLineItems.reduce(
-    (total, item) => total + item.quantity * Number(item.price),
-    0,
-  );
+  const itemsForCalculation = cartLineItems.map((item) => {
+    return {
+      price: item.price, // Harga dasar per unit
+      quantity: item.quantity, // Kuantitas
+      priceOrder: item.priceOrder, // Harga total yang disesuaikan per baris item (jika ada)
+    };
+  });
 
-  // --- Perhitungan Total yang Didefinisikan di Awal ---
-  const totalQuantity = cartLineItems.reduce(
-    (acc, item) => acc + item.quantity,
-    0,
-  );
-
-  const subtotalPrice = cartLineItems.reduce((acc, item) => {
-    return acc + item.price * item.quantity;
-  }, 0);
-
-  const finalPrice = cartLineItems.reduce((acc, item) => {
-    // Jika item.priceOrder ada dan bukan null/undefined, gunakan itu.
-    // Jika tidak, gunakan item.price * item.quantity.
-    return (
-      acc +
-      (item.priceOrder !== undefined && item.priceOrder !== null
-        ? item.priceOrder
-        : item.price * item.quantity)
-    );
-  }, 0);
-
-  // --- LOGIKA DISKON/BIAYA TAMBAHAN BARU DI SINI ---
-  let adjustmentText: string | null = null;
-  let adjustmentAmount = 0;
-
-  if (finalPrice > subtotalPrice) {
-    adjustmentAmount = finalPrice - subtotalPrice;
-    adjustmentText = `Biaya Tambahan: ${formatToRupiah(adjustmentAmount)}`;
-  } else if (finalPrice < subtotalPrice) {
-    adjustmentAmount = subtotalPrice - finalPrice;
-    adjustmentText = `Diskon Biaya: ${formatToRupiah(adjustmentAmount)}`;
-  }
+  // --- Gunakan fungsi reusable untuk perhitungan total keseluruhan keranjang ---
+  const { totalQuantity, subtotalPrice, finalPrice, adjustmentText } =
+    calculateOrderTotals(itemsForCalculation);
+  // --- Akhir penggunaan fungsi reusable ---
 
   return (
     <Sheet>
@@ -82,7 +59,14 @@ export async function CartSheet() {
           <Icons.cart className="size-4" aria-hidden="true" />
         </Button>
       </SheetTrigger>
-      <SheetContent className="flex w-full flex-col pr-0 sm:max-w-lg">
+
+      <VisuallyHidden.Root>
+        <SheetDescription>Cart Desc</SheetDescription>
+      </VisuallyHidden.Root>
+      <SheetContent
+        aria-describedby="cart-content"
+        className="flex w-full flex-col pr-0 sm:max-w-lg"
+      >
         <SheetHeader className="space-y-2.5 pr-6">
           <SheetTitle>Cart {itemCount > 0 && `(${itemCount})`}</SheetTitle>
           <Separator />
@@ -113,7 +97,7 @@ export async function CartSheet() {
 
                 <div className="flex">
                   <span className="flex-1">Total</span>
-                  <span>Rp. {formatToRupiah(cartTotal)}</span>
+                  <span>Rp. {formatToRupiah(finalPrice)}</span>
                 </div>
               </div>
               <SheetFooter>

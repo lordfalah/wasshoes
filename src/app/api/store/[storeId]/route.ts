@@ -14,7 +14,7 @@ export const GET = withAuthRole(async (req) => {
       );
     }
 
-    const store = await db.store.findFirst({
+    const store = await db.store.findUnique({
       where: { id: storeId },
     });
 

@@ -4,9 +4,7 @@ import {
   AlertDialog,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
@@ -14,7 +12,6 @@ import { FormEvent, Fragment, useState } from "react";
 import { Button } from "../ui/button";
 import { Loader2, HandCoins, X } from "lucide-react";
 import { showErrorToast } from "@/lib/handle-error";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useRouter } from "next/navigation";
 
 const PayTransaction: React.FC<{ paymentToken: string }> = ({
@@ -73,13 +70,6 @@ const PayTransaction: React.FC<{ paymentToken: string }> = ({
         aria-description="desc-snap"
         className="px-0 py-0 sm:p-6"
       >
-        <VisuallyHidden>
-          <AlertDialogDescription id="snap-desc">
-            Snap UI
-          </AlertDialogDescription>
-          <AlertDialogTitle id="snap-title">Snap UI</AlertDialogTitle>
-        </VisuallyHidden>
-
         <AlertDialogFooter className="flex flex-row justify-end">
           <AlertDialogCancel asChild>
             <Button

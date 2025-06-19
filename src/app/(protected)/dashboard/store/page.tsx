@@ -1,13 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { TStoreSchemaServer } from "@/schemas/store.schema";
 import { TError, TSuccess } from "@/types/route-api";
-import { Role, User } from "@prisma/client";
+import { Store, User } from "@prisma/client";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import DataTableStore from "./_components/data-table-store";
 
-const fetchStore = async (cookieAuth: ReadonlyRequestCookies) => {
+const fetchStores = async (cookieAuth: ReadonlyRequestCookies) => {
   try {
     const req = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/store`, {
       headers: {
@@ -16,9 +15,8 @@ const fetchStore = async (cookieAuth: ReadonlyRequestCookies) => {
     });
     const res = (await req.json()) as
       | TSuccess<
-          (TStoreSchemaServer & {
-            id: string;
-            users: (User & { role: Role[] })[];
+          (Store & {
+            admin: User;
           })[]
         >
       | TError<{
@@ -38,7 +36,7 @@ const fetchStore = async (cookieAuth: ReadonlyRequestCookies) => {
 
 export default async function PageDashboardStore() {
   const cookieStore = await cookies();
-  const { data: dataStores } = await fetchStore(cookieStore);
+  const { data: dataStores } = await fetchStores(cookieStore);
 
   return (
     <div className="flex flex-col gap-4 px-4 py-4 md:gap-6 md:py-6 lg:px-6">

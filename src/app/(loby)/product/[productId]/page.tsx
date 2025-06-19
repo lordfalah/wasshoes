@@ -103,10 +103,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <div className="flex flex-col gap-8 md:flex-row md:gap-16">
         <ProductImageCarousel
           className="w-full md:w-1/2"
-          images={Array(product.image) ?? []}
+          images={product.image ?? []}
           options={{
             loop: true,
           }}
+          showChildImg={true}
         />
         <Separator className="mt-4 md:hidden" />
         <div className="flex w-full flex-col gap-4 md:w-1/2">

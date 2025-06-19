@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { TStatusOrder } from "@prisma/client";
+import { Order, Prisma, TStatusOrder, UserRole } from "@prisma/client";
 import { subHours } from "date-fns";
 import { connection } from "next/server";
 import { getErrorMessage } from "@/lib/handle-error";
@@ -64,6 +64,136 @@ export async function getOrderLineItems(input: { orderId: string }) {
   } catch (err) {
     console.error("Error getOrderLineItems:", err);
     return { data: null, error: getErrorMessage(err) };
+  }
+}
+
+type GetAllOrdersParams = {
+  page: number;
+  perPage: number;
+  sort: { id: string; desc: boolean }[];
+  nameAdmin: string;
+  status: TStatusOrder[]; // hasil dari split manual string "PENDING,FAILURE"
+};
+
+export async function getAllOrdersForSuperadmin({
+  page,
+  perPage,
+  sort = [],
+  nameAdmin = "",
+  status = [],
+}: GetAllOrdersParams) {
+  try {
+    const skip = (page - 1) * perPage;
+
+    // Atur sorting
+    const orderBy = sort.length
+      ? sort.map(({ id, desc }) => ({
+          [id]: desc ? "desc" : "asc",
+        }))
+      : [{ createdAt: "desc" }];
+
+    // Filter dinamis
+    const where: Prisma.OrderWhereInput = {
+      ...(status.length > 0 && {
+        status: {
+          in: status,
+        },
+      }),
+      ...(nameAdmin && {
+        store: {
+          admin: {
+            name: {
+              contains: nameAdmin,
+              mode: "insensitive",
+            },
+          },
+        },
+      }),
+    };
+
+    // Ambil data dan total
+    const [orders] = await Promise.all([
+      db.order.findMany({
+        where,
+        skip,
+        take: perPage,
+        orderBy,
+        include: {
+          user: true,
+          store: {
+            include: {
+              admin: true,
+            },
+          },
+          pakets: true,
+        },
+      }),
+      db.order.count({ where }),
+    ]);
+
+    return {
+      data: orders,
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error getAllOrdersForSuperadmin:", error);
+    return {
+      data: null,
+      error: getErrorMessage(error),
+    };
+  }
+}
+
+export async function getOrders() {
+  try {
+    const session = await auth();
+    if (!session) throw new Error("Not Authorized");
+
+    const role = session.user.role.name;
+    const userId = session.user.id;
+
+    let orders: Order[] = [];
+
+    if (role === UserRole.SUPERADMIN) {
+      // Superadmin bisa lihat semua order
+      orders = await db.order.findMany({
+        include: {
+          store: {
+            include: {
+              admin: true,
+            },
+          },
+          pakets: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+    } else if (role === UserRole.ADMIN) {
+      // Cari toko yang dikelola admin ini
+      const store = await db.store.findFirst({
+        where: { adminId: userId },
+      });
+
+      if (!store) throw new Error("Admin tidak mengelola toko manapun");
+
+      orders = await db.order.findMany({
+        where: {
+          storeId: store.id,
+        },
+        include: {
+          user: true,
+          store: true,
+          pakets: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+    } else {
+      throw new Error("Unauthorized role");
+    }
+
+    return { data: orders, error: null };
+  } catch (error) {
+    console.error("Error getOrders:", error);
+    return { data: null, error: getErrorMessage(error) };
   }
 }
 

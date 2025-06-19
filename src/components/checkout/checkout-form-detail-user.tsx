@@ -39,7 +39,6 @@ import { TError, TSuccess } from "@/types/route-api";
 import { deleteFiles } from "@/app/api/uploadthing/helper-function";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { NumericFormat, PatternFormat } from "react-number-format";
 import { useRouter } from "next/navigation";
 
@@ -48,17 +47,6 @@ interface CheckoutFormDetailProps
   storeId: string;
   carts: CartLineItem[];
 }
-
-const paymentMethods = [
-  {
-    name: TPaymentMethod.AUTO,
-    description: "Bayar Otomatis",
-  },
-  {
-    name: TPaymentMethod.MANUAL,
-    description: "Bayar Manual",
-  },
-] as const;
 
 const CheckoutFormDetailUser: React.FC<CheckoutFormDetailProps> = ({
   storeId,
@@ -301,54 +289,6 @@ const CheckoutFormDetailUser: React.FC<CheckoutFormDetailProps> = ({
                     />
                   </div>
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="paymentMethod"
-            render={({ field }) => (
-              <FormItem className="space-y-3">
-                <fieldset className="flex flex-col gap-1.5">
-                  <FormLabel className="text-sm font-medium">Plan</FormLabel>
-                  <FormDescription className="text-muted-foreground text-sm">
-                    Select the plan that best fits your needs.
-                  </FormDescription>
-                  <RadioGroup
-                    className="flex flex-wrap gap-3 sm:flex-nowrap"
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    {paymentMethods.map(({ description, name }, idx) => (
-                      <FormItem
-                        key={idx}
-                        className="has-[[data-state=checked]]:border-ring flex w-full items-start gap-3 rounded-lg border has-[[data-state=checked]]:bg-white has-[[data-state=checked]]:text-black dark:has-[[data-state=checked]]:bg-black dark:has-[[data-state=checked]]:text-white"
-                      >
-                        <FormLabel
-                          htmlFor={name}
-                          className="flex flex-grow cursor-pointer items-center gap-3 p-3"
-                        >
-                          <FormControl>
-                            <RadioGroupItem
-                              value={name}
-                              id={name}
-                              className="data-[state=checked]:border-primary bg-slate-400 dark:bg-auto"
-                            />
-                          </FormControl>
-                          <div className="grid gap-1 font-normal">
-                            <div className="font-medium">{name}</div>
-                            <div className="text-muted-foreground pr-2 text-xs leading-snug text-balance">
-                              {description}
-                            </div>
-                          </div>
-                        </FormLabel>
-                      </FormItem>
-                    ))}
-                  </RadioGroup>
-                </fieldset>
-
                 <FormMessage />
               </FormItem>
             )}

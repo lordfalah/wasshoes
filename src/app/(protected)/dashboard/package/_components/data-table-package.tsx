@@ -33,6 +33,7 @@ import { getErrorMessage } from "@/lib/handle-error";
 import { TError } from "@/types/route-api";
 import { Badge } from "@/components/ui/badge";
 import { formatToRupiah } from "@/lib/utils";
+import { Scroller } from "@/components/ui/scroller";
 
 const DataTablePackage: React.FC<{
   data: Array<
@@ -83,7 +84,7 @@ const DataTablePackage: React.FC<{
         header: "Name Package",
 
         cell: ({ row }) => (
-          <div className="w-80 text-wrap break-all">
+          <div className="w-52 text-wrap break-all md:w-80">
             <h4 className="font-semibold">{row.original.name}</h4>
             <p>{row.original.description}</p>
           </div>
@@ -96,18 +97,22 @@ const DataTablePackage: React.FC<{
         header: () => <p className="text-center">Picture Package</p>,
 
         cell: ({ row }) => (
-          <div className="relative h-40 w-80 rounded-md">
-            <Image
-              priority
-              src={row.original.image.ufsUrl}
-              alt={row.original.image.name}
-              fill
-              style={{
-                objectFit: "contain",
-                objectPosition: "center",
-              }}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
+          <div className="!w-[500px] min-w-0 gap-x-5 md:!w-[600px]">
+            <Scroller orientation="horizontal" className="p-4" asChild>
+              <div className="flex items-center justify-center gap-2.5">
+                {row.original.image.map(({ ufsUrl, name }, idx) => (
+                  <Image
+                    priority
+                    key={idx}
+                    src={ufsUrl}
+                    alt={name}
+                    width={180}
+                    height={180}
+                    className="h-40 w-60 rounded-md object-contain"
+                  />
+                ))}
+              </div>
+            </Scroller>
           </div>
         ),
       },

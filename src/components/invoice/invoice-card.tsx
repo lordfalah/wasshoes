@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "../ui/card";
 
-import { cn, formatToRupiah } from "@/lib/utils";
+import { calculateOrderTotals, cn, formatToRupiah } from "@/lib/utils";
 import { Separator } from "../ui/separator";
 import { getStoreByStoreId } from "@/actions/store";
 import { Category, Order, Paket, PaketOrder } from "@prisma/client";
@@ -22,7 +22,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { redirect } from "next/navigation";
-import { getMidtansStatus } from "@/actions/midtrans-status";
+import { getMidtransStatus } from "@/actions/midtrans-status";
 
 interface InvoiceCardProps {
   redirectUrl?: string;
@@ -40,7 +40,7 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
   const { data: storeData, error } = await getStoreByStoreId(order.storeId);
   if (!storeData) throw new Error(error ?? "Error getStoreByStoreId");
 
-  const { data: midtransStatusData } = await getMidtansStatus(order.id);
+  const { data: midtransStatusData } = await getMidtransStatus(order.id);
 
   const onCancelTransaction = async () => {
     "use server";
@@ -54,32 +54,21 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
     }
   };
 
-  // --- Perhitungan Total ---
-  const totalQuantity = order.pakets.reduce(
-    (acc, item) => acc + item.quantity,
-    0,
-  );
+  // --- PREPARASI DATA UNTUK calculateOrderTotals ---
+  // Kita perlu mengubah `order.pakets` menjadi format `ItemPriceDetails[]`
+  // yang diharapkan oleh `calculateOrderTotals`.
+  const itemsForCalculation = order.pakets.map((paketOrder) => {
+    return {
+      price: paketOrder.paket.price,
+      quantity: paketOrder.quantity,
+      priceOrder: paketOrder.priceOrder,
+    };
+  });
 
-  const subtotalPrice = order.pakets.reduce((acc, item) => {
-    // Gunakan harga asli paket dari item.paket.price
-    return acc + item.paket.price * item.quantity;
-  }, 0);
+  const { totalQuantity, subtotalPrice, finalPrice, adjustmentText } =
+    calculateOrderTotals(itemsForCalculation);
 
-  // Menggunakan order.totalPrice sebagai harga final
-  // Ini adalah harga total yang sudah termasuk penyesuaian jika ada
-  const finalPrice = order.totalPrice;
-
-  // --- LOGIKA DISKON/BIAYA TAMBAHAN ---
-  let adjustmentText: string | null = null;
-  let adjustmentAmount = 0;
-
-  if (finalPrice > subtotalPrice) {
-    adjustmentAmount = finalPrice - subtotalPrice;
-    adjustmentText = `Biaya Tambahan: ${formatToRupiah(adjustmentAmount)}`;
-  } else if (finalPrice < subtotalPrice) {
-    adjustmentAmount = subtotalPrice - finalPrice;
-    adjustmentText = `Diskon Biaya: ${formatToRupiah(adjustmentAmount)}`;
-  }
+  console.log({ totalQuantity, subtotalPrice, finalPrice, adjustmentText });
 
   return (
     <Card

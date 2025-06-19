@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cn, formatToRupiah } from "@/lib/utils";
+import { calculateOrderTotals, cn, formatToRupiah } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { CartLineItems } from "@/components/checkout/cart-line-items";
 import {
@@ -12,7 +12,10 @@ import { db } from "@/lib/db";
 import { getOrderLineItems } from "@/actions/order";
 import { notFound } from "next/navigation";
 import { TStatusOrder } from "@prisma/client";
-import { getMidtansStatus } from "@/actions/midtrans-status";
+import {
+  getMidtransStatus,
+  processMidtransOrderStatus,
+} from "@/actions/midtrans-status";
 import { EmptyContent } from "../../invoice/_components/empty-content";
 import { Fragment } from "react";
 import InvoiceCard from "@/components/invoice/invoice-card";
@@ -60,102 +63,30 @@ export default async function FinishCheckoutPage({
     notFound();
   }
 
-  // --- BAGIAN PENTING: Penanganan Status Midtrans dan Fallback (DISEMPURNAKAN) ---
-  let currentOrderStatusInDb: TStatusOrder = orderLineItems.order.status; // Status order saat ini di DB
-  let statusFromMidtransApi: string | undefined = undefined; // Status mentah dari Midtrans API
-  let midtransApiErrorMessage: string | undefined | object = undefined; // Pesan error dari Midtrans API jika gagal
+  // --- Ambil status dari Midtrans API ---
+  const midtransStatusApiResult = await getMidtransStatus(order_id);
 
-  const {
-    data: midtransStatusData,
-    error: midtransApiError,
-    message: midtransErrorMessage,
-  } = await getMidtansStatus(order_id);
-
-  if (midtransStatusData) {
-    statusFromMidtransApi = midtransStatusData.transaction_status.toLowerCase();
-
-    // Mapping status Midtrans API ke TStatusOrder lokal
-    let mappedStatus: TStatusOrder | undefined;
-    if (statusFromMidtransApi === "capture") {
-      if (midtransStatusData.fraud_status === "accept") {
-        mappedStatus = TStatusOrder.SETTLEMENT;
-      }
-    } else if (statusFromMidtransApi === "settlement") {
-      mappedStatus = TStatusOrder.SETTLEMENT;
-    } else if (
-      statusFromMidtransApi === "cancel" ||
-      statusFromMidtransApi === "deny" ||
-      statusFromMidtransApi === "expire"
-    ) {
-      mappedStatus = TStatusOrder.FAILURE;
-    } else if (statusFromMidtransApi === "pending") {
-      mappedStatus = TStatusOrder.PENDING;
-    } else if (
-      statusFromMidtransApi === "refund" ||
-      statusFromMidtransApi === "partial_refund"
-    ) {
-      mappedStatus = TStatusOrder.REFUND; // Tambahkan ini jika ada status REFUND di TStatusOrder Anda
-    }
-
-    // Jika ada mappedStatus baru dan berbeda dari status di DB, update DB
-    if (mappedStatus && currentOrderStatusInDb !== mappedStatus) {
-      console.log(
-        `Updating order ${orderLineItems.order.id} status from ${currentOrderStatusInDb} to ${mappedStatus} (from Midtrans API)`,
-      );
-      await db.order.update({
-        where: { id: orderLineItems.order.id },
-        data: {
-          status: mappedStatus,
-        },
-      });
-      currentOrderStatusInDb = mappedStatus; // Perbarui status lokal untuk rendering
-    }
-  } else {
-    // Jika gagal mengambil dari Midtrans API, gunakan status dari database sebagai sumber kebenaran
-    midtransApiErrorMessage =
-      midtransApiError ||
-      midtransErrorMessage ||
-      "Failed to get status from Midtrans API.";
-    console.log("Error fetching Midtrans status:", midtransApiErrorMessage);
-    // currentOrderStatusInDb sudah diinisialisasi dengan order.status dari DB, jadi tidak perlu diubah
-  }
+  // --- Panggil fungsi reusable untuk memproses status Midtrans ---
+  const { updatedOrderStatus, midtransApiErrorMessage, midtransStatusData } =
+    await processMidtransOrderStatus({
+      order: {
+        id: orderLineItems.order.id,
+        status: orderLineItems.order.status,
+      },
+      midtransStatusResult: midtransStatusApiResult, // Sekarang namanya midtransApiResult
+    });
 
   // --- LOGIKA RENDERING UI BERDASARKAN currentOrderStatusInDb ---
   // Gunakan currentOrderStatusInDb untuk menentukan tampilan
-  const isPaymentSuccessful =
-    currentOrderStatusInDb === TStatusOrder.SETTLEMENT;
-  const isPaymentFailed = currentOrderStatusInDb === TStatusOrder.FAILURE;
-  const isPaymentPending = currentOrderStatusInDb === TStatusOrder.PENDING;
+  const isPaymentSuccessful = updatedOrderStatus === TStatusOrder.SETTLEMENT;
+  const isPaymentFailed = updatedOrderStatus === TStatusOrder.FAILURE;
+  const isPaymentPending = updatedOrderStatus === TStatusOrder.PENDING;
 
-  // --- Perhitungan Total ---
-  const totalQuantity = orderLineItems.lineItems.reduce(
-    (acc, item) => acc + item.quantity,
-    0,
-  );
-
-  const subtotalPrice = orderLineItems.lineItems.reduce((acc, item) => {
-    // Gunakan harga asli paket dari item.paket.price
-    return acc + item.price * item.quantity;
-  }, 0);
-
-  // Menggunakan order.totalPrice sebagai harga final
-  // Ini adalah harga total yang sudah termasuk penyesuaian jika ada
-  const finalPrice = orderLineItems.order.totalPrice;
-
-  // --- LOGIKA DISKON/BIAYA TAMBAHAN ---
-  let adjustmentText: string | null = null;
-  let adjustmentAmount = 0;
-
-  if (finalPrice > subtotalPrice) {
-    adjustmentAmount = finalPrice - subtotalPrice;
-    adjustmentText = `Biaya Tambahan: ${formatToRupiah(adjustmentAmount)}`;
-  } else if (finalPrice < subtotalPrice) {
-    adjustmentAmount = subtotalPrice - finalPrice;
-    adjustmentText = `Diskon Biaya: ${formatToRupiah(adjustmentAmount)}`;
-  }
+  const { totalQuantity, subtotalPrice, finalPrice, adjustmentText } =
+    calculateOrderTotals(orderLineItems.lineItems);
 
   return (
-    <div className="flex size-full max-h-dvh flex-col gap-10 overflow-hidden pt-6 pb-8 md:py-8">
+    <div className="flex size-full flex-col gap-10 overflow-hidden pt-6 pb-8 md:py-8">
       {isPaymentSuccessful ? (
         <div className="grid gap-10 overflow-auto">
           <PageHeader
@@ -206,7 +137,7 @@ export default async function FinishCheckoutPage({
           <section
             id="order-success-actions"
             aria-labelledby="order-success-actions-heading"
-            className="container flex max-w-7xl items-center justify-center space-x-2.5"
+            className="container flex max-w-7xl items-center justify-center gap-2.5"
           >
             <Link
               aria-label="Continue shopping"
@@ -245,10 +176,10 @@ export default async function FinishCheckoutPage({
             >
               <PageHeaderHeading>
                 {isPaymentFailed
-                  ? `Transaction is ${currentOrderStatusInDb}` // Gagal (CANCEL, EXPIRE, DENY)
+                  ? `Transaction is ${updatedOrderStatus}` // Gagal (CANCEL, EXPIRE, DENY)
                   : isPaymentPending
                     ? `Please complete your order` // Pending
-                    : `Transaction status: ${currentOrderStatusInDb || "Unknown"}`}{" "}
+                    : `Transaction status: ${updatedOrderStatus || "Unknown"}`}{" "}
                 {/* Lainnya atau tidak dikenal */}
               </PageHeaderHeading>
               <PageHeaderDescription>
@@ -292,7 +223,7 @@ export default async function FinishCheckoutPage({
           <section
             id="order-status-actions"
             aria-labelledby="order-status-actions-heading"
-            className="container flex max-w-7xl items-center justify-center space-x-2.5"
+            className="container flex max-w-7xl flex-wrap items-center justify-center gap-2.5"
           >
             <Link
               aria-label="Continue shopping"

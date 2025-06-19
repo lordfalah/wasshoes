@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import Link from "next/link";
 import { ArrowLeftIcon } from "@radix-ui/react-icons";
-import { formatToRupiah } from "@/lib/utils";
+import { calculateOrderTotals, formatToRupiah } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
   DrawerDescription,
+  DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,7 +16,6 @@ import { Separator } from "@/components/ui/separator";
 import { CartLineItems } from "@/components/checkout/cart-line-items";
 import { notFound, redirect } from "next/navigation";
 import { getCart } from "@/actions/cart";
-import { DialogTitle } from "@/components/ui/dialog";
 import CheckoutFormDetailUser from "@/components/checkout/checkout-form-detail-user";
 import { auth } from "@/auth";
 import CheckoutFormDetailAdmin from "@/components/checkout/checkout-form-detail-admin";
@@ -35,7 +35,6 @@ interface CheckoutPageProps {
 
 export default async function CheckoutPage({ params }: CheckoutPageProps) {
   const storeId = decodeURIComponent((await params).storeId);
-
   const session = await auth();
 
   const store = await db.store.findUnique({
@@ -54,37 +53,10 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   }
 
   const cartLineItems = await getCart({ storeId });
-
   if (!cartLineItems || cartLineItems.length === 0) redirect("/invoice");
 
-  const subtotalPrice = cartLineItems.reduce((acc, item) => {
-    return acc + Number(item.price) * Number(item.quantity);
-  }, 0);
-
-  const finalPrice = cartLineItems.reduce((acc, item) => {
-    // Jika item.priceOrder sudah merupakan TOTAL untuk item tersebut,
-    // maka cukup gunakan nilai itu tanpa dikalikan quantity lagi.
-    return (
-      acc +
-      (item.priceOrder !== undefined && item.priceOrder !== null
-        ? Number(item.priceOrder) // HANYA gunakan nilai ini
-        : Number(item.price) * Number(item.quantity)) // Jika priceOrder tidak ada, hitung dari harga paket asli
-    );
-  }, 0);
-
-  // --- LOGIKA DISKON/BIAYA TAMBAHAN ---
-  let adjustmentText: string | null = null;
-  let adjustmentAmount = 0;
-
-  if (finalPrice > subtotalPrice) {
-    adjustmentAmount = finalPrice - subtotalPrice;
-    console.log({ adjustmentAmount });
-    adjustmentText = `Biaya Tambahan: ${formatToRupiah(adjustmentAmount)}`;
-  } else if (finalPrice < subtotalPrice) {
-    adjustmentAmount = subtotalPrice - finalPrice;
-    adjustmentText = `Diskon Biaya: ${formatToRupiah(adjustmentAmount)}`;
-  }
-  // console.log({ subtotalPrice, finalPrice });
+  const { totalQuantity, subtotalPrice, finalPrice, adjustmentText } =
+    calculateOrderTotals(cartLineItems);
 
   return (
     <section className="relative flex h-full min-h-dvh flex-col items-start justify-center lg:h-dvh lg:flex-row lg:overflow-hidden">
@@ -113,61 +85,59 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
                   Details
                 </Button>
               </DrawerTrigger>
+
               <DrawerContent
                 id="detail-content"
                 aria-describedby={"Detail Content"}
                 className="mx-auto flex h-[82%] w-full max-w-4xl flex-col space-y-6 border px-4 pt-8 pb-6"
               >
-                <CartLineItems
-                  items={cartLineItems}
-                  variant="default"
-                  isEditable={false}
-                  className="container h-full flex-1"
-                />
-
-                <DialogTitle className="text-center">Location</DialogTitle>
-                <DrawerDescription>
-                  <iframe
-                    src={store.mapEmbed}
-                    allowFullScreen={false}
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    className="h-[250px] w-full rounded-2xl border-0 border-none"
+                <ScrollArea className="h-52 w-full rounded-md border">
+                  <CartLineItems
+                    items={cartLineItems}
+                    variant="default"
+                    isEditable={false}
+                    className="container h-full flex-1 pt-4"
                   />
-                </DrawerDescription>
+                </ScrollArea>
 
-                <div className="container space-y-4 pr-8">
-                  <Separator />
-                  <div className="flex font-medium">
-                    <div className="flex-1">
-                      SubTotal (
-                      {cartLineItems.reduce(
-                        (acc, item) => acc + Number(item.quantity),
-                        0,
-                      )}
-                      )
+                <ScrollArea className="xs:h-full h-[40%] w-full rounded-md">
+                  <DrawerTitle className="text-center">Location</DrawerTitle>
+                  <DrawerDescription>
+                    <iframe
+                      src={store.mapEmbed}
+                      allowFullScreen={false}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="h-[250px] w-full rounded-2xl border-0 border-none px-4 sm:px-0"
+                    />
+                  </DrawerDescription>
+
+                  <div className="container space-y-1.5 pr-8">
+                    <Separator />
+                    <div className="flex font-medium">
+                      <div className="flex-1">SubTotal {totalQuantity}</div>
+                      <div>Rp. {formatToRupiah(subtotalPrice)}</div>
                     </div>
-                    <div>Rp. {formatToRupiah(subtotalPrice)}</div>
+
+                    {adjustmentText && ( // Hanya render jika ada penyesuaian
+                      <Fragment>
+                        <div className="text-muted-foreground flex font-medium">
+                          <div className="flex-1">
+                            {adjustmentText.split(":")[0]}:
+                          </div>{" "}
+                          {/* Ambil label "Biaya Tambahan" atau "Diskon Biaya" */}
+                          <div>{adjustmentText.split(":")[1]}</div>{" "}
+                          {/* Ambil nilai yang sudah diformat */}
+                        </div>
+
+                        <div className="flex font-medium">
+                          <div className="flex-1">Final</div>
+                          <div>Rp. {formatToRupiah(finalPrice)}</div>
+                        </div>
+                      </Fragment>
+                    )}
                   </div>
-
-                  {adjustmentText && ( // Hanya render jika ada penyesuaian
-                    <Fragment>
-                      <div className="text-muted-foreground flex font-medium">
-                        <div className="flex-1">
-                          {adjustmentText.split(":")[0]}:
-                        </div>{" "}
-                        {/* Ambil label "Biaya Tambahan" atau "Diskon Biaya" */}
-                        <div>{adjustmentText.split(":")[1]}</div>{" "}
-                        {/* Ambil nilai yang sudah diformat */}
-                      </div>
-
-                      <div className="flex font-medium">
-                        <div className="flex-1">Final</div>
-                        <div>Rp. {formatToRupiah(finalPrice)}</div>
-                      </div>
-                    </Fragment>
-                  )}
-                </div>
+                </ScrollArea>
               </DrawerContent>
             </Drawer>
           </div>

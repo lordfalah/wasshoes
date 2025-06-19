@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Slot } from "@radix-ui/react-slot";
-import { cn, formatToRupiah } from "@/lib/utils";
+import { calculateItemPriceDetails, cn, formatToRupiah } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { UpdateCart } from "@/components/checkout/update-cart";
@@ -46,32 +46,14 @@ export async function CartLineItems({
         {...props}
       >
         {items.map((item) => {
-          // --- Hitung subtotal dan harga final per item untuk tampilan invoice ---
-          const itemSubtotal = Number(item.price) * Number(item.quantity); // Ini adalah harga dasar * kuantitas
-
-          // PERBAIKAN PENTING DI SINI:
-          // Jika item.priceOrder ada, itu adalah TOTAL FINAL untuk item ini.
-          // JANGAN dikalikan lagi dengan quantity.
-          const itemFinalPrice =
-            item.priceOrder !== undefined && item.priceOrder !== null
-              ? Number(item.priceOrder) // Jika priceOrder ada, gunakan langsung sebagai total final
-              : itemSubtotal; // Jika tidak ada, final sama dengan subtotal (harga dasar * quantity)
-
-          let itemAdjustmentText: string | null = null;
-          let itemAdjustmentAmount = 0;
-
-          // HANYA hitung penyesuaian jika itemFinalPrice berbeda dari itemSubtotal
-          // (itemSubtotal adalah total harga asli berdasarkan price * quantity)
-          if (item.price !== item.priceOrder) {
-            if (itemFinalPrice > itemSubtotal) {
-              itemAdjustmentAmount = itemFinalPrice - itemSubtotal;
-              itemAdjustmentText = `Biaya Tambahan: ${formatToRupiah(itemAdjustmentAmount)}`;
-            } else if (itemFinalPrice < itemSubtotal) {
-              itemAdjustmentAmount = itemSubtotal - itemFinalPrice;
-              itemAdjustmentText = `Diskon Biaya: ${formatToRupiah(itemAdjustmentAmount)}`;
-            }
-          }
-          // --- Akhir perhitungan per item ---
+          // --- Gunakan fungsi reusable di sini ---
+          const { itemSubtotal, itemFinalPrice, itemAdjustmentText } =
+            calculateItemPriceDetails({
+              price: item.price,
+              quantity: item.quantity,
+              priceOrder: item.priceOrder,
+            });
+          // --- Akhir penggunaan fungsi reusable ---
 
           return (
             <div key={item.id} className="space-y-3">
@@ -87,10 +69,10 @@ export async function CartLineItems({
                       {item?.image ? (
                         <Image
                           src={
-                            item.image.ufsUrl ??
+                            item.image[0].ufsUrl ??
                             "/images/product-placeholder.webp"
                           }
-                          alt={item.image.name ?? item.name}
+                          alt={item.image[0].name ?? item.name}
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           fill
                           className="absolute object-cover"
@@ -133,7 +115,7 @@ export async function CartLineItems({
                     {" "}
                     {/* Tambahkan items-end */}
                     {/* Harga Asli (Subtotal) Item */}
-                    <div className="flex items-center gap-x-2">
+                    <div className="xs:flex hidden items-center gap-x-2">
                       <span className="text-muted-foreground text-xs">
                         Subtotal:
                       </span>
@@ -144,7 +126,7 @@ export async function CartLineItems({
                     {/* Biaya Tambahan / Diskon Biaya (jika ada) */}
                     {itemAdjustmentText && (
                       <Fragment>
-                        <div className="flex items-center gap-x-2 text-sm">
+                        <div className="xs:flex hidden items-center gap-x-2 text-sm">
                           <span
                             className={cn(
                               "text-xs",
@@ -168,7 +150,7 @@ export async function CartLineItems({
                         </div>
 
                         {/* Harga Final Item */}
-                        <div className="flex items-center gap-x-2">
+                        <div className="xs:flex hidden items-center gap-x-2">
                           <span className="text-muted-foreground text-xs">
                             Final:
                           </span>

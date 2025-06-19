@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Slot } from "@radix-ui/react-slot";
-import { cn, formatToRupiah } from "@/lib/utils";
+import { calculateItemPriceDetails, cn, formatToRupiah } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Icons } from "@/components/icons";
@@ -35,32 +35,14 @@ export function InvoiceLineItems({
         {...props}
       >
         {items.map((item) => {
-          // --- Hitung subtotal dan harga final per item untuk tampilan invoice ---
-          // itemSubtotal adalah total harga dasar (harga paket * quantity)
-          const itemSubtotal = Number(item.paket.price) * Number(item.quantity);
-
-          // PERBAIKAN PENTING DI SINI:
-          // itemFinalPrice adalah total harga item yang sudah dimodifikasi (priceOrder)
-          // Jika item.priceOrder ada, gunakan langsung nilainya. JANGAN dikalikan lagi dengan quantity.
-          const itemFinalPrice =
-            item.priceOrder !== undefined && item.priceOrder !== null
-              ? Number(item.priceOrder) // Ini sudah harga TOTAL untuk item tersebut
-              : itemSubtotal; // Jika priceOrder tidak ada, maka final sama dengan subtotal
-
-          let itemAdjustmentText: string | null = null;
-          let itemAdjustmentAmount = 0;
-
-          // HANYA hitung penyesuaian jika itemFinalPrice berbeda dari itemSubtotal
-          if (item.paket.price !== item.priceOrder) {
-            if (itemFinalPrice > itemSubtotal) {
-              itemAdjustmentAmount = itemFinalPrice - itemSubtotal;
-              itemAdjustmentText = `Biaya Tambahan: ${formatToRupiah(itemAdjustmentAmount)}`;
-            } else if (itemFinalPrice < itemSubtotal) {
-              itemAdjustmentAmount = itemSubtotal - itemFinalPrice;
-              itemAdjustmentText = `Diskon Biaya: ${formatToRupiah(itemAdjustmentAmount)}`;
-            }
-          }
-          // --- Akhir perhitungan per item ---
+          // --- Gunakan fungsi reusable di sini ---
+          const { itemSubtotal, itemFinalPrice, itemAdjustmentText } =
+            calculateItemPriceDetails({
+              price: item.paket.price,
+              quantity: item.quantity,
+              priceOrder: item.priceOrder,
+            });
+          // --- Akhir penggunaan fungsi reusable ---
 
           return (
             <div key={item.id} className="space-y-3">
@@ -73,13 +55,13 @@ export function InvoiceLineItems({
                 <div className="flex items-center space-x-4">
                   {variant === "default" ? (
                     <div className="relative aspect-square size-16 min-w-fit overflow-hidden rounded">
-                      {item?.paket.image ? (
+                      {item?.paket.image.length > 0 ? (
                         <Image
                           src={
-                            item?.paket.image.ufsUrl ??
+                            item?.paket.image[0].ufsUrl ??
                             "/images/product-placeholder.webp"
                           }
-                          alt={item?.paket.image.name ?? item?.paket.name}
+                          alt={item?.paket.image[0].name ?? item?.paket.name}
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           fill
                           className="absolute object-cover"
@@ -126,7 +108,7 @@ export function InvoiceLineItems({
                     </span>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-end space-y-1 font-medium">
+                  <div className="xs:flex hidden flex-col items-end space-y-1 font-medium">
                     {/* Harga Asli (Subtotal) Item */}
                     <div className="flex items-center gap-x-2">
                       <span className="text-muted-foreground text-xs">
@@ -140,7 +122,7 @@ export function InvoiceLineItems({
                     {/* Biaya Tambahan / Diskon Biaya (jika ada) */}
                     {itemAdjustmentText && (
                       <Fragment>
-                        <div className="flex items-center gap-x-2 text-sm">
+                        <div className="xs:flex hidden items-center gap-x-2 text-sm">
                           <span
                             className={cn(
                               "text-xs",
@@ -164,7 +146,7 @@ export function InvoiceLineItems({
                         </div>
 
                         {/* Harga Final Item */}
-                        <div className="flex items-center gap-x-2">
+                        <div className="xs:flex hidden items-center gap-x-2">
                           <span className="text-muted-foreground text-xs">
                             Final:
                           </span>

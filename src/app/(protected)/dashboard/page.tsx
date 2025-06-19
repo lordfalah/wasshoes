@@ -1,15 +1,20 @@
-import data from "./data.json";
 import { SectionCards } from "./_components/section-cards";
 import { ChartAreaInteractive } from "./_components/chart-area-interactive";
-import { DataTable } from "./_components/data-table";
 import { cookies } from "next/headers";
 import { TError, TSuccess } from "@/types/route-api";
-import { Category, Paket } from "@prisma/client";
+import { Category, Paket, TStatusOrder } from "@prisma/client";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import DataTableCategorys from "./_components/data-table-category";
 import { TabsContent } from "@/components/ui/tabs";
-
 import PageTabs from "./_components/page-tabs";
+import { getAllOrdersForSuperadmin } from "@/actions/order";
+import DataTableOrder from "./_components/data-table-order";
+import { SearchParams } from "nuqs";
+import { loadSearchParamsDataDashboard } from "@/lib/searchParams";
+
+type PageProps = {
+  searchParams: Promise<SearchParams>;
+};
 
 const fetchCategorys = async (cookieAuth: ReadonlyRequestCookies) => {
   try {
@@ -38,10 +43,28 @@ const fetchCategorys = async (cookieAuth: ReadonlyRequestCookies) => {
   }
 };
 
-export default async function PageDashboard() {
+export default async function PageDashboard({ searchParams }: PageProps) {
   const cookieStore = await cookies();
 
-  const { data: dataCategorys } = await fetchCategorys(cookieStore);
+  const { nameAdmin, page, perPage, sort, status } =
+    await loadSearchParamsDataDashboard(searchParams);
+
+  const [{ data: dataCategorys }, { data: dataOrders, error: errorOrder }] =
+    await Promise.all([
+      fetchCategorys(cookieStore),
+      getAllOrdersForSuperadmin({
+        page,
+        perPage,
+        sort,
+        nameAdmin,
+        status: status
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean) as TStatusOrder[],
+      }),
+    ]);
+
+  if (!dataOrders || errorOrder) throw new Error(errorOrder);
 
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
@@ -49,7 +72,10 @@ export default async function PageDashboard() {
       <div className="px-4 lg:px-6">
         <ChartAreaInteractive />
       </div>
-      <DataTable data={data} />
+
+      <div className="px-4 lg:px-6">
+        <DataTableOrder data={dataOrders} />
+      </div>
 
       <PageTabs className="flex flex-col px-4 lg:px-6">
         <TabsContent value="categorys">

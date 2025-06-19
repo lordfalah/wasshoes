@@ -1,5 +1,6 @@
 import { ClientUploadedFileData } from "uploadthing/types";
 import { z } from "zod";
+import { priceValidation } from "./checkout.schema";
 
 export const BasePackageFields = {
   name: z
@@ -12,21 +13,7 @@ export const BasePackageFields = {
     .min(10, { message: "Deskripsi minimal 10 karakter" })
     .max(200, { message: "Deskripsi maksimal 200 karakter" }),
 
-  price: z.preprocess(
-    (val) => {
-      if (typeof val === "string" && val.trim() !== "") {
-        const num = Number(val);
-        return isNaN(num) ? val : num;
-      }
-      return val;
-    },
-    z
-      .number({
-        required_error: "Harga wajib diisi",
-        invalid_type_error: "Harga harus berupa angka",
-      })
-      .min(1000, { message: "Harga tidak boleh dibawah 1000" }),
-  ),
+  price: priceValidation,
 
   categoryId: z
     .string({
@@ -48,7 +35,7 @@ export const PackageSchemaClient = z.object({
   image: z
     .array(z.custom<File>())
     .min(1, "File is required")
-    .max(1, "Maximum of 1 files allowed")
+    .max(3, "Maximum of 3 files allowed")
     .refine((files) => files.every((file) => file.size <= 4 * 1024 * 1024), {
       message: "File size must be less than 4MB",
       path: ["image"],
@@ -63,7 +50,7 @@ export const PackageSchemaServer = z.object({
     )
     .min(1, "File is required")
     .nonempty("Package Image must have at least one image")
-    .max(1, "Please select up to 1 files")
+    .max(3, "Please select up to 1 files")
     .refine((files) => files.every((file) => file.size <= 4 * 1024 * 1024), {
       message: "File size must be less than 4MB",
       path: ["image"],

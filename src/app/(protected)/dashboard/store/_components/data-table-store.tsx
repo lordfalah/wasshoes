@@ -13,8 +13,8 @@ import { Button } from "@/components/ui/button";
 import { useMemo, useState } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
 import { DataTable } from "@/components/tables/data-table";
-import { Role, User } from "@prisma/client";
-import { TStoreSchemaServer } from "@/schemas/store.schema";
+import { Store, User } from "@prisma/client";
+
 import { Scroller } from "@/components/ui/scroller";
 import Image from "next/image";
 import Link from "next/link";
@@ -35,16 +35,11 @@ import { getErrorMessage } from "@/lib/handle-error";
 import { TError } from "@/types/route-api";
 
 const DataTableStore: React.FC<{
-  data: (TStoreSchemaServer & {
-    id: string;
-    users: (User & { role: Role[] })[];
+  data: (Store & {
+    admin: User;
   })[];
 }> = ({ data }) => {
-  const columns = useMemo<
-    ColumnDef<
-      TStoreSchemaServer & { id: string; users: (User & { role: Role[] })[] }
-    >[]
-  >(
+  const columns = useMemo<ColumnDef<Store & { admin: User }>[]>(
     () => [
       {
         id: "select",
@@ -133,17 +128,17 @@ const DataTableStore: React.FC<{
       },
 
       {
-        id: "User",
+        id: "Admin",
         accessorKey: "user",
-        header: "User",
+        header: "Head Store",
 
         cell: ({ row }) => (
-          <div>
-            {row.original.users.length > 0
-              ? row.original.users.map(({ name }, idx) => (
-                  <p key={idx}>{name}</p>
-                ))
-              : "Doesn't have user"}
+          <div className="text-center">
+            {row.original.admin ? (
+              <p>{row.original.admin.name}</p>
+            ) : (
+              "Doesn't have user"
+            )}
           </div>
         ),
       },
