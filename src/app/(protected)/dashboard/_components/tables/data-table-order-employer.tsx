@@ -66,7 +66,7 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 
-import { cn, formatToRupiah } from "@/lib/utils";
+import { calculateOrderTotals, cn, formatToRupiah } from "@/lib/utils";
 import { DataTableToolbar } from "@/components/tables/data-table-toolbar";
 import { LapTimerIcon } from "@radix-ui/react-icons";
 import { DataTableColumnHeader } from "@/components/tables/data-table-column-header";
@@ -128,7 +128,7 @@ const DataTableOrderEmployer: React.FC<{
       {
         id: "no",
         header: "No",
-        cell: ({ row }) => row.index + 1, // nomor dalam halaman
+        cell: ({ row }) => row.index + 1,
         size: 32,
         enableSorting: false,
         enableHiding: false,
@@ -196,6 +196,53 @@ const DataTableOrderEmployer: React.FC<{
       },
 
       {
+        id: "amountPrice",
+        accessorFn: (order) => order.pakets,
+        header: "Amount Price",
+        cell: ({ row }) => {
+          const itemsForCalculation = row.original.pakets.map((paketOrder) => {
+            return {
+              price: Number(paketOrder.paket.price), // Pastikan price adalah number
+              quantity: paketOrder.quantity,
+              // Pastikan priceOrder adalah number atau null/undefined
+              priceOrder:
+                paketOrder.priceOrder !== undefined &&
+                paketOrder.priceOrder !== null
+                  ? Number(paketOrder.priceOrder)
+                  : undefined, // Atau null, tergantung preferensi calculateOrderTotals Anda
+            };
+          });
+
+          const { subtotalPrice, adjustmentText } =
+            calculateOrderTotals(itemsForCalculation);
+
+          return (
+            <div className="w-44 text-wrap break-all">
+              <p>{adjustmentText ?? ""}</p>
+              <p>
+                {adjustmentText &&
+                  `sub total price Rp. ${formatToRupiah(subtotalPrice)}`}
+              </p>
+            </div>
+          );
+        },
+      },
+
+      {
+        id: "totalPrice",
+        accessorKey: "pakets",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Total Price" />
+        ),
+
+        cell: ({ row }) => (
+          <div className="w-28 text-wrap break-all">
+            <p>Rp. {formatToRupiah(row.original.totalPrice)}</p>
+          </div>
+        ),
+      },
+
+      {
         id: "status",
         accessorKey: "status",
         header: ({ column }) => (
@@ -244,20 +291,6 @@ const DataTableOrderEmployer: React.FC<{
           ],
         },
         enableColumnFilter: true,
-      },
-
-      {
-        id: "totalPrice",
-        accessorKey: "totalPrice",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Total Price" />
-        ),
-
-        cell: ({ row }) => (
-          <div className="w-28 text-wrap break-all">
-            <p>Rp. {formatToRupiah(row.original.totalPrice)}</p>
-          </div>
-        ),
       },
 
       {

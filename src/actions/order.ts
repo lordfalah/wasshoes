@@ -78,7 +78,7 @@ type GetAllOrdersParams = {
   page: number;
   perPage: number;
   sort: { id: string; desc: boolean }[];
-  nameAdmin: string;
+  customer: string;
   status: TStatusOrder[]; // hasil dari split manual string "PENDING,FAILURE"
 };
 
@@ -86,7 +86,7 @@ export async function getAllOrdersForSuperadmin({
   page,
   perPage,
   sort = [],
-  nameAdmin = "",
+  customer = "",
   status = [],
 }: GetAllOrdersParams) {
   try {
@@ -106,15 +106,29 @@ export async function getAllOrdersForSuperadmin({
           in: status,
         },
       }),
-      ...(nameAdmin && {
-        store: {
-          admin: {
-            name: {
-              contains: nameAdmin,
+      ...(customer && {
+        OR: [
+          {
+            informationCustomer: {
+              path: ["first_name"],
+              string_contains: customer,
               mode: "insensitive",
             },
           },
-        },
+          {
+            informationCustomer: {
+              path: ["last_name"],
+              string_contains: customer,
+              mode: "insensitive",
+            },
+          },
+
+          {
+            user: {
+              name: { contains: customer, mode: "insensitive" },
+            },
+          },
+        ],
       }),
     };
 

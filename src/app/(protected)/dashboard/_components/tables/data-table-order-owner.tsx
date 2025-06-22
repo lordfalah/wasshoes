@@ -128,7 +128,7 @@ const DataTableOrderOwner: React.FC<{
       },
 
       {
-        id: "nameAdmin",
+        id: "headStore",
         accessorFn: (row) => row.store.admin.name,
         header: "Head Store",
         cell: ({ row }) => (
@@ -136,10 +136,37 @@ const DataTableOrderOwner: React.FC<{
             <p>{row.original.store.admin.name}</p>
           </div>
         ),
+      },
+
+      {
+        id: "customer",
+        accessorKey: "informationCustomer",
+        header: "Customer",
+
+        cell: ({ row }) => (
+          <div className="w-80 text-wrap break-all">
+            {row.original.informationCustomer ? (
+              <div>
+                <p>
+                  <span>
+                    {row.original.informationCustomer.first_name}{" "}
+                    {row.original.informationCustomer.last_name}
+                  </span>
+                </p>
+              </div>
+            ) : (
+              <div>
+                <p>
+                  <span>{row.original.user.name}</span>
+                </p>
+              </div>
+            )}
+          </div>
+        ),
 
         meta: {
-          label: "Head Store",
-          placeholder: "Search Head Store...",
+          label: "customer",
+          placeholder: "Search customer...",
           variant: "text",
           icon: Text,
         },
@@ -208,42 +235,6 @@ const DataTableOrderOwner: React.FC<{
         cell: ({ row }) => (
           <div className="w-28 text-wrap break-all">
             <p>Rp. {formatToRupiah(row.original.totalPrice)}</p>
-          </div>
-        ),
-      },
-
-      {
-        id: "customer",
-        accessorKey: "informationCustomer",
-        header: "Customer",
-
-        cell: ({ row }) => (
-          <div className="w-80 text-wrap break-all">
-            {row.original.informationCustomer ? (
-              <div>
-                <p>
-                  Assign By Admin{" "}
-                  <span className="font-semibold">
-                    {row.original.user.name}
-                  </span>
-                </p>
-                <p>
-                  Customer{" "}
-                  <span className="font-semibold">
-                    {row.original.informationCustomer.first_name}
-                    {row.original.informationCustomer.last_name}
-                  </span>
-                </p>
-              </div>
-            ) : (
-              <div>
-                <p>
-                  <span className="font-semibold">
-                    {row.original.user.name}
-                  </span>
-                </p>
-              </div>
-            )}
           </div>
         ),
       },

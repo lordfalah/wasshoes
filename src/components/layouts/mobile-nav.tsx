@@ -16,9 +16,16 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Icons } from "@/components/icons";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { VisuallyHidden } from "radix-ui";
 
 interface MobileNavProps {
   items?: MainNavItem[];
@@ -43,6 +50,12 @@ export function MobileNav({ items }: MobileNavProps) {
           <span className="sr-only">Toggle Menu</span>
         </Button>
       </SheetTrigger>
+
+      <VisuallyHidden.Root>
+        <SheetTitle>Sheet Mobile nav</SheetTitle>
+        <SheetDescription>Mobile Description</SheetDescription>
+      </VisuallyHidden.Root>
+
       <SheetContent side="left" className="pt-9 pr-0 pl-1">
         <div className="w-full px-7">
           <Link

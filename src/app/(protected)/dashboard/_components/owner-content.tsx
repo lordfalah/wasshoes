@@ -10,7 +10,6 @@ import { ChartAreaInteractive } from "./chart-area-interactive";
 import PageTabs from "./page-tabs";
 import { TabsContent } from "@/components/ui/tabs";
 import DataTableCategorys from "./data-table-category";
-
 import DataTableOrderOwner from "./tables/data-table-order-owner";
 import { loadSearchParamsDataDashboardOwner } from "@/lib/searchParams";
 
@@ -48,7 +47,7 @@ const fetchCategorys = async (cookieAuth: ReadonlyRequestCookies) => {
 const OwnerContent: React.FC<PageProps> = async ({ searchParams }) => {
   const cookieStore = await cookies();
 
-  const { nameAdmin, page, perPage, sort, status } =
+  const { customer, page, perPage, sort, status } =
     await loadSearchParamsDataDashboardOwner(searchParams);
 
   const [{ data: dataCategorys }, { data: dataOrders, error: errorOrder }] =
@@ -58,7 +57,7 @@ const OwnerContent: React.FC<PageProps> = async ({ searchParams }) => {
         page,
         perPage,
         sort,
-        nameAdmin,
+        customer,
         status: status
           .split(",")
           .map((s) => s.trim())

@@ -42,7 +42,6 @@ export function InvoiceLineItems({
               quantity: item.quantity,
               priceOrder: item.priceOrder,
             });
-          // --- Akhir penggunaan fungsi reusable ---
 
           return (
             <div key={item.id} className="space-y-3">

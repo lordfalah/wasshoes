@@ -1,4 +1,4 @@
-import { getHistoryOrder, getUnpaidOrders } from "@/actions/order";
+import { getUnpaidOrders } from "@/actions/order";
 import InvoiceCard from "@/components/invoice/invoice-card";
 import {
   PageHeader,
@@ -6,33 +6,22 @@ import {
   PageHeaderHeading,
 } from "@/components/page-header";
 import { Shell } from "@/components/shell";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import HistoryOrderCard from "./_components/history-card";
-import { Badge } from "@/components/ui/badge";
 import { EmptyContent } from "./_components/empty-content";
-
-const viewContent = ["Invoice", "History"] as const;
+import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const InvoicePage: React.FC = async () => {
-  const [
-    { data: unpaidOrders, error: errorUnpaid },
-    { data: historyOrders, error: errorHistory },
-  ] = await Promise.all([getUnpaidOrders(), getHistoryOrder()]);
+  const { data: unpaidOrders, error: errorUnpaid } = await getUnpaidOrders();
 
   if (unpaidOrders === null || typeof errorUnpaid === "string") {
     throw new Error(errorUnpaid);
-  } else if (historyOrders === null || typeof errorHistory === "string") {
-    throw new Error(errorHistory);
   }
-
   return (
     <Shell>
       <div>
-        <Tabs
-          defaultValue="Invoice"
-          className="flex w-full flex-col justify-start gap-6"
-        >
-          <TabsContent value="Invoice" className="space-y-5">
+        <div className="flex w-full flex-col justify-start gap-6">
+          <div className="space-y-5">
             <header className="flex justify-between">
               <PageHeader
                 id="invoice-page-header"
@@ -44,26 +33,17 @@ const InvoicePage: React.FC = async () => {
                 </PageHeaderDescription>
               </PageHeader>
 
-              <TabsList className="flex">
-                {viewContent.map((value, idx) => (
-                  <TabsTrigger
-                    value={value}
-                    key={`${value}-${idx}`}
-                    className="relative"
-                  >
-                    {value}
-
-                    {value === "History" && historyOrders.length > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-muted-foreground absolute -top-4 -right-2.5 size-4 justify-center rounded-full p-2.5"
-                      >
-                        {historyOrders.length}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+              <Link
+                href={"/invoice/history"}
+                className={cn(
+                  buttonVariants({
+                    size: "sm",
+                    variant: "outline",
+                  }),
+                )}
+              >
+                History Invoice
+              </Link>
             </header>
 
             {unpaidOrders.length > 0 ? (
@@ -74,52 +54,8 @@ const InvoicePage: React.FC = async () => {
             ) : (
               <EmptyContent text="Your invoice is empty" />
             )}
-          </TabsContent>
-
-          <TabsContent value="History" className="space-y-5">
-            <header className="flex justify-between">
-              <PageHeader
-                id="history-page-header"
-                aria-labelledby="history-page-header-heading"
-              >
-                <PageHeaderHeading size="sm">History</PageHeaderHeading>
-                <PageHeaderDescription size="sm">
-                  History with your cart items
-                </PageHeaderDescription>
-              </PageHeader>
-
-              <TabsList className="flex">
-                {viewContent.map((value, idx) => (
-                  <TabsTrigger
-                    className="relative"
-                    value={value}
-                    key={`${value}-${idx}`}
-                  >
-                    {value}
-
-                    {value === "History" && historyOrders.length > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-muted-foreground absolute -top-4 -right-2.5 size-4 justify-center rounded-full p-2.5"
-                      >
-                        {historyOrders.length}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </header>
-
-            {historyOrders.length > 0 ? (
-              historyOrders.map(
-                (order) =>
-                  order && <HistoryOrderCard key={order.id} order={order} />,
-              )
-            ) : (
-              <EmptyContent text="Your history order is empty" />
-            )}
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
     </Shell>
   );

@@ -68,7 +68,7 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
   const { totalQuantity, subtotalPrice, finalPrice, adjustmentText } =
     calculateOrderTotals(itemsForCalculation);
 
-  console.log({ totalQuantity, subtotalPrice, finalPrice, adjustmentText });
+  // console.log({ totalQuantity, subtotalPrice, finalPrice, adjustmentText });
 
   return (
     <Card

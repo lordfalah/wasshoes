@@ -163,13 +163,13 @@ export function calculateItemPriceDetails(
   let itemAdjustmentText: string | null = null;
 
   // Hanya hitung penyesuaian jika itemFinalPrice berbeda dari itemSubtotal
-  if (itemFinalPrice !== itemSubtotal) {
+  if (item.priceOrder !== 0) {
     if (itemFinalPrice > itemSubtotal) {
       itemAdjustmentAmount = itemFinalPrice - itemSubtotal;
-      itemAdjustmentText = `Biaya Tambahan: ${formatToRupiah(itemAdjustmentAmount)}`;
+      itemAdjustmentText = `Biaya Tambahan: Rp. ${formatToRupiah(itemAdjustmentAmount)}`;
     } else if (itemFinalPrice < itemSubtotal) {
       itemAdjustmentAmount = itemSubtotal - itemFinalPrice;
-      itemAdjustmentText = `Diskon Biaya: ${formatToRupiah(itemAdjustmentAmount)}`;
+      itemAdjustmentText = `Diskon Biaya: Rp. ${formatToRupiah(itemAdjustmentAmount)}`;
     }
   }
 
@@ -225,10 +225,10 @@ export function calculateOrderTotals(
   if (finalPrice !== subtotalPrice) {
     if (finalPrice > subtotalPrice) {
       adjustmentAmount = finalPrice - subtotalPrice;
-      adjustmentText = `Biaya Tambahan: ${formatToRupiah(adjustmentAmount)}`;
+      adjustmentText = `Biaya Tambahan: Rp. ${formatToRupiah(adjustmentAmount)}`;
     } else if (finalPrice < subtotalPrice) {
       adjustmentAmount = subtotalPrice - finalPrice;
-      adjustmentText = `Diskon Biaya: ${formatToRupiah(adjustmentAmount)}`;
+      adjustmentText = `Diskon Biaya: Rp. ${formatToRupiah(adjustmentAmount)}`;
     }
   }
 

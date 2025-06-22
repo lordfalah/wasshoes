@@ -1,8 +1,4 @@
 import type { FooterItem, MainNavItem } from "@/types";
-
-import { productConfig } from "@/config/product";
-import { slugify } from "@/lib/utils";
-
 export type SiteConfig = typeof siteConfig;
 
 const links = {
@@ -25,42 +21,42 @@ export const siteConfig = {
       title: "Lobby",
       items: [
         {
-          title: "Products",
-          href: "/products",
+          title: "Invoice",
+          href: "/invoice",
           description: "All the products we have to offer.",
           items: [],
         },
         {
-          title: "Build a Board",
-          href: "/build-a-board",
+          title: "History Invoice",
+          href: "/invoice/history",
           description: "Build your own custom skateboard.",
           items: [],
         },
         {
-          title: "Blog",
-          href: "/blog",
+          title: "Products",
+          href: "/products",
           description: "Read our latest blog posts.",
           items: [],
         },
       ],
     },
-    ...productConfig.categories.map((category) => ({
-      title: category.name,
-      items: [
-        {
-          title: "All",
-          href: `/categories/${slugify(category.name)}`,
-          description: `All ${category.name}.`,
-          items: [],
-        },
-        ...category.subcategories.map((subcategory) => ({
-          title: subcategory.name,
-          href: `/categories/${slugify(category.name)}/${slugify(subcategory.name)}`,
-          description: subcategory.description,
-          items: [],
-        })),
-      ],
-    })),
+    // ...productConfig.categories.map((category) => ({
+    //   title: category.name,
+    //   items: [
+    //     {
+    //       title: "All",
+    //       href: `/categories/${slugify(category.name)}`,
+    //       description: `All ${category.name}.`,
+    //       items: [],
+    //     },
+    //     ...category.subcategories.map((subcategory) => ({
+    //       title: subcategory.name,
+    //       href: `/categories/${slugify(category.name)}/${slugify(subcategory.name)}`,
+    //       description: subcategory.description,
+    //       items: [],
+    //     })),
+    //   ],
+    // })),
   ] satisfies MainNavItem[],
   footerNav: [
     {

@@ -26,7 +26,7 @@ const PaginationNuqs = {
 export const dataDashboardSearchParamsOwner = {
   ...PaginationNuqs,
   sort: parseAsJson(SortOptionSchema.parse).withDefault([]),
-  nameAdmin: parseAsString.withDefault(""),
+  customer: parseAsString.withDefault(""),
   status: parseAsString.withDefault(""),
 };
 export const loadSearchParamsDataDashboardOwner = createLoader(
