@@ -3,7 +3,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { coreApi } from "@/lib/midtrans";
 import { db } from "@/lib/db";
-import { TStatusOrder } from "@prisma/client";
+import { TPaymentMethod, TStatusOrder } from "@prisma/client";
 import crypto from "crypto";
 import { StatusTransactionResponse } from "midtrans-client";
 
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
 
     // Cek apakah order memang ada di database
     const order = await db.order.findUnique({
-      where: { id: order_id },
+      where: { id: order_id, paymentMethod: TPaymentMethod.AUTO },
     });
 
     if (!order) {

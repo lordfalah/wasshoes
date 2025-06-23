@@ -5,7 +5,7 @@ import * as React from "react";
 import { ErrorCard } from "@/components/error-card";
 import { Shell } from "@/components/shell";
 
-export default function CheckoutError({
+export default function FinishError({
   error,
   reset,
 }: {
@@ -20,8 +20,8 @@ export default function CheckoutError({
   return (
     <Shell variant="centered" className="max-w-md">
       <ErrorCard
-        retryLinkText="back to home"
-        retryLink="/"
+        retryLinkText="back to invoice"
+        retryLink="/invoice"
         title={error.name}
         description={error.message}
         reset={reset}

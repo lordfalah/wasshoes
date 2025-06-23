@@ -10,12 +10,19 @@ import {
 import { calculateOrderTotals, cn, formatToRupiah } from "@/lib/utils";
 import { Separator } from "../ui/separator";
 import { getStoreByStoreId } from "@/actions/store";
-import { Category, Order, Paket, PaketOrder } from "@prisma/client";
+import {
+  Category,
+  Order,
+  Paket,
+  PaketOrder,
+  TPaymentMethod,
+  TStatusOrder,
+} from "@prisma/client";
 import { InvoiceLineItems } from "./cart-line-items";
 import ShiftingCountdown from "../shifting-countdown";
 import ButtonPayTransaction from "./pay-transaction";
-import BtnCancelTransaction from "./btn-submit-load";
-import { cancelTransactionOrder } from "@/actions/order";
+
+import { cancelTransactionOrder, updateStatusOrder } from "@/actions/order";
 import {
   Tooltip,
   TooltipContent,
@@ -23,6 +30,7 @@ import {
 } from "@/components/ui/tooltip";
 import { redirect } from "next/navigation";
 import { getMidtransStatus } from "@/actions/midtrans-status";
+import BtnSubmitWithLoad from "./btn-submit-load";
 
 interface InvoiceCardProps {
   redirectUrl?: string;
@@ -49,6 +57,22 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
       const { error } = await cancelTransactionOrder(order.id);
       if (error) throw new Error(error);
       if (redirectUrl) redirect(redirectUrl);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const onTransactionManual = async (statusOrder: TStatusOrder) => {
+    "use server";
+
+    try {
+      const { data, error } = await updateStatusOrder({
+        orderId: order.id,
+        statusOrder,
+      });
+      if (!data || error) throw new Error(error);
+
+      redirect("/invoice/history");
     } catch (error) {
       throw error;
     }
@@ -90,14 +114,14 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
           }
         />
 
-        {order.paymentToken ? (
+        {order.paymentToken && order.paymentMethod === TPaymentMethod.AUTO ? (
           <div className="flex flex-wrap gap-2">
             <ButtonPayTransaction paymentToken={order.paymentToken} />
             {midtransStatusData && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <form action={onCancelTransaction}>
-                    <BtnCancelTransaction />
+                    <BtnSubmitWithLoad />
                   </form>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -107,7 +131,36 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
             )}
           </div>
         ) : (
-          "Token Required"
+          <div className="flex flex-wrap gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <form
+                  action={onTransactionManual.bind(
+                    null,
+                    TStatusOrder.SETTLEMENT,
+                  )}
+                >
+                  <BtnSubmitWithLoad iconName="HandCoins" />
+                </form>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Pay</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <form
+                  action={onTransactionManual.bind(null, TStatusOrder.CANCEL)}
+                >
+                  <BtnSubmitWithLoad />
+                </form>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Cancel</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         )}
       </CardHeader>
       <Separator className="mb-4" />

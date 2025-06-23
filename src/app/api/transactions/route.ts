@@ -7,7 +7,7 @@ import {
   adminCheckoutSchemaServer,
   userCheckoutSchemaServer,
 } from "@/schemas/checkout.schema";
-import { UserRole } from "@prisma/client";
+import { Order, TPaymentMethod, UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getTotalPriceAndItemDetails } from "@/actions/product";
@@ -54,51 +54,81 @@ export const POST = withAuth(async (req) => {
         true, // karena admin
       );
 
-      console.log({ item_details });
+      let order: Order | undefined = undefined;
 
-      const transaction = await snap.createTransaction({
-        transaction_details: {
-          order_id: uuidOrderId, // ID order unik
-          gross_amount: total,
-        },
-        customer_details: {
-          first_name: data.customer.first_name,
-          last_name: data.customer.last_name,
-          phone: data.customer.phone,
-          email: data.customer.email,
-        },
-
-        item_details,
-      });
-
-      // Buat order (hanya satu kali)
-      const order = await db.order.create({
-        data: {
-          id: uuidOrderId,
-          userId: req.auth.user.id as string,
-          totalPrice: total,
-          paymentMethod: data.paymentMethod,
-          paymentToken: transaction.token,
-          redirectUrl: transaction.redirect_url,
-          shoesImages: data.shoesImages,
-          informationCustomer: {
+      if (data.paymentMethod === TPaymentMethod.AUTO) {
+        const transaction = await snap.createTransaction({
+          transaction_details: {
+            order_id: uuidOrderId, // ID order unik
+            gross_amount: total,
+          },
+          customer_details: {
             first_name: data.customer.first_name,
             last_name: data.customer.last_name,
             phone: data.customer.phone,
             email: data.customer.email,
           },
 
-          pakets: {
-            create: data.pakets.map((paket) => ({
-              paketId: paket.paketId,
-              quantity: paket.quantity,
-              priceOrder: paket.priceOrder ?? null,
-            })),
-          },
+          item_details,
+        });
 
-          storeId: data.storeId,
-        },
-      });
+        // Buat order (hanya satu kali)
+        order = await db.order.create({
+          data: {
+            id: uuidOrderId,
+            userId: req.auth.user.id as string,
+            totalPrice: total,
+            paymentMethod: data.paymentMethod,
+            paymentToken: transaction.token,
+            redirectUrl: transaction.redirect_url,
+            shoesImages: data.shoesImages,
+            informationCustomer: {
+              first_name: data.customer.first_name,
+              last_name: data.customer.last_name,
+              phone: data.customer.phone,
+              email: data.customer.email,
+            },
+
+            pakets: {
+              create: data.pakets.map((paket) => ({
+                paketId: paket.paketId,
+                quantity: paket.quantity,
+                priceOrder: paket.priceOrder ?? null,
+              })),
+            },
+
+            storeId: data.storeId,
+          },
+        });
+      } else if (data.paymentMethod === TPaymentMethod.MANUAL) {
+        order = await db.order.create({
+          data: {
+            id: uuidOrderId,
+            userId: req.auth.user.id as string,
+            totalPrice: total,
+            paymentMethod: data.paymentMethod,
+            paymentToken: null,
+            redirectUrl: null,
+            shoesImages: data.shoesImages,
+            informationCustomer: {
+              first_name: data.customer.first_name,
+              last_name: data.customer.last_name,
+              phone: data.customer.phone,
+              email: data.customer.email,
+            },
+
+            pakets: {
+              create: data.pakets.map((paket) => ({
+                paketId: paket.paketId,
+                quantity: paket.quantity,
+                priceOrder: paket.priceOrder ?? null,
+              })),
+            },
+
+            storeId: data.storeId,
+          },
+        });
+      }
 
       // update cart to close if success
       await db.cart.updateMany({

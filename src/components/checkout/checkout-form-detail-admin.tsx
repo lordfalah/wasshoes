@@ -147,12 +147,18 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
                 "Transaksi sudah ada selesaikan di halaman invoice",
               );
             } else {
-              console.log("BAYAR ORDER");
-              window.snap.pay(resTransaction.data.paymentToken as string, {
-                onClose() {
-                  router.push("/invoice");
-                },
-              });
+              if (
+                resTransaction.data.paymentToken &&
+                resTransaction.data.paymentMethod === TPaymentMethod.AUTO
+              ) {
+                window.snap.pay(resTransaction.data.paymentToken);
+              } else if (
+                resTransaction.data.paymentMethod === TPaymentMethod.MANUAL
+              ) {
+                router.push("/invoice");
+              } else {
+                throw new Error(`Payment method must Manual or Auto!!!`);
+              }
             }
           } catch (error) {
             console.log({ error });
@@ -168,7 +174,8 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
         },
       );
     },
-    [form, router],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [form],
   );
 
   return (

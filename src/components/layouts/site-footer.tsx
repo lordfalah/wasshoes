@@ -57,7 +57,7 @@ export function SiteFooter() {
               rel="noreferrer"
               className="hover:text-foreground font-semibold transition-colors"
             >
-              Sadman
+              Mrr. Falah
               <span className="sr-only">Twitter</span>
             </Link>
             .

@@ -6,6 +6,7 @@ import {
   LaundryStatus,
   Order,
   Prisma,
+  TPaymentMethod,
   TStatusOrder,
   UserRole,
 } from "@prisma/client";
@@ -25,7 +26,7 @@ export async function getOrderLineItems(input: { orderId: string }) {
 
     // 1. Ambil order beserta paketnya
     const order = await db.order.findUnique({
-      where: { id: input.orderId },
+      where: { id: input.orderId, paymentMethod: TPaymentMethod.AUTO },
       include: {
         pakets: {
           include: {
@@ -533,6 +534,36 @@ export async function cancelTransactionOrder(orderId: string) {
 
     revalidatePath("/invoice");
     return { data: updateStatusOrder, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: getErrorMessage(error) };
+  }
+}
+
+export async function updateStatusOrder({
+  orderId,
+  statusOrder,
+}: {
+  orderId: string;
+  statusOrder: TStatusOrder;
+}) {
+  try {
+    const order = await db.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: statusOrder,
+      },
+
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    revalidatePath("/invoice");
+    return { data: order, error: null };
   } catch (error) {
     console.log(error);
     return { data: null, error: getErrorMessage(error) };
