@@ -64,7 +64,6 @@ export const {
         // Hapus cookie cartId
         const cookieStore = await cookies();
         cookieStore.delete("cartId");
-        console.log("cartId cookie deleted on sign out.");
       } catch (err) {
         console.error("Error deleting cartId cookie on signOut:", err);
       }

@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import {
-  LaundryStatus,
+  TLaundryStatus,
   Order,
   Prisma,
   TPaymentMethod,
@@ -204,16 +204,10 @@ export async function getAllOrdersForAdmin({
               ],
             },
           },
+
           {
             informationCustomer: {
-              path: ["first_name"],
-              string_contains: nameUser,
-              mode: "insensitive",
-            },
-          },
-          {
-            informationCustomer: {
-              path: ["last_name"],
+              path: ["name"],
               string_contains: nameUser,
               mode: "insensitive",
             },
@@ -271,7 +265,7 @@ export async function getAllOrdersForAdmin({
   }
 }
 
-export async function updateStatusLaundry(status: LaundryStatus, id: string) {
+export async function updateStatusLaundry(status: TLaundryStatus, id: string) {
   try {
     const { success, error, data } = orderSchema.safeParse({
       statusLaundry: status,

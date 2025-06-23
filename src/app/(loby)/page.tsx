@@ -3,7 +3,6 @@ import { LobbySkeleton } from "./_components/lobby-skeleton";
 import { db } from "@/lib/db";
 import Loby from "./_components/loby";
 import { Paket } from "@prisma/client";
-
 import { getFeaturedStores } from "@/actions/store";
 
 export default async function RootLoby() {

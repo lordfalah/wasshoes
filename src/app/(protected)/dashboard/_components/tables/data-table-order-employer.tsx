@@ -17,7 +17,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,7 @@ import { Fragment, useMemo, useTransition } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
 import { DataTable } from "@/components/tables/data-table";
 import {
-  LaundryStatus,
+  TLaundryStatus,
   Order,
   Paket,
   PaketOrder,
@@ -154,8 +153,7 @@ const DataTableOrderEmployer: React.FC<{
             {row.original.informationCustomer ? (
               <div>
                 <span className="font-semibold">
-                  {row.original.informationCustomer.first_name}{" "}
-                  {row.original.informationCustomer.last_name}
+                  {row.original.informationCustomer.name}
                 </span>
               </div>
             ) : (
@@ -302,21 +300,21 @@ const DataTableOrderEmployer: React.FC<{
             variant="outline"
             className="text-muted-foreground flex gap-1 px-1.5 capitalize [&_svg]:size-3"
           >
-            {row.original.laundryStatus === LaundryStatus.COMPLETED && (
+            {row.original.laundryStatus === TLaundryStatus.COMPLETED && (
               <CheckCircle2Icon className="text-green-500 dark:text-green-400" />
             )}
-            {row.original.laundryStatus === LaundryStatus.ON_HOLD && (
+            {row.original.laundryStatus === TLaundryStatus.ON_HOLD && (
               <XCircle />
             )}
-            {row.original.laundryStatus === LaundryStatus.IN_PROGRESS && (
+            {row.original.laundryStatus === TLaundryStatus.IN_PROGRESS && (
               <Loader2 />
             )}
-            {row.original.laundryStatus === LaundryStatus.QUALITY_CHECK && (
+            {row.original.laundryStatus === TLaundryStatus.QUALITY_CHECK && (
               <ClipboardCheck />
             )}
 
             {row.original.laundryStatus ===
-              LaundryStatus.READY_FOR_COLLECTION && <Contact />}
+              TLaundryStatus.READY_FOR_COLLECTION && <Contact />}
             {row.original.laundryStatus}
           </Badge>
         ),
@@ -403,7 +401,7 @@ const DataTableOrderEmployer: React.FC<{
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button
-                      className="w-full text-left"
+                      className="w-full cursor-pointer text-center"
                       variant="ghost"
                       type="button"
                     >
@@ -413,7 +411,14 @@ const DataTableOrderEmployer: React.FC<{
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                       <DialogTitle>
-                        Update Role User : {cell.row.original.id}
+                        Update Status Laundry :{" "}
+                        {cell.row.original.informationCustomer
+                          ? cell.row.original.informationCustomer.name
+                          : `${
+                              cell.row.original.user.name
+                                ? cell.row.original.user.name
+                                : `${cell.row.original.user.firstName} ${cell.row.original.user.lastName}`
+                            }`}
                       </DialogTitle>
                       <DialogDescription>
                         Make changes to your Management role here. Click save
@@ -465,7 +470,7 @@ const DataTableOrderEmployer: React.FC<{
                                         </CommandEmpty>
                                         <CommandGroup>
                                           {/* Loop melalui nilai-nilai dari LaundryStatus enum */}
-                                          {Object.values(LaundryStatus).map(
+                                          {Object.values(TLaundryStatus).map(
                                             (status) => (
                                               <CommandItem
                                                 value={status} // Value harus berupa string dari enum
@@ -519,10 +524,6 @@ const DataTableOrderEmployer: React.FC<{
                     </div>
                   </DialogContent>
                 </Dialog>
-
-                <DropdownMenuItem variant="destructive">
-                  Delete
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           );

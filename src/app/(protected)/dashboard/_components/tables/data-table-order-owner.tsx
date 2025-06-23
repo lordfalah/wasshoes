@@ -23,7 +23,7 @@ import { useMemo } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
 import { DataTable } from "@/components/tables/data-table";
 import {
-  LaundryStatus,
+  TLaundryStatus,
   Order,
   PaketOrder,
   Store,
@@ -248,21 +248,21 @@ const DataTableOrderOwner: React.FC<{
             variant="outline"
             className="text-muted-foreground flex gap-1 px-1.5 capitalize [&_svg]:size-3"
           >
-            {row.original.laundryStatus === LaundryStatus.COMPLETED && (
+            {row.original.laundryStatus === TLaundryStatus.COMPLETED && (
               <CheckCircle2Icon className="text-green-500 dark:text-green-400" />
             )}
-            {row.original.laundryStatus === LaundryStatus.ON_HOLD && (
+            {row.original.laundryStatus === TLaundryStatus.ON_HOLD && (
               <XCircle />
             )}
-            {row.original.laundryStatus === LaundryStatus.IN_PROGRESS && (
+            {row.original.laundryStatus === TLaundryStatus.IN_PROGRESS && (
               <Loader2 />
             )}
-            {row.original.laundryStatus === LaundryStatus.QUALITY_CHECK && (
+            {row.original.laundryStatus === TLaundryStatus.QUALITY_CHECK && (
               <ClipboardCheck />
             )}
 
             {row.original.laundryStatus ===
-              LaundryStatus.READY_FOR_COLLECTION && <Contact />}
+              TLaundryStatus.READY_FOR_COLLECTION && <Contact />}
             {row.original.laundryStatus}
           </Badge>
         ),

@@ -1,6 +1,6 @@
 import * as z from "zod";
 import { cartItemSchema } from "./cart.schema";
-import { LaundryStatus } from "@prisma/client";
+import { TLaundryStatus } from "@prisma/client";
 
 export const getOrderLineItemsSchema = z.object({
   storeId: z.string(),
@@ -9,12 +9,12 @@ export const getOrderLineItemsSchema = z.object({
 
 export const orderSchema = z.object({
   statusLaundry: z.enum([
-    LaundryStatus.AWAITING_PROCESSING,
-    LaundryStatus.COMPLETED,
-    LaundryStatus.IN_PROGRESS,
-    LaundryStatus.ON_HOLD,
-    LaundryStatus.QUALITY_CHECK,
-    LaundryStatus.READY_FOR_COLLECTION,
+    TLaundryStatus.AWAITING_PROCESSING,
+    TLaundryStatus.COMPLETED,
+    TLaundryStatus.IN_PROGRESS,
+    TLaundryStatus.ON_HOLD,
+    TLaundryStatus.QUALITY_CHECK,
+    TLaundryStatus.READY_FOR_COLLECTION,
   ]),
 });
 

@@ -156,7 +156,7 @@ enum TPaymentMethod {
   AUTO
 }
 
-enum LaundryStatus {
+enum TLaundryStatus {
   // Status awal setelah pesanan dikonfirmasi/dibayar
   AWAITING_PROCESSING // Menunggu untuk diproses/dikerjakan
   // Status pengerjaan
@@ -177,7 +177,7 @@ model Order {
   paymentToken  String? // Token Snap (WAJIB)
   redirectUrl   String?
   status        TStatusOrder   @default(PENDING) // transaction
-  laundryStatus LaundryStatus  @default(AWAITING_PROCESSING)
+  laundryStatus TLaundryStatus @default(AWAITING_PROCESSING)
 
   /// [Image]
   shoesImages Json[]

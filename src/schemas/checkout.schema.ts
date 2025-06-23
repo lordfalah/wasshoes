@@ -23,22 +23,27 @@ export const priceValidation = z.preprocess(
 );
 
 // Data form konsumen (manual input dari Admin)
-export const customerSchema = z.object({
-  first_name: z.string().min(1, "Nama wajib diisi"),
-  last_name: z.string().min(1, "Nama wajib diisi"),
-  email: z.string().email("Email tidak valid").optional().default(""),
-  phone: z
-    .string()
-    .min(8, "Nomor HP terlalu pendek") // Minimal 8 digit (misal 08123456) atau +628123456
-    .max(15, "Nomor HP terlalu panjang") // Batas maksimal yang wajar
-    .transform((val) => val.replace(/[\s-]/g, "")) // Hapus spasi dan dash
-    .refine((val) => /^(0|62|\+62)8[1-9][0-9]{6,10}$/.test(val), {
-      // Ubah regex untuk panjang 10-13 digit total
-      path: ["phone"],
-      message:
-        "Format nomor HP tidak valid (contoh: 081234567890 atau +6281234567890)",
-    }),
-});
+export const customerSchema = z
+  .object({
+    first_name: z.string().trim().min(1, "Nama wajib diisi"),
+    last_name: z.string().trim().min(1, "Nama wajib diisi"),
+    email: z.string().trim().email("Email tidak valid").optional().default(""),
+    phone: z
+      .string()
+      .min(8, "Nomor HP terlalu pendek") // Minimal 8 digit (misal 08123456) atau +628123456
+      .max(15, "Nomor HP terlalu panjang") // Batas maksimal yang wajar
+      .transform((val) => val.replace(/[\s-]/g, "")) // Hapus spasi dan dash
+      .refine((val) => /^(0|62|\+62)8[1-9][0-9]{6,10}$/.test(val), {
+        // Ubah regex untuk panjang 10-13 digit total
+        path: ["phone"],
+        message:
+          "Format nomor HP tidak valid (contoh: 081234567890 atau +6281234567890)",
+      }),
+  })
+  .transform((data) => ({
+    ...data,
+    name: `${data.first_name} ${data.last_name}`.trim(),
+  }));
 
 // Digunakan saat user login & checkout paket sendiri lewat aplikasi/web
 export const userCheckoutSchemaServer = z.object({

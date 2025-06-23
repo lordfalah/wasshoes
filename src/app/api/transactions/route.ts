@@ -87,6 +87,7 @@ export const POST = withAuth(async (req) => {
               last_name: data.customer.last_name,
               phone: data.customer.phone,
               email: data.customer.email,
+              name: data.customer.name,
             },
 
             pakets: {
@@ -115,6 +116,7 @@ export const POST = withAuth(async (req) => {
               last_name: data.customer.last_name,
               phone: data.customer.phone,
               email: data.customer.email,
+              name: data.customer.name,
             },
 
             pakets: {
