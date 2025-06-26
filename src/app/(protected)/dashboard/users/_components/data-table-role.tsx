@@ -45,11 +45,28 @@ const DataTableRole: React.FC<{ data: Role[] }> = ({ data }) => {
       },
 
       {
+        id: "no",
+        header: "No",
+        cell: ({ row }) => row.index + 1, // nomor dalam halaman
+        size: 32,
+        enableSorting: false,
+        enableHiding: false,
+      },
+
+      {
         id: "Role",
         accessorKey: "name",
         header: "Role",
 
         cell: ({ row }) => <p>{row.original.name}</p>,
+      },
+
+      {
+        id: "id_role",
+        accessorKey: "id",
+        header: "Id",
+
+        cell: ({ row }) => <p>{row.original.id}</p>,
       },
 
       {

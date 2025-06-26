@@ -67,7 +67,7 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
   ...props
 }) => {
   const initialDefaultPriceOrder = carts.reduce(
-    (total, item) => total + (item.priceOrder ?? item.price * item.quantity), // Menggunakan nullish coalescing operator
+    (total, item) => total + (item.priceOrder ?? item.price * item.quantity),
     0,
   );
   const router = useRouter();
@@ -99,7 +99,6 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
       toast.promise(
         (async () => {
           setIsSubmitting(true);
-          console.log(data);
 
           try {
             const resFile = await uploadFiles("packagePicture", {

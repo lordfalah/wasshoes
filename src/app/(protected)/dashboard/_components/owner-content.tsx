@@ -50,20 +50,22 @@ const OwnerContent: React.FC<PageProps> = async ({ searchParams }) => {
   const { customer, page, perPage, sort, status } =
     await loadSearchParamsDataDashboardOwner(searchParams);
 
-  const [{ data: dataCategorys }, { data: dataOrders, error: errorOrder }] =
-    await Promise.all([
-      fetchCategorys(cookieStore),
-      getAllOrdersForSuperadmin({
-        page,
-        perPage,
-        sort,
-        customer,
-        status: status
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean) as TStatusOrder[],
-      }),
-    ]);
+  const [
+    { data: dataCategorys },
+    { data: dataOrders, total, error: errorOrder },
+  ] = await Promise.all([
+    fetchCategorys(cookieStore),
+    getAllOrdersForSuperadmin({
+      page,
+      perPage,
+      sort,
+      customer,
+      status: status
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean) as TStatusOrder[],
+    }),
+  ]);
 
   if (!dataOrders || errorOrder) throw new Error(errorOrder);
 
@@ -75,7 +77,7 @@ const OwnerContent: React.FC<PageProps> = async ({ searchParams }) => {
       </div>
 
       <div className="px-4 lg:px-6">
-        <DataTableOrderOwner data={dataOrders} />
+        <DataTableOrderOwner data={dataOrders} total={total} />
       </div>
 
       <PageTabs className="flex flex-col px-4 lg:px-6">

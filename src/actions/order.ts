@@ -111,14 +111,7 @@ export async function getAllOrdersForSuperadmin({
         OR: [
           {
             informationCustomer: {
-              path: ["first_name"],
-              string_contains: customer,
-              mode: "insensitive",
-            },
-          },
-          {
-            informationCustomer: {
-              path: ["last_name"],
+              path: ["name"],
               string_contains: customer,
               mode: "insensitive",
             },
@@ -134,7 +127,7 @@ export async function getAllOrdersForSuperadmin({
     };
 
     // Ambil data dan total
-    const [orders] = await Promise.all([
+    const [orders, total] = await Promise.all([
       db.order.findMany({
         where,
         skip,
@@ -155,11 +148,13 @@ export async function getAllOrdersForSuperadmin({
 
     return {
       data: orders,
+      total,
       error: null,
     };
   } catch (error) {
     console.error("Error getAllOrdersForSuperadmin:", error);
     return {
+      total: 0,
       data: null,
       error: getErrorMessage(error),
     };

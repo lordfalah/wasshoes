@@ -54,12 +54,14 @@ import { formatToRupiah } from "@/lib/utils";
 import { DataTableToolbar } from "@/components/tables/data-table-toolbar";
 import { LapTimerIcon } from "@radix-ui/react-icons";
 import { DataTableColumnHeader } from "@/components/tables/data-table-column-header";
+import { parseAsInteger, useQueryStates } from "nuqs";
 
 const DataTableOrderOwner: React.FC<{
   data: Array<
     Order & { user: User; store: Store & { admin: User }; pakets: PaketOrder[] }
   >;
-}> = ({ data }) => {
+  total: number;
+}> = ({ data, total }) => {
   const columns = useMemo<
     ColumnDef<
       Order & {
@@ -335,13 +337,30 @@ const DataTableOrderOwner: React.FC<{
     [],
   );
 
+  const [params] = useQueryStates({
+    page: parseAsInteger.withDefault(1),
+    perPage: parseAsInteger.withDefault(10),
+  });
+
+  const currentPage = params.page;
+  const currentPerPage = params.perPage;
+
+  const calculatedPageCount = useMemo(() => {
+    if (total === 0) return 1;
+    return Math.ceil(total / currentPerPage);
+  }, [total, currentPerPage]);
+
   const { table } = useDataTable({
     data,
     columns,
-    pageCount: 1,
+    pageCount: calculatedPageCount,
     initialState: {
       sorting: [{ id: "status", desc: true }],
       columnPinning: { right: ["actions"] },
+      pagination: {
+        pageIndex: currentPage - 1,
+        pageSize: currentPerPage,
+      },
     },
     shallow: false,
     throttleMs: 1000,
@@ -349,7 +368,7 @@ const DataTableOrderOwner: React.FC<{
   });
 
   return (
-    <DataTable table={table}>
+    <DataTable table={table} pagination={true}>
       <DataTableToolbar table={table} />
     </DataTable>
   );

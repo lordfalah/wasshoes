@@ -3,7 +3,14 @@
 import { DataTableColumnHeader } from "@/components/tables/data-table-column-header";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, BadgeCheck, BadgeX } from "lucide-react";
+import {
+  MoreHorizontal,
+  BadgeCheck,
+  BadgeX,
+  Users,
+  UserCog,
+  Text,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,8 +67,14 @@ import { TError } from "@/types/route-api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { getErrorMessage } from "@/lib/handle-error";
+import { UserRole } from "@prisma/client";
+import { Badge } from "@/components/ui/badge";
+import { parseAsInteger, useQueryStates } from "nuqs";
 
-const DataTableUser: React.FC<{ data: TDataUsersRole[] }> = ({ data }) => {
+const DataTableUser: React.FC<{ data: TDataUsersRole[]; total: number }> = ({
+  data,
+  total,
+}) => {
   const columns = useMemo<ColumnDef<TDataUsersRole>[]>(
     () => [
       {
@@ -91,14 +104,20 @@ const DataTableUser: React.FC<{ data: TDataUsersRole[] }> = ({ data }) => {
       },
 
       {
-        // Required: Unique identifier for the column
         id: "name",
-        // Required: Key to access the data, `accessorFn` can also be used
         accessorKey: "name",
-        // Optional: Custom header component
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Name" />
         ),
+
+        meta: {
+          label: "Name",
+          placeholder: "Search name...",
+          variant: "text",
+          icon: Text,
+        },
+
+        enableColumnFilter: true,
       },
 
       {
@@ -130,7 +149,7 @@ const DataTableUser: React.FC<{ data: TDataUsersRole[] }> = ({ data }) => {
       },
 
       {
-        id: "Email",
+        id: "email",
         accessorKey: "email",
 
         header: ({ column }) => (
@@ -148,22 +167,42 @@ const DataTableUser: React.FC<{ data: TDataUsersRole[] }> = ({ data }) => {
           </div>
         ),
 
-        enableSorting: false,
-        enableHiding: false,
+        enableColumnFilter: true,
       },
 
       {
-        id: "Role",
+        id: "role",
         accessorKey: "role",
-
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Role" />
         ),
 
-        cell: ({ row }) => <p>{row.original.role.name}</p>,
+        cell: ({ row }) => (
+          <Badge
+            variant="outline"
+            className="text-muted-foreground flex gap-1 px-1.5 capitalize [&_svg]:size-3"
+          >
+            {row.original.role.name}
+          </Badge>
+        ),
 
-        enableSorting: false,
-        enableHiding: false,
+        meta: {
+          label: "Role",
+          variant: "multiSelect",
+          options: [
+            {
+              label: "Admin",
+              value: UserRole.ADMIN,
+              icon: UserCog,
+            },
+            {
+              label: "User",
+              value: UserRole.USER,
+              icon: Users,
+            },
+          ],
+        },
+        enableColumnFilter: true,
       },
 
       {
@@ -374,22 +413,40 @@ const DataTableUser: React.FC<{ data: TDataUsersRole[] }> = ({ data }) => {
     [],
   );
 
+  const [params] = useQueryStates({
+    page: parseAsInteger.withDefault(1),
+    perPage: parseAsInteger.withDefault(10),
+  });
+
+  const currentPage = params.page;
+  const currentPerPage = params.perPage;
+
+  const calculatedPageCount = useMemo(() => {
+    if (total === 0) return 1;
+    return Math.ceil(total / currentPerPage);
+  }, [total, currentPerPage]);
+
   const { table } = useDataTable({
     data,
     columns,
-    pageCount: 1,
-    shallow: false,
+    pageCount: calculatedPageCount,
     initialState: {
       sorting: [{ id: "name", desc: true }],
       columnPinning: { right: ["actions"] },
-    },
 
+      pagination: {
+        pageIndex: currentPage - 1,
+        pageSize: currentPerPage,
+      },
+    },
+    shallow: false,
+    throttleMs: 1000,
     getRowId: (row) => row.id,
   });
 
   return (
     <>
-      <DataTable table={table}>
+      <DataTable table={table} pagination={true}>
         <DataTableToolbar table={table} />
       </DataTable>
     </>

@@ -16,6 +16,7 @@ import {
   SearchIcon,
   Settings,
   SettingsIcon,
+  ShieldUser,
   Store,
   Users,
 } from "lucide-react";
@@ -52,6 +53,13 @@ const data = {
       url: "/dashboard/users",
       icon: Users,
     },
+
+    {
+      title: "Roles",
+      url: "/dashboard/role",
+      icon: ShieldUser,
+    },
+
     {
       title: "Store",
       icon: Store,
