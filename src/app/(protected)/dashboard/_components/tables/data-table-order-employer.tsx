@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Fragment, useMemo, useTransition } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
-import { DataTable } from "@/components/tables/data-table";
+import { DataTable } from "@/components/data-table/data-table";
 import {
   TLaundryStatus,
   Order,
@@ -66,9 +66,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 import { calculateOrderTotals, cn, formatToRupiah } from "@/lib/utils";
-import { DataTableToolbar } from "@/components/tables/data-table-toolbar";
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { LapTimerIcon } from "@radix-ui/react-icons";
-import { DataTableColumnHeader } from "@/components/tables/data-table-column-header";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Scroller } from "@/components/ui/scroller";
 import Image from "next/image";
 import { useRouter } from "next/navigation";

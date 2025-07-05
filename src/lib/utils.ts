@@ -240,3 +240,11 @@ export function calculateOrderTotals(
     adjustmentText,
   };
 }
+
+// Helper untuk mendapatkan array dari enum
+// Ini bisa ditempatkan di luar komponen atau di file utilitas
+export const getEnumKeys = <T extends Record<string, string | number>>(
+  enumObject: T,
+): string[] => {
+  return Object.keys(enumObject).filter((key) => isNaN(Number(key)));
+};

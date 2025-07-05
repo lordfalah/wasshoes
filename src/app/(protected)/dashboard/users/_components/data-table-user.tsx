@@ -1,6 +1,6 @@
 "use client";
 
-import { DataTableColumnHeader } from "@/components/tables/data-table-column-header";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -20,8 +20,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useMemo } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
-import { DataTable } from "@/components/tables/data-table";
-import { DataTableToolbar } from "@/components/tables/data-table-toolbar";
+import { DataTable } from "@/components/data-table/data-table";
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { TDataUsersRole } from "../page";
 import Image from "next/image";
 

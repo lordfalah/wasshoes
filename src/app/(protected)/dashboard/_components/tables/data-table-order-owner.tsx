@@ -3,6 +3,7 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import {
+  CalendarSearch,
   CheckCircle,
   CheckCircle2Icon,
   ClipboardCheck,
@@ -21,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useMemo } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
-import { DataTable } from "@/components/tables/data-table";
+import { DataTable } from "@/components/data-table/data-table";
 import {
   TLaundryStatus,
   Order,
@@ -51,10 +52,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { formatToRupiah } from "@/lib/utils";
-import { DataTableToolbar } from "@/components/tables/data-table-toolbar";
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { LapTimerIcon } from "@radix-ui/react-icons";
-import { DataTableColumnHeader } from "@/components/tables/data-table-column-header";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { parseAsInteger, useQueryStates } from "nuqs";
+import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
+import { DataTableAdvancedToolbar } from "@/components/data-table/data-table-advanced-toolbar";
+import { DataTableFilterList } from "@/components/data-table/data-table-filter-list";
+import { DataTableFilterMenu } from "@/components/data-table/data-table-filter-menu";
+import { TasksTableActionBar } from "@/components/data-table/tasks-table-action-bar";
 
 const DataTableOrderOwner: React.FC<{
   data: Array<
@@ -101,7 +107,7 @@ const DataTableOrderOwner: React.FC<{
       {
         id: "no",
         header: "No",
-        cell: ({ row }) => row.index + 1, // nomor dalam halaman
+        cell: ({ row }) => row.index + 1,
         size: 32,
         enableSorting: false,
         enableHiding: false,
@@ -115,6 +121,26 @@ const DataTableOrderOwner: React.FC<{
         cell: ({ row }) => (
           <h4 className="font-semibold">{row.original.paymentMethod}</h4>
         ),
+      },
+
+      {
+        id: "Date",
+        accessorKey: "createdAt",
+        header: "Date",
+        cell: ({ row }) => (
+          <div className="w-40 text-wrap break-all">
+            <p>{row.original.createdAt.toDateString()}</p>
+          </div>
+        ),
+
+        meta: {
+          label: "date",
+          placeholder: "Search date...",
+          variant: "dateRange",
+          icon: CalendarSearch,
+        },
+
+        enableColumnFilter: true,
       },
 
       {
@@ -146,7 +172,7 @@ const DataTableOrderOwner: React.FC<{
         header: "Customer",
 
         cell: ({ row }) => (
-          <div className="w-80 text-wrap break-all">
+          <div className="text-wrap break-all">
             {row.original.informationCustomer ? (
               <div>
                 <p>
@@ -354,8 +380,9 @@ const DataTableOrderOwner: React.FC<{
     data,
     columns,
     pageCount: calculatedPageCount,
+    // enableAdvancedFilter: true,
     initialState: {
-      sorting: [{ id: "status", desc: true }],
+      sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
       pagination: {
         pageIndex: currentPage - 1,
@@ -363,13 +390,19 @@ const DataTableOrderOwner: React.FC<{
       },
     },
     shallow: false,
-    throttleMs: 1000,
+    clearOnDefault: true,
     getRowId: (row) => row.id,
   });
 
   return (
-    <DataTable table={table} pagination={true}>
-      <DataTableToolbar table={table} />
+    <DataTable
+      table={table}
+      pagination={true}
+      actionBar={<TasksTableActionBar table={table} />}
+    >
+      <DataTableToolbar table={table}>
+        <DataTableSortList table={table} align="end" />
+      </DataTableToolbar>
     </DataTable>
   );
 };

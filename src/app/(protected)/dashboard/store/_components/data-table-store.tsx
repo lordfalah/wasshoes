@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useMemo, useState } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
-import { DataTable } from "@/components/tables/data-table";
+import { DataTable } from "@/components/data-table/data-table";
 import { Store, User } from "@prisma/client";
 
 import { Scroller } from "@/components/ui/scroller";

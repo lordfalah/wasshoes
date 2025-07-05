@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Fragment, useCallback, useMemo, useState } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
-import { DataTable } from "@/components/tables/data-table";
+import { DataTable } from "@/components/data-table/data-table";
 import { Category, Paket } from "@prisma/client";
 import {
   AlertDialog,
