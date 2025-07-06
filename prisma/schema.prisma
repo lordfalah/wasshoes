@@ -170,6 +170,12 @@ enum TLaundryStatus {
   ON_HOLD // Ditahan karena alasan tertentu (misal: menunggu konfirmasi pelanggan, masalah pada sepatu)
 }
 
+enum TPriority {
+  low
+  medium
+  high
+}
+
 model Order {
   id            String         @id @default(cuid())
   totalPrice    Int            @db.Integer
@@ -178,6 +184,7 @@ model Order {
   redirectUrl   String?
   status        TStatusOrder   @default(PENDING) // transaction
   laundryStatus TLaundryStatus @default(AWAITING_PROCESSING)
+  priority      TPriority      @default(low)
 
   /// [Image]
   shoesImages Json[]

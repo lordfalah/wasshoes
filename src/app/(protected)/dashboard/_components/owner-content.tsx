@@ -1,6 +1,6 @@
 import { getAllOrdersForSuperadmin } from "@/actions/order";
 import { TError, TSuccess } from "@/types/route-api";
-import { Category, Paket, TStatusOrder } from "@prisma/client";
+import { Category, Paket } from "@prisma/client";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { cookies } from "next/headers";
 import { SearchParams } from "nuqs";
@@ -11,7 +11,8 @@ import PageTabs from "./page-tabs";
 import { TabsContent } from "@/components/ui/tabs";
 import DataTableCategorys from "./data-table-category";
 import DataTableOrderOwner from "./tables/data-table-order-owner";
-import { loadSearchParamsDataDashboardOwner } from "@/lib/searchParams";
+
+import { searchParamsCacheOrder } from "@/lib/search-params/search-order";
 
 type PageProps = {
   searchParams: Promise<SearchParams>;
@@ -47,24 +48,14 @@ const fetchCategorys = async (cookieAuth: ReadonlyRequestCookies) => {
 const OwnerContent: React.FC<PageProps> = async ({ searchParams }) => {
   const cookieStore = await cookies();
 
-  const { customer, page, perPage, sort, status } =
-    await loadSearchParamsDataDashboardOwner(searchParams);
+  const search = searchParamsCacheOrder.parse(await searchParams);
 
   const [
     { data: dataCategorys },
     { data: dataOrders, total, error: errorOrder },
   ] = await Promise.all([
     fetchCategorys(cookieStore),
-    getAllOrdersForSuperadmin({
-      page,
-      perPage,
-      sort,
-      customer,
-      status: status
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean) as TStatusOrder[],
-    }),
+    getAllOrdersForSuperadmin(search),
   ]);
 
   if (!dataOrders || errorOrder) throw new Error(errorOrder);

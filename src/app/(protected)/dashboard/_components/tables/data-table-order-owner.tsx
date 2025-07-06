@@ -57,9 +57,6 @@ import { LapTimerIcon } from "@radix-ui/react-icons";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { parseAsInteger, useQueryStates } from "nuqs";
 import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
-import { DataTableAdvancedToolbar } from "@/components/data-table/data-table-advanced-toolbar";
-import { DataTableFilterList } from "@/components/data-table/data-table-filter-list";
-import { DataTableFilterMenu } from "@/components/data-table/data-table-filter-menu";
 import { TasksTableActionBar } from "@/components/data-table/tasks-table-action-bar";
 
 const DataTableOrderOwner: React.FC<{
@@ -114,17 +111,22 @@ const DataTableOrderOwner: React.FC<{
       },
 
       {
-        id: "Payment",
+        id: "paymentMethod",
         accessorKey: "paymentMethod",
         header: "Payment Method",
 
         cell: ({ row }) => (
           <h4 className="font-semibold">{row.original.paymentMethod}</h4>
         ),
+        meta: {
+          label: "Payment Method",
+        },
+
+        enableColumnFilter: true,
       },
 
       {
-        id: "Date",
+        id: "createdAt",
         accessorKey: "createdAt",
         header: "Date",
         cell: ({ row }) => (
@@ -134,7 +136,7 @@ const DataTableOrderOwner: React.FC<{
         ),
 
         meta: {
-          label: "date",
+          label: "Date",
           placeholder: "Search date...",
           variant: "dateRange",
           icon: CalendarSearch,
@@ -153,6 +155,12 @@ const DataTableOrderOwner: React.FC<{
             <p>{row.original.store.name}</p>
           </div>
         ),
+
+        meta: {
+          label: "Store",
+        },
+
+        enableColumnFilter: true,
       },
 
       {
@@ -164,6 +172,11 @@ const DataTableOrderOwner: React.FC<{
             <p>{row.original.store.admin.name}</p>
           </div>
         ),
+
+        meta: {
+          label: "Head Store",
+        },
+        enableColumnFilter: true,
       },
 
       {
@@ -193,13 +206,14 @@ const DataTableOrderOwner: React.FC<{
         ),
 
         meta: {
-          label: "customer",
+          label: "Customer",
           placeholder: "Search customer...",
           variant: "text",
           icon: Text,
         },
 
         enableColumnFilter: true,
+        enableSorting: false,
       },
 
       {
@@ -265,10 +279,16 @@ const DataTableOrderOwner: React.FC<{
             <p>Rp. {formatToRupiah(row.original.totalPrice)}</p>
           </div>
         ),
+
+        meta: {
+          label: "Total Price",
+        },
+
+        enableColumnFilter: true,
       },
 
       {
-        id: "status_laundry",
+        id: "laundryStatus",
         accessorKey: "laundryStatus",
         header: "Status Laundry",
         cell: ({ row }) => (
@@ -294,6 +314,12 @@ const DataTableOrderOwner: React.FC<{
             {row.original.laundryStatus}
           </Badge>
         ),
+
+        meta: {
+          label: "Status Laundry",
+        },
+
+        enableColumnFilter: true,
       },
 
       {
@@ -380,7 +406,6 @@ const DataTableOrderOwner: React.FC<{
     data,
     columns,
     pageCount: calculatedPageCount,
-    // enableAdvancedFilter: true,
     initialState: {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },

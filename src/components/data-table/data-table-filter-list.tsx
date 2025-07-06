@@ -136,7 +136,7 @@ export function DataTableFilterList<TData>({
         operator: getDefaultFilterOperator(
           column.columnDef.meta?.variant ?? "text",
         ),
-        filterId: generateId({ length: 8 }),
+        filterId: generateId(undefined, { length: 8 }),
       },
     ]);
   }, [columns, filters, debouncedSetFilters]);
@@ -237,7 +237,7 @@ export function DataTableFilterList<TData>({
             {filters.length > 0 && (
               <Badge
                 variant="secondary"
-                className="h-[18.24px] rounded-[3.2px] px-[5.12px] font-mono font-normal text-[10.4px]"
+                className="h-[18.24px] rounded-[3.2px] px-[5.12px] font-mono text-[10.4px] font-normal"
               >
                 {filters.length}
               </Badge>
@@ -251,7 +251,7 @@ export function DataTableFilterList<TData>({
           {...props}
         >
           <div className="flex flex-col gap-1">
-            <h4 id={labelId} className="font-medium leading-none">
+            <h4 id={labelId} className="leading-none font-medium">
               {filters.length > 0 ? "Filters" : "No filters applied"}
             </h4>
             <p
@@ -309,12 +309,12 @@ export function DataTableFilterList<TData>({
       </Popover>
       <SortableOverlay>
         <div className="flex items-center gap-2">
-          <div className="h-8 min-w-[72px] rounded-sm bg-primary/10" />
-          <div className="h-8 w-32 rounded-sm bg-primary/10" />
-          <div className="h-8 w-32 rounded-sm bg-primary/10" />
-          <div className="h-8 min-w-36 flex-1 rounded-sm bg-primary/10" />
-          <div className="size-8 shrink-0 rounded-sm bg-primary/10" />
-          <div className="size-8 shrink-0 rounded-sm bg-primary/10" />
+          <div className="bg-primary/10 h-8 min-w-[72px] rounded-sm" />
+          <div className="bg-primary/10 h-8 w-32 rounded-sm" />
+          <div className="bg-primary/10 h-8 w-32 rounded-sm" />
+          <div className="bg-primary/10 h-8 min-w-36 flex-1 rounded-sm" />
+          <div className="bg-primary/10 size-8 shrink-0 rounded-sm" />
+          <div className="bg-primary/10 size-8 shrink-0 rounded-sm" />
         </div>
       </SortableOverlay>
     </Sortable>
@@ -583,7 +583,7 @@ function onFilterInputRender<TData>({
           filter.operator === "isEmpty" ? "empty" : "not empty"
         }`}
         aria-live="polite"
-        className="h-8 w-full rounded border bg-transparent dark:bg-input/30"
+        className="dark:bg-input/30 h-8 w-full rounded border bg-transparent"
       />
     );
   }

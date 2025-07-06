@@ -40,7 +40,7 @@ export async function CartLineItems({
       <div
         className={cn(
           "flex w-full flex-col gap-5",
-          isScrollable && "px-6",
+          isScrollable && "px-0 sm:px-6",
           className,
         )}
         {...props}
@@ -120,7 +120,7 @@ export async function CartLineItems({
                         Subtotal:
                       </span>
                       <span className="line-clamp-1 text-sm">
-                        {formatToRupiah(itemSubtotal)}
+                        Rp. {formatToRupiah(itemSubtotal)}
                       </span>
                     </div>
                     {/* Biaya Tambahan / Diskon Biaya (jika ada) */}
@@ -155,7 +155,7 @@ export async function CartLineItems({
                             Final:
                           </span>
                           <span className="line-clamp-1 text-sm">
-                            {formatToRupiah(itemFinalPrice)}
+                            Rp. {formatToRupiah(itemFinalPrice)}
                           </span>
                         </div>
                       </Fragment>

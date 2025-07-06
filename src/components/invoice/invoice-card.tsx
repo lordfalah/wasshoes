@@ -101,7 +101,7 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
       id={`checkout-store-${order.storeId}`}
       aria-labelledby={`checkout-store-${order.storeId}-heading`}
     >
-      <CardHeader className="flex flex-row items-center justify-between space-x-4 py-4">
+      <CardHeader className="flex flex-col items-center justify-between space-x-4 gap-y-2 py-4 sm:flex-row">
         <CardTitle className="line-clamp-1">{storeData.name}</CardTitle>
 
         <ShiftingCountdown
@@ -115,7 +115,7 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
         />
 
         {order.paymentToken && order.paymentMethod === TPaymentMethod.AUTO ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2">
             <ButtonPayTransaction paymentToken={order.paymentToken} />
             {midtransStatusData && (
               <Tooltip>

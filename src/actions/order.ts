@@ -17,6 +17,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { coreApi } from "@/lib/midtrans";
 import { orderSchema } from "@/schemas/order.schema";
+import { GetOrderSchema } from "@/lib/search-params/search-order";
 
 export async function getOrderLineItems(input: { orderId: string }) {
   try {
@@ -75,58 +76,79 @@ export async function getOrderLineItems(input: { orderId: string }) {
   }
 }
 
-type GetAllOrdersParams = {
-  page: number;
-  perPage: number;
-  sort: { id: string; desc: boolean }[];
-  customer: string;
-  status: TStatusOrder[]; // hasil dari split manual string "PENDING,FAILURE"
-};
-
-export async function getAllOrdersForSuperadmin({
-  page,
-  perPage,
-  sort = [],
-  customer = "",
-  status = [],
-}: GetAllOrdersParams) {
+export async function getAllOrdersForSuperadmin(input: GetOrderSchema) {
   try {
+    const { page, perPage, sort, customer, status, createdAt } = input;
+
     const skip = (page - 1) * perPage;
 
-    // Atur sorting
-    const orderBy = sort.length
-      ? sort.map(({ id, desc }) => ({
-          [id]: desc ? "desc" : "asc",
-        }))
-      : [{ createdAt: "desc" }];
+    const orderBy = sort.map(({ id, desc }) => {
+      if (id === "store") {
+        return {
+          store: {
+            name: (desc ? "desc" : "asc") as Prisma.SortOrder,
+          },
+        };
+      }
 
-    // Filter dinamis
+      if (id === ("headStore" as string)) {
+        return {
+          store: {
+            admin: {
+              name: (desc ? "desc" : "asc") as Prisma.SortOrder,
+            },
+          },
+        };
+      }
+
+      return {
+        [id]: desc ? "desc" : "asc",
+      };
+    });
+
     const where: Prisma.OrderWhereInput = {
+      ...(customer && {
+        OR: [
+          {
+            informationCustomer: {
+              path: ["first_name"],
+              string_contains: customer,
+              mode: "insensitive",
+            },
+          },
+          {
+            informationCustomer: {
+              path: ["last_name"],
+              string_contains: customer,
+              mode: "insensitive",
+            },
+          },
+          {
+            user: {
+              OR: [
+                { name: { contains: customer, mode: "insensitive" } },
+                { firstName: { contains: customer, mode: "insensitive" } },
+                { lastName: { contains: customer, mode: "insensitive" } },
+              ],
+            },
+          },
+        ],
+      }),
+
       ...(status.length > 0 && {
         status: {
           in: status,
         },
       }),
-      ...(customer && {
-        OR: [
-          {
-            informationCustomer: {
-              path: ["name"],
-              string_contains: customer,
-              mode: "insensitive",
-            },
-          },
 
-          {
-            user: {
-              name: { contains: customer, mode: "insensitive" },
-            },
-          },
-        ],
+      ...(createdAt.length === 2 && {
+        createdAt: {
+          gte: new Date(createdAt[0]),
+          lte: new Date(createdAt[1]),
+        },
       }),
     };
 
-    // Ambil data dan total
     const [orders, total] = await Promise.all([
       db.order.findMany({
         where,
@@ -154,8 +176,8 @@ export async function getAllOrdersForSuperadmin({
   } catch (error) {
     console.error("Error getAllOrdersForSuperadmin:", error);
     return {
-      total: 0,
       data: null,
+      total: 0,
       error: getErrorMessage(error),
     };
   }

@@ -63,7 +63,7 @@ export async function CheckoutCard({
         </Link>
       </CardHeader>
       <Separator className="mb-4" />
-      <CardContent className="pr-0 pb-6 pl-6">
+      <CardContent>
         <CartLineItems
           isAdmin={isAdmin}
           items={cartLineItems}
@@ -73,30 +73,21 @@ export async function CheckoutCard({
       <Separator className="mb-4" />
       <CardFooter className="flex-col justify-between space-y-2">
         {" "}
-        {/* Tambahkan space-y-2 untuk jarak antar baris */}
-        {/* Baris untuk Subtotal (Total Harga Barang Asli) */}
         <div className="flex w-full items-center justify-between">
-          <p>
-            Subtotal ({totalQuantity}){" "}
-            {/* Menggunakan totalQuantity yang sudah dihitung */}
-          </p>
-          <p>{formatToRupiah(subtotalPrice)}</p>
+          <p>Subtotal ({totalQuantity}) </p>
+          <p>Rp. {formatToRupiah(subtotalPrice)}</p>
         </div>
-        {/* Baris untuk Biaya Tambahan / Diskon Biaya (jika ada) */}
         {adjustmentText && ( // Hanya render jika ada penyesuaian
           <div className="text-muted-foreground flex w-full items-center justify-between text-sm">
             <p>{adjustmentText.split(":")[0]}:</p>{" "}
-            {/* Ambil label "Biaya Tambahan" atau "Diskon Biaya" */}
             <p className="font-medium">{adjustmentText.split(":")[1]}</p>{" "}
-            {/* Ambil nilai yang sudah diformat */}
           </div>
         )}
         {/* Baris untuk Harga Final */}
         <div className="flex w-full items-center justify-between font-semibold">
           {" "}
-          {/* Tambahkan font-semibold untuk menonjolkan Harga Final */}
           <p>Total</p>
-          <p>{formatToRupiah(finalPrice)}</p>
+          <p>Rp. {formatToRupiah(finalPrice)}</p>
         </div>
       </CardFooter>
     </Card>

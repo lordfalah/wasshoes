@@ -4,7 +4,7 @@ import { SelectTrigger } from "@radix-ui/react-select";
 import type { Table } from "@tanstack/react-table";
 import { ArrowUp, CheckCircle2, Download, Trash2 } from "lucide-react";
 import * as React from "react";
-import { toast } from "sonner";
+
 import {
   DataTableActionBar,
   DataTableActionBarAction,
@@ -59,6 +59,7 @@ export function TasksTableActionBar({ table }: TasksTableActionBarProps) {
   const onTaskUpdate = React.useCallback(
     ({
       field,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       value,
     }: {
       field: "status" | "laundryStatus";
@@ -80,7 +81,7 @@ export function TasksTableActionBar({ table }: TasksTableActionBarProps) {
       //     toast.success("Tasks updated");
       //   });
     },
-    [rows],
+    [],
   );
 
   const onTaskExport = React.useCallback(() => {
@@ -106,7 +107,7 @@ export function TasksTableActionBar({ table }: TasksTableActionBarProps) {
     //   }
     //   table.toggleAllRowsSelected(false);
     // });
-  }, [rows, table]);
+  }, []);
 
   return (
     <DataTableActionBar table={table} visible={rows.length > 0}>

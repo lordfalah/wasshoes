@@ -96,7 +96,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
                     items={cartLineItems}
                     variant="default"
                     isEditable={false}
-                    className="container h-full flex-1 pt-4"
+                    className="container h-full flex-1 px-2.5 pt-4"
                   />
                 </ScrollArea>
 
