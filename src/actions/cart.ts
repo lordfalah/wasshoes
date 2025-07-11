@@ -14,7 +14,6 @@ import { Category, Paket, Store, UserRole } from "@prisma/client";
 import { auth } from "@/auth";
 import { connection } from "next/server";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 export type CartLineItem = Paket & {
   quantity: number;
@@ -28,39 +27,25 @@ export async function getCart(input?: {
 }): Promise<CartLineItem[]> {
   await connection();
   try {
-    const [session, cookieStore] = await Promise.all([auth(), cookies()]);
-    if (!session || !session.user?.id) return [];
+    const cookieStore = await cookies();
 
-    const userId = session.user.id;
     const cartIdFromCookie = cookieStore.get("cartId")?.value;
 
-    let cart = null;
+    if (!cartIdFromCookie) return [];
 
-    if (cartIdFromCookie) {
-      cart = await db.cart.findUnique({
-        where: { id: cartIdFromCookie },
-        select: { id: true, closed: true, items: true },
-      });
+    const cart = await db.cart.findUnique({
+      where: { id: cartIdFromCookie },
+      select: { closed: true, items: true },
+    });
 
-      // Jika cart tidak ditemukan atau sudah ditutup, cari cart aktif dari user
-      if (!cart || cart.closed) {
-        cart = await db.cart.findFirst({
-          where: { userId, closed: false },
-          select: { id: true, closed: true, items: true },
-        });
-      }
-    } else {
-      // Tidak ada cookie, cari cart aktif berdasarkan user
-      cart = await db.cart.findFirst({
-        where: { userId, closed: false },
-        select: { id: true, closed: true, items: true },
-      });
-    }
+    // Cart tidak ditemukan atau sudah ditutup
+    if (!cart || cart.closed) return [];
 
-    const items = cart?.items as TCartItemSchema[] | undefined;
+    const items = cart.items as TCartItemSchema[] | undefined;
     if (!items || items.length === 0) return [];
 
     const paketIds = items.map((item) => item.productId);
+
     const pakets = await db.paket.findMany({
       where: {
         id: { in: paketIds },
@@ -75,12 +60,12 @@ export async function getCart(input?: {
     });
 
     return pakets.map((paket) => {
-      const item = items.find((item) => item.productId === paket.id);
+      const item = items.find((i) => i.productId === paket.id);
 
       return {
         ...paket,
         quantity: item?.quantity ?? 0,
-        priceOrder: item?.priceOrder, // tambahkan ini
+        priceOrder: item?.priceOrder ?? 0,
       };
     });
   } catch (error) {
@@ -137,8 +122,6 @@ export async function addToCart(rawInput: z.infer<typeof cartItemSchema>) {
 
     const [session, cookieStore] = await Promise.all([auth(), cookies()]);
     const userId = session?.user?.id;
-    if (!userId) redirect("/");
-
     const cartIdFromCookie = cookieStore.get("cartId")?.value;
 
     // Cek apakah produk valid dan visible
@@ -177,7 +160,7 @@ export async function addToCart(rawInput: z.infer<typeof cartItemSchema>) {
     if (!cart) {
       cart = await db.cart.create({
         data: {
-          userId: userId,
+          userId: userId || null,
           items: [input],
         },
       });
@@ -224,28 +207,27 @@ export async function updateCartItem(rawInput: TCartItemSchema) {
     const [session, cookieStore] = await Promise.all([auth(), cookies()]);
     const input = cartItemSchema.parse(rawInput);
 
-    const userId = session?.user.id;
     const isAdmin = session?.user.role?.name === UserRole.ADMIN;
     const cartId = cookieStore.get("cartId")?.value;
 
-    const cart = await db.cart.findFirst({
-      where: {
-        ...(userId ? { userId } : { id: cartId }),
-        closed: false,
-      },
+    if (!cartId) throw new Error("Cart ID tidak ditemukan.");
+
+    const cart = await db.cart.findUnique({
+      where: { id: cartId },
     });
 
-    if (!cart) throw new Error("Cart not found.");
+    if (!cart || cart.closed)
+      throw new Error("Cart tidak ditemukan atau sudah ditutup.");
 
-    let updatedItems: TCartItemSchema[] = [];
     const currentItems = Array.isArray(cart.items) ? cart.items : [];
+    let updatedItems: TCartItemSchema[] = [];
 
     const existingItem = currentItems.find(
       (item) => item.productId === input.productId,
     );
 
     if (input.quantity === 0 && !isAdmin) {
-      // Hapus item jika quantity 0, hanya untuk user
+      // Hapus item jika quantity 0 dan bukan admin
       updatedItems = currentItems.filter(
         (item) => item.productId !== input.productId,
       );
@@ -263,6 +245,7 @@ export async function updateCartItem(rawInput: TCartItemSchema) {
         return item;
       });
     } else {
+      // Tambah item baru jika belum ada
       updatedItems = [
         ...currentItems,
         {
@@ -328,18 +311,17 @@ export async function deleteCartItem(
   await connection();
 
   try {
-    const [session, cookieStore] = await Promise.all([auth(), cookies()]);
-    const userId = session?.user.id;
+    const cookieStore = await cookies();
     const cartId = cookieStore.get("cartId")?.value;
 
-    const cart = await db.cart.findFirst({
-      where: {
-        ...(userId ? { userId } : { id: cartId }),
-        closed: false,
-      },
+    if (!cartId) throw new Error("Cart ID tidak ditemukan di cookie.");
+
+    const cart = await db.cart.findUnique({
+      where: { id: cartId },
     });
 
-    if (!cart) throw new Error("Cart not found.");
+    if (!cart || cart.closed)
+      throw new Error("Cart tidak ditemukan atau sudah ditutup.");
 
     const currentItems = Array.isArray(cart.items) ? cart.items : [];
     const updatedItems = currentItems.filter(
@@ -365,18 +347,17 @@ export async function deleteCartItems(
   await connection();
 
   try {
-    const [session, cookieStore] = await Promise.all([auth(), cookies()]);
-    const userId = session?.user.id;
+    const cookieStore = await cookies();
     const cartId = cookieStore.get("cartId")?.value;
 
-    const cart = await db.cart.findFirst({
-      where: {
-        ...(userId ? { userId } : { id: cartId }),
-        closed: false,
-      },
+    if (!cartId) throw new Error("Cart ID tidak ditemukan di cookie.");
+
+    const cart = await db.cart.findUnique({
+      where: { id: cartId },
     });
 
-    if (!cart) throw new Error("Cart not found.");
+    if (!cart || cart.closed)
+      throw new Error("Cart tidak ditemukan atau sudah ditutup.");
 
     const currentItems = Array.isArray(cart.items) ? cart.items : [];
     const updatedItems = currentItems.filter(

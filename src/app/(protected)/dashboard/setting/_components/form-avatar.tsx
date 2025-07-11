@@ -20,6 +20,7 @@ import { uploadFiles } from "@/lib/uploadthing";
 import { extractFileKeyFromUrl } from "@/lib/utils";
 import { TError } from "@/types/route-api";
 import { Upload, X } from "lucide-react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import * as React from "react";
 import { toast } from "sonner";
@@ -33,6 +34,7 @@ export function UploadAvatar({
   const [isUploading, setIsUploading] = React.useState(false);
   const [files, setFiles] = React.useState<File[]>([]);
   const [previewImage, setPreviewImage] = React.useState(avatar.src);
+  const { update } = useSession();
 
   const onUpload = React.useCallback(
     async (
@@ -77,6 +79,8 @@ export function UploadAvatar({
           return;
         }
 
+        update();
+
         // delete old file
         await deleteFiles(extractFileKeyFromUrl(avatar.src as string));
 
@@ -119,7 +123,7 @@ export function UploadAvatar({
       }
     },
 
-    [avatar],
+    [avatar, update],
   );
 
   const onFileReject = React.useCallback((file: File, message: string) => {

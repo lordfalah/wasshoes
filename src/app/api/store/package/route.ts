@@ -1,10 +1,10 @@
-import { withAuth } from "@/lib/auth";
+import { withAuthRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import PrismaErrorHandler from "@/lib/PrismaErrorHandler";
 import { PackageSchemaServer } from "@/schemas/package.schema";
 import { NextResponse } from "next/server";
 
-export const POST = withAuth(async (req) => {
+export const POST = withAuthRole(async (req) => {
   try {
     const body = await req.json();
     const { success, error, data } = PackageSchemaServer.safeParse(body);
@@ -46,7 +46,7 @@ export const POST = withAuth(async (req) => {
 });
 
 // READ ALL
-export const GET = withAuth(async () => {
+export const GET = withAuthRole(async () => {
   try {
     const pakets = await db.paket.findMany({
       include: {

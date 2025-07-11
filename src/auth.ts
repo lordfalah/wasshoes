@@ -68,6 +68,26 @@ export const {
         console.error("Error deleting cartId cookie on signOut:", err);
       }
     },
+
+    async signIn({ user }) {
+      try {
+        const cookieStore = await cookies();
+        const cartId = cookieStore.get("cartId")?.value;
+
+        if (cartId && user.id) {
+          const cart = await db.cart.findUnique({ where: { id: cartId } });
+
+          if (cart && !cart.userId) {
+            await db.cart.update({
+              where: { id: cart.id },
+              data: { userId: user.id },
+            });
+          }
+        }
+      } catch (error) {
+        console.log("Error signin update cookie", error);
+      }
+    },
   },
   callbacks: {
     async signIn({ user, account }) {

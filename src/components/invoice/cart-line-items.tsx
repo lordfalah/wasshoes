@@ -82,7 +82,8 @@ export function InvoiceLineItems({
                     </span>
                     {/* Tampilkan Qty dan harga asli per unit, sama untuk editable/non-editable di invoice */}
                     <span className="text-muted-foreground line-clamp-1 text-xs">
-                      {formatToRupiah(item.paket.price)} each x {item.quantity}
+                      Rp. {formatToRupiah(item.paket.price)} each x{" "}
+                      {item.quantity}
                     </span>
                     {variant === "default" ? (
                       <span className="text-muted-foreground line-clamp-1 text-xs capitalize">
@@ -100,10 +101,10 @@ export function InvoiceLineItems({
                   // Anda bisa menyesuaikan ini jika ada kebutuhan untuk editing di tampilan invoice.
                   <div className="flex flex-col items-end space-y-1 font-medium">
                     <span className="ml-auto line-clamp-1 text-sm">
-                      {formatToRupiah(itemSubtotal)}
+                      Rp. {formatToRupiah(itemSubtotal)}
                     </span>
                     <span className="text-muted-foreground line-clamp-1 text-xs">
-                      {formatToRupiah(item.paket.price)} each
+                      Rp. {formatToRupiah(item.paket.price)} each
                     </span>
                   </div>
                 ) : (
@@ -114,7 +115,7 @@ export function InvoiceLineItems({
                         Subtotal:
                       </span>
                       <span className="line-clamp-1 text-sm">
-                        {formatToRupiah(itemSubtotal)}
+                        Rp. {formatToRupiah(itemSubtotal)}
                       </span>
                     </div>
 
@@ -150,7 +151,7 @@ export function InvoiceLineItems({
                             Final:
                           </span>
                           <span className="line-clamp-1 text-sm">
-                            {formatToRupiah(itemFinalPrice)}
+                            Rp. {formatToRupiah(itemFinalPrice)}
                           </span>
                         </div>
                       </Fragment>

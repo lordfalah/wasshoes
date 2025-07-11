@@ -1,17 +1,7 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import Script from "next/script";
 import { Fragment } from "react";
 
-export default async function CheckoutLayout({
-  children,
-}: React.PropsWithChildren) {
-  const session = await auth();
-
-  if (!session) {
-    redirect("/signin");
-  }
-
+export default function CheckoutLayout({ children }: React.PropsWithChildren) {
   return (
     <Fragment>
       <Script

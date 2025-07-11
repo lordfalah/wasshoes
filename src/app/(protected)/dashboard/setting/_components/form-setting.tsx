@@ -6,13 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { SettingsSchema } from "@/schemas";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,13 +22,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/form-error";
 import { FormSuccess } from "@/components/form-success";
-import { Role } from "@prisma/client";
 import { ExtendedUser } from "@/types/types";
+import { PatternFormat } from "react-number-format";
+import { cn } from "@/lib/utils";
 
-const FormSetting: React.FC<{ user: ExtendedUser; roles: Role[] }> = ({
-  user,
-  roles,
-}) => {
+const FormSetting: React.FC<{ user: ExtendedUser }> = ({ user }) => {
   const [error, setError] = useState<string | undefined>();
   const [success, setSuccess] = useState<string | undefined>();
   const { update } = useSession();
@@ -50,9 +41,9 @@ const FormSetting: React.FC<{ user: ExtendedUser; roles: Role[] }> = ({
       email: user?.email || "",
       role: user.role.name,
       isTwoFactorEnabled: user?.isTwoFactorEnabled || undefined,
-      first_name: "",
-      last_name: "",
-      phone: "",
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
+      phone: user?.phone || "",
     },
   });
 
@@ -106,7 +97,7 @@ const FormSetting: React.FC<{ user: ExtendedUser; roles: Role[] }> = ({
 
             <FormField
               control={form.control}
-              name="first_name"
+              name="firstName"
               render={({ field }) => (
                 <FormItem className="col-span-12 space-y-2.5 md:col-span-6">
                   <FormLabel>First Name</FormLabel>
@@ -124,7 +115,7 @@ const FormSetting: React.FC<{ user: ExtendedUser; roles: Role[] }> = ({
 
             <FormField
               control={form.control}
-              name="last_name"
+              name="lastName"
               render={({ field }) => (
                 <FormItem className="col-span-12 space-y-2.5 md:col-span-6">
                   <FormLabel>Last Name</FormLabel>
@@ -145,13 +136,24 @@ const FormSetting: React.FC<{ user: ExtendedUser; roles: Role[] }> = ({
               name="phone"
               render={({ field }) => (
                 <FormItem className="col-span-12 space-y-2.5 md:col-span-6">
-                  <FormLabel>Phone Number</FormLabel>
+                  <FormLabel>Phone</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="John Doe"
-                      disabled={isPending}
-                      type="number"
+                    <PatternFormat
+                      value={field.value}
+                      onValueChange={(values) => {
+                        form.setValue("phone", values.value, {
+                          shouldValidate: true,
+                        });
+                      }}
+                      mask="_"
+                      type="tel"
+                      format="####-####-####"
+                      placeholder="0812-3456-7890"
+                      className={cn(
+                        "border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+                        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+                        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+                      )}
                     />
                   </FormControl>
                   <FormMessage />
@@ -218,36 +220,6 @@ const FormSetting: React.FC<{ user: ExtendedUser; roles: Role[] }> = ({
               </>
             )}
 
-            {user.role.name === "SUPERADMIN" && (
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem className="col-span-12 space-y-2.5 md:col-span-6">
-                    <FormLabel>Role</FormLabel>
-                    <Select
-                      disabled={isPending}
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {roles.map(({ id, name }) => (
-                          <SelectItem key={id} value={name}>
-                            {name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
             {user?.isOAuth === false && (
               <FormField
                 control={form.control}

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { auth, signOut } from "@/auth";
+import { UserRole } from "@prisma/client";
 
 interface AuthDropdownProps
   extends React.ComponentPropsWithRef<typeof DropdownMenuTrigger>,
@@ -81,7 +82,7 @@ export async function AuthDropdown({ className, ...props }: AuthDropdownProps) {
             </div>
           }
         >
-          <AuthDropdownGroup />
+          <AuthDropdownGroup role={session.user.role.name} />
         </React.Suspense>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
@@ -91,11 +92,11 @@ export async function AuthDropdown({ className, ...props }: AuthDropdownProps) {
               await signOut();
             }}
           >
-            <ExitIcon className="mr-2 size-4" aria-hidden="true" />
             <button
               type="submit"
-              className="flex w-full items-center justify-between"
+              className="flex w-full items-center justify-between gap-x-4"
             >
+              <ExitIcon className="size-4" aria-hidden="true" />
               Log out
               <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
             </button>
@@ -106,23 +107,19 @@ export async function AuthDropdown({ className, ...props }: AuthDropdownProps) {
   );
 }
 
-async function AuthDropdownGroup() {
+async function AuthDropdownGroup({ role }: { role: UserRole }) {
   return (
     <DropdownMenuGroup>
-      <DropdownMenuItem asChild>
-        <Link href={"/dashboard"}>
-          <DashboardIcon className="mr-2 size-4" aria-hidden="true" />
-          Dashboard
-          <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
-        </Link>
-      </DropdownMenuItem>
-      {/* <DropdownMenuItem asChild>
-        <Link href="/dashboard/billing">
-          <Icons.credit className="mr-2 size-4" aria-hidden="true" />
-          Billing
-          <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-        </Link>
-      </DropdownMenuItem> */}
+      {role === UserRole.ADMIN ||
+        (role === UserRole.SUPERADMIN && (
+          <DropdownMenuItem asChild>
+            <Link href={"/dashboard"}>
+              <DashboardIcon className="mr-2 size-4" aria-hidden="true" />
+              Dashboard
+              <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+            </Link>
+          </DropdownMenuItem>
+        ))}
       <DropdownMenuItem asChild>
         <Link href="/dashboard/setting">
           <GearIcon className="mr-2 size-4" aria-hidden="true" />

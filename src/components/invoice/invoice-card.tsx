@@ -187,7 +187,7 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
         {/* Baris untuk Subtotal (Total Harga Barang Asli) */}
         <div className="flex w-full items-center justify-between">
           <p>Subtotal ({totalQuantity}) </p>
-          <p>{formatToRupiah(subtotalPrice)}</p>
+          <p>Rp. {formatToRupiah(subtotalPrice)}</p>
         </div>
         {/* Baris untuk Biaya Tambahan / Diskon Biaya (jika ada) */}
         {adjustmentText && ( // Hanya render jika ada penyesuaian
@@ -212,7 +212,7 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
         {/* Baris untuk Harga Final */}
         <div className="flex w-full items-center justify-between font-semibold">
           <p>Total</p>
-          <p>{formatToRupiah(finalPrice)}</p>
+          <p>Rp. {formatToRupiah(finalPrice)}</p>
         </div>
       </CardFooter>
     </Card>

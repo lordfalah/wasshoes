@@ -4,15 +4,18 @@ import { Category, Paket } from "@prisma/client";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { cookies } from "next/headers";
 import { SearchParams } from "nuqs";
-import React from "react";
+import React, { Suspense } from "react";
 import { SectionCards } from "./section-cards";
 import { ChartAreaInteractive } from "./chart-area-interactive";
 import PageTabs from "./page-tabs";
 import { TabsContent } from "@/components/ui/tabs";
 import DataTableCategorys from "./data-table-category";
 import DataTableOrderOwner from "./tables/data-table-order-owner";
-
 import { searchParamsCacheOrder } from "@/lib/search-params/search-order";
+import PrintTablePdf from "./tables/print-table-pdf";
+import TablePdfOrderOwner from "./tables/table-pdf-order-owner";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 type PageProps = {
   searchParams: Promise<SearchParams>;
@@ -68,6 +71,27 @@ const OwnerContent: React.FC<PageProps> = async ({ searchParams }) => {
       </div>
 
       <div className="px-4 lg:px-6">
+        <Suspense
+          key={dataOrders.length}
+          fallback={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex items-center justify-between"
+              disabled={true}
+            >
+              <Loader2 className="animate-spin" />
+              Please wait
+            </Button>
+          }
+        >
+          <PrintTablePdf
+            document={<TablePdfOrderOwner data={dataOrders} />}
+            fileName="laporan-order.pdf"
+            className="flex w-0 pb-2 pl-1"
+          />
+        </Suspense>
         <DataTableOrderOwner data={dataOrders} total={total} />
       </div>
 

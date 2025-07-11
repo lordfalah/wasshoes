@@ -2,7 +2,6 @@ import React from "react";
 import { auth } from "@/auth";
 import FormSetting from "./_components/form-setting";
 import { UploadAvatar } from "./_components/form-avatar";
-import { db } from "@/lib/db";
 
 const SettingPage: React.FC = async () => {
   const session = await auth();
@@ -10,8 +9,6 @@ const SettingPage: React.FC = async () => {
   if (!session || !session.user) {
     throw new Error("You are not authenticated");
   }
-
-  const roles = await db.role.findMany();
 
   return (
     <div className="space-y-4 p-4 lg:p-6">
@@ -26,7 +23,7 @@ const SettingPage: React.FC = async () => {
           id: session.user.id as string,
         }}
       />
-      <FormSetting roles={roles} user={session.user} />
+      <FormSetting user={session.user} />
     </div>
   );
 };

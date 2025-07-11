@@ -58,7 +58,10 @@ export default auth((req, context) => {
   const isLoggedIn = !!req.auth;
 
   const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
-  const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
+  const isPublicRoute = publicRoutes.some(
+    (route) =>
+      nextUrl.pathname === route || nextUrl.pathname.startsWith(`${route}/`),
+  );
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
   // Bypass middleware untuk route tertentu (contoh: upload, auth API)

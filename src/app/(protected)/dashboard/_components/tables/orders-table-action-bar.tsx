@@ -18,21 +18,22 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 
-// import { deleteTasks, updateTasks } from "../_lib/actions";
 import {
   Order,
   PaketOrder,
   Store,
   TLaundryStatus,
-  TStatusOrder,
+  TPriority,
   User,
 } from "@prisma/client";
 import { getEnumKeys } from "@/lib/utils";
 import { exportTableToCSV } from "@/lib/export";
+import { deleteOrders, updateOrders } from "@/actions/order";
+import { toast } from "sonner";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const actions = [
-  "update-status",
+  "update-laundry-status",
   "update-priority",
   "export",
   "delete",
@@ -40,13 +41,13 @@ const actions = [
 
 type Action = (typeof actions)[number];
 
-interface TasksTableActionBarProps {
+interface OrderTableActionBarProps {
   table: Table<
     Order & { user: User; store: Store & { admin: User }; pakets: PaketOrder[] }
   >;
 }
 
-export function TasksTableActionBar({ table }: TasksTableActionBarProps) {
+export function OrdersTableActionBar({ table }: OrderTableActionBarProps) {
   const rows = table.getFilteredSelectedRowModel().rows;
   const [isPending, startTransition] = React.useTransition();
   const [currentAction, setCurrentAction] = React.useState<Action | null>(null);
@@ -56,32 +57,31 @@ export function TasksTableActionBar({ table }: TasksTableActionBarProps) {
     [isPending, currentAction],
   );
 
-  const onTaskUpdate = React.useCallback(
+  const onOrderUpdate = React.useCallback(
     ({
       field,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       value,
     }: {
-      field: "status" | "laundryStatus";
-      value: TStatusOrder | TLaundryStatus;
+      field: "laundryStatus" | "priority";
+      value: TLaundryStatus | TPriority;
     }) => {
       setCurrentAction(
-        field === "status" ? "update-status" : "update-priority",
+        field === "laundryStatus" ? "update-laundry-status" : "update-priority",
       );
-      //   startTransition(async () => {
-      //     const { error } = await updateTasks({
-      //       ids: rows.map((row) => row.original.id),
-      //       [field]: value,
-      //     });
+      startTransition(async () => {
+        const { error } = await updateOrders({
+          ids: rows.map((row) => row.original.id),
+          [field]: value,
+        });
 
-      //     if (error) {
-      //       toast.error(error);
-      //       return;
-      //     }
-      //     toast.success("Tasks updated");
-      //   });
+        if (error) {
+          toast.error(error);
+          return;
+        }
+        toast.success("Orders updated");
+      });
     },
-    [],
+    [rows],
   );
 
   const onTaskExport = React.useCallback(() => {
@@ -96,18 +96,18 @@ export function TasksTableActionBar({ table }: TasksTableActionBarProps) {
 
   const onTaskDelete = React.useCallback(() => {
     setCurrentAction("delete");
-    // startTransition(async () => {
-    //   const { error } = await deleteTasks({
-    //     ids: rows.map((row) => row.original.id),
-    //   });
+    startTransition(async () => {
+      const { error } = await deleteOrders({
+        ids: rows.map((row) => row.original.id),
+      });
 
-    //   if (error) {
-    //     toast.error(error);
-    //     return;
-    //   }
-    //   table.toggleAllRowsSelected(false);
-    // });
-  }, []);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+      table.toggleAllRowsSelected(false);
+    });
+  }, [rows, table]);
 
   return (
     <DataTableActionBar table={table} visible={rows.length > 0}>
@@ -118,22 +118,22 @@ export function TasksTableActionBar({ table }: TasksTableActionBarProps) {
       />
       <div className="flex items-center gap-1.5">
         <Select
-          onValueChange={(value: TStatusOrder) =>
-            onTaskUpdate({ field: "status", value })
+          onValueChange={(value: TLaundryStatus) =>
+            onOrderUpdate({ field: "laundryStatus", value })
           }
         >
           <SelectTrigger asChild>
             <DataTableActionBarAction
               size="icon"
-              tooltip="Update status"
-              isPending={getIsActionPending("update-status")}
+              tooltip="Update Status Laundry"
+              isPending={getIsActionPending("update-laundry-status")}
             >
               <CheckCircle2 />
             </DataTableActionBarAction>
           </SelectTrigger>
           <SelectContent align="center">
             <SelectGroup>
-              {getEnumKeys(TStatusOrder).map((status) => (
+              {getEnumKeys(TLaundryStatus).map((status) => (
                 <SelectItem key={status} value={status} className="capitalize">
                   {status}
                 </SelectItem>
@@ -142,8 +142,8 @@ export function TasksTableActionBar({ table }: TasksTableActionBarProps) {
           </SelectContent>
         </Select>
         <Select
-          onValueChange={(value: TLaundryStatus) =>
-            onTaskUpdate({ field: "laundryStatus", value })
+          onValueChange={(value: TPriority) =>
+            onOrderUpdate({ field: "priority", value })
           }
         >
           <SelectTrigger asChild>
@@ -157,7 +157,7 @@ export function TasksTableActionBar({ table }: TasksTableActionBarProps) {
           </SelectTrigger>
           <SelectContent align="center">
             <SelectGroup>
-              {getEnumKeys(TLaundryStatus).map((priority) => (
+              {getEnumKeys(TPriority).map((priority) => (
                 <SelectItem
                   key={priority}
                   value={priority}
@@ -171,7 +171,7 @@ export function TasksTableActionBar({ table }: TasksTableActionBarProps) {
         </Select>
         <DataTableActionBarAction
           size="icon"
-          tooltip="Export tasks"
+          tooltip="Export Orders"
           isPending={getIsActionPending("export")}
           onClick={onTaskExport}
         >
@@ -179,7 +179,7 @@ export function TasksTableActionBar({ table }: TasksTableActionBarProps) {
         </DataTableActionBarAction>
         <DataTableActionBarAction
           size="icon"
-          tooltip="Delete tasks"
+          tooltip="Delete Orders"
           isPending={getIsActionPending("delete")}
           onClick={onTaskDelete}
         >

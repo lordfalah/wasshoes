@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import OwnerContent from "./_components/owner-content";
 import { UserRole } from "@prisma/client";
 import EmployerContent from "./_components/employer-content";
+import { redirect } from "next/navigation";
 
 type PageProps = {
   searchParams: Promise<SearchParams>;
@@ -22,6 +23,6 @@ export default async function PageDashboard({ searchParams }: PageProps) {
       />
     );
   } else {
-    return "asas";
+    redirect("/");
   }
 }

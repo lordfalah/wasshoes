@@ -440,7 +440,7 @@ const DataTableUser: React.FC<{ data: TDataUsersRole[]; total: number }> = ({
       },
     },
     shallow: false,
-    throttleMs: 1000,
+    clearOnDefault: true,
     getRowId: (row) => row.id,
   });
 

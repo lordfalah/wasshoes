@@ -1,4 +1,11 @@
+import { TPriority } from "@prisma/client";
 import { clsx, type ClassValue } from "clsx";
+import {
+  ArrowDownIcon,
+  ArrowRightIcon,
+  ArrowUpIcon,
+  CircleIcon,
+} from "lucide-react";
 import { env } from "process";
 import { twMerge } from "tailwind-merge";
 
@@ -202,19 +209,19 @@ export function calculateOrderTotals(
 ): CalculateOrderTotalsOutput {
   const totalQuantity = items.reduce((acc, item) => acc + item.quantity, 0);
 
-  const subtotalPrice = items.reduce((acc, item) => {
-    // Subtotal selalu berdasarkan harga dasar (price dari Paket DB) * kuantitas
-    return acc + Number(item.price) * Number(item.quantity);
-  }, 0);
+  const subtotalPrice = items.reduce(
+    (acc, item) => acc + Number(item.price) * Number(item.quantity),
+    0,
+  );
 
   const finalPrice = items.reduce((acc, item) => {
-    // Harga final per item:
-    // Jika priceOrder ada (tidak undefined dan tidak null), gunakan priceOrder sebagai harga TOTAL baris item.
-    // Jika priceOrder tidak ada, gunakan harga dasar (item.price) * kuantitas.
+    const hasCustomTotal =
+      typeof item.priceOrder === "number" && item.priceOrder > 0;
+
     return (
       acc +
-      (item.priceOrder !== undefined && item.priceOrder !== null
-        ? Number(item.priceOrder) // Ini adalah harga TOTAL untuk item ini
+      (hasCustomTotal
+        ? Number(item.priceOrder) // total custom
         : Number(item.price) * Number(item.quantity))
     );
   }, 0);
@@ -223,13 +230,11 @@ export function calculateOrderTotals(
   let adjustmentText: string | null = null;
 
   if (finalPrice !== subtotalPrice) {
-    if (finalPrice > subtotalPrice) {
-      adjustmentAmount = finalPrice - subtotalPrice;
-      adjustmentText = `Biaya Tambahan: Rp. ${formatToRupiah(adjustmentAmount)}`;
-    } else if (finalPrice < subtotalPrice) {
-      adjustmentAmount = subtotalPrice - finalPrice;
-      adjustmentText = `Diskon Biaya: Rp. ${formatToRupiah(adjustmentAmount)}`;
-    }
+    adjustmentAmount = Math.abs(finalPrice - subtotalPrice);
+    adjustmentText =
+      finalPrice > subtotalPrice
+        ? `Biaya Tambahan: Rp. ${formatToRupiah(adjustmentAmount)}`
+        : `Diskon Biaya: Rp. ${formatToRupiah(adjustmentAmount)}`;
   }
 
   return {
@@ -248,3 +253,24 @@ export const getEnumKeys = <T extends Record<string, string | number>>(
 ): string[] => {
   return Object.keys(enumObject).filter((key) => isNaN(Number(key)));
 };
+
+// export function getStatusIcon(status: TStatusOrder) {
+//   const statusIcons = {
+//     canceled: CircleX,
+//     done: CheckCircle2,
+//     "in-progress": Timer,
+//     todo: CircleHelp,
+//   };
+
+//   return statusIcons[status] || CircleIcon;
+// }
+
+export function getPriorityIcon(priority: TPriority) {
+  const priorityIcons = {
+    high: ArrowUpIcon,
+    low: ArrowDownIcon,
+    medium: ArrowRightIcon,
+  };
+
+  return priorityIcons[priority] || CircleIcon;
+}

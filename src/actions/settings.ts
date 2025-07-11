@@ -2,7 +2,6 @@
 
 import * as z from "zod";
 import bcrypt from "bcryptjs";
-
 import { db } from "@/lib/db";
 import { SettingsSchema } from "@/schemas";
 import { getUserByEmail, getUserById } from "@/data/user";
@@ -47,19 +46,27 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
     return { success: "Verification email sent!" };
   }
 
-  if (values.password && values.newPassword && dbUser.password) {
-    const passwordsMatch = await bcrypt.compare(
-      values.password,
-      dbUser.password,
-    );
+  // Validasi password jika ingin mengubah password
+  if (
+    (values.password && !values.newPassword) ||
+    (!values.password && values.newPassword)
+  ) {
+    return { error: "Password lama dan baru harus diisi bersamaan" };
+  }
 
-    if (!passwordsMatch) {
+  if (values.password && values.newPassword && dbUser.password) {
+    const match = await bcrypt.compare(values.password, dbUser.password);
+    if (!match) {
       return { error: "Incorrect password!" };
     }
 
     const hashedPassword = await bcrypt.hash(values.newPassword, 10);
     values.password = hashedPassword;
-    values.newPassword = undefined;
+    delete values.newPassword;
+  } else {
+    // Jika tidak ingin mengubah password
+    delete values.password;
+    delete values.newPassword;
   }
 
   const updatedUser = await db.user.update({
@@ -88,6 +95,8 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
       email: updatedUser.email,
       isTwoFactorEnabled: updatedUser.isTwoFactorEnabled,
       role: updatedUser.role,
+      firstName: updatedUser.firstName || "",
+      lastName: updatedUser.lastName || "",
     },
   });
 

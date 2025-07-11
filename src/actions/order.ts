@@ -9,6 +9,7 @@ import {
   TPaymentMethod,
   TStatusOrder,
   UserRole,
+  TPriority,
 } from "@prisma/client";
 import { subHours } from "date-fns";
 import { connection } from "next/server";
@@ -578,5 +579,65 @@ export async function updateStatusOrder({
   } catch (error) {
     console.log(error);
     return { data: null, error: getErrorMessage(error) };
+  }
+}
+
+export async function updateOrders({
+  ids,
+  priority,
+  laundryStatus,
+}: {
+  ids: string[];
+  laundryStatus?: TLaundryStatus;
+  priority?: TPriority;
+}) {
+  await connection();
+
+  try {
+    const orders = await db.order.updateManyAndReturn({
+      where: {
+        id: { in: ids },
+      },
+
+      data: {
+        priority,
+        laundryStatus,
+      },
+    });
+
+    revalidatePath("/dashboard");
+    return {
+      data: orders,
+      error: null,
+    };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: getErrorMessage(error) };
+  }
+}
+
+export async function deleteOrders({ ids }: { ids: string[] }) {
+  await connection();
+
+  try {
+    const orders = await db.order.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+
+    revalidatePath("/dashboard");
+    return {
+      data: orders,
+      error: null,
+    };
+  } catch (error) {
+    console.log(error);
+    return {
+      data: null,
+      error: getErrorMessage(error),
+    };
   }
 }

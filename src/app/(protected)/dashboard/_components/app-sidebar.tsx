@@ -14,7 +14,6 @@ import {
   LayoutDashboardIcon,
   Package,
   SearchIcon,
-  Settings,
   SettingsIcon,
   ShieldUser,
   Store,
@@ -99,11 +98,6 @@ const data = {
       url: "#",
       icon: FolderIcon,
     },
-    {
-      title: "Setting",
-      url: "/dashboard/setting",
-      icon: Settings,
-    },
   ],
   navClouds: [
     {
@@ -156,7 +150,7 @@ const data = {
   navSecondary: [
     {
       title: "Settings",
-      url: "#",
+      url: "/dashboard/setting",
       icon: SettingsIcon,
     },
     {

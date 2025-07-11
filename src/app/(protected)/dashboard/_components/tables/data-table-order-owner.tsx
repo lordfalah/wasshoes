@@ -3,23 +3,17 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import {
+  ArrowUpDown,
   CalendarSearch,
   CheckCircle,
   CheckCircle2Icon,
   ClipboardCheck,
   Contact,
   Loader2,
-  MoreHorizontal,
   Text,
   XCircle,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+
 import { useMemo } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
 import { DataTable } from "@/components/data-table/data-table";
@@ -30,34 +24,16 @@ import {
   Store,
   TStatusOrder,
   User,
+  TPriority,
 } from "@prisma/client";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { formatToRupiah } from "@/lib/utils";
+import { formatToRupiah, getEnumKeys, getPriorityIcon } from "@/lib/utils";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { LapTimerIcon } from "@radix-ui/react-icons";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { parseAsInteger, useQueryStates } from "nuqs";
 import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
-import { TasksTableActionBar } from "@/components/data-table/tasks-table-action-bar";
+import { OrdersTableActionBar } from "./orders-table-action-bar";
 
 const DataTableOrderOwner: React.FC<{
   data: Array<
@@ -116,7 +92,9 @@ const DataTableOrderOwner: React.FC<{
         header: "Payment Method",
 
         cell: ({ row }) => (
-          <h4 className="font-semibold">{row.original.paymentMethod}</h4>
+          <h4 className="h-9 py-2 font-semibold">
+            {row.original.paymentMethod}
+          </h4>
         ),
         meta: {
           label: "Payment Method",
@@ -180,19 +158,51 @@ const DataTableOrderOwner: React.FC<{
       },
 
       {
+        id: "priority",
+        accessorKey: "priority",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Priority" />
+        ),
+        cell: ({ cell }) => {
+          const priority = getEnumKeys(TPriority).find(
+            (priority) => priority === cell.getValue(),
+          );
+
+          if (!priority) return null;
+
+          const Icon = getPriorityIcon(priority as TPriority);
+
+          return (
+            <Badge variant="outline" className="py-1 [&>svg]:size-3.5">
+              <Icon />
+              <span className="capitalize">{priority}</span>
+            </Badge>
+          );
+        },
+        meta: {
+          label: "Priority",
+          variant: "multiSelect",
+          options: getEnumKeys(TPriority).map((priority) => ({
+            label: priority.charAt(0).toUpperCase() + priority.slice(1),
+            value: priority,
+            icon: getPriorityIcon(priority as TPriority),
+          })),
+          icon: ArrowUpDown,
+        },
+        enableColumnFilter: true,
+      },
+
+      {
         id: "customer",
         accessorKey: "informationCustomer",
         header: "Customer",
 
         cell: ({ row }) => (
-          <div className="text-wrap break-all">
+          <div className="w-40 text-wrap break-all">
             {row.original.informationCustomer ? (
               <div>
                 <p>
-                  <span>
-                    {row.original.informationCustomer.first_name}{" "}
-                    {row.original.informationCustomer.last_name}
-                  </span>
+                  <span>{row.original.informationCustomer.name}</span>
                 </p>
               </div>
             ) : (
@@ -321,70 +331,6 @@ const DataTableOrderOwner: React.FC<{
 
         enableColumnFilter: true,
       },
-
-      {
-        id: "actions",
-        cell: function Cell({}) {
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" className="w-full">
-                        Edit
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                      <DialogHeader>
-                        <DialogTitle>Edit profile</DialogTitle>
-                        <DialogDescription>
-                          Make changes to your profile here. Click save when
-                          you&apos;re done.
-                        </DialogDescription>
-                      </DialogHeader>
-                    </DialogContent>
-                  </Dialog>
-                </DropdownMenuItem>
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full hover:bg-red-400/20 hover:text-red-500"
-                    >
-                      Delete
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Are you absolutely sure?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently
-                        delete your account and remove your data from our
-                        servers.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction>Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
-        },
-        size: 32,
-      },
     ],
     [],
   );
@@ -420,15 +366,17 @@ const DataTableOrderOwner: React.FC<{
   });
 
   return (
-    <DataTable
-      table={table}
-      pagination={true}
-      actionBar={<TasksTableActionBar table={table} />}
-    >
-      <DataTableToolbar table={table}>
-        <DataTableSortList table={table} align="end" />
-      </DataTableToolbar>
-    </DataTable>
+    <>
+      <DataTable
+        table={table}
+        pagination={true}
+        actionBar={<OrdersTableActionBar table={table} />}
+      >
+        <DataTableToolbar table={table}>
+          <DataTableSortList table={table} align="start" />
+        </DataTableToolbar>
+      </DataTable>
+    </>
   );
 };
 

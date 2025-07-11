@@ -6,11 +6,22 @@ export const UserSchema = z.object({
   isTwoFactorEnabled: z.optional(z.boolean()),
   role: z.enum([UserRole.ADMIN, UserRole.USER, UserRole.SUPERADMIN]),
   email: z.optional(z.string().email()),
-  password: z.optional(z.string().min(6)),
-  newPassword: z.optional(z.string().min(6)),
+  password: z
+    .string()
+    .optional()
+    .refine((val) => !val || val.length >= 6, {
+      message: "Password minimal 6 karakter",
+    }),
+
+  newPassword: z
+    .string()
+    .optional()
+    .refine((val) => !val || val.length >= 6, {
+      message: "Password baru minimal 6 karakter",
+    }),
   url: z.optional(z.string().url()),
-  first_name: z.optional(z.string().min(1, "Nama wajib diisi")),
-  last_name: z.optional(z.string().min(1, "Nama wajib diisi")),
+  firstName: z.optional(z.string().min(1, "Nama wajib diisi")),
+  lastName: z.optional(z.string().min(1, "Nama wajib diisi")),
   phone: z.optional(
     z
       .string()
