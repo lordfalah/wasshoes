@@ -103,7 +103,11 @@ export async function getUniqueStoreIds(): Promise<string[]> {
 
     const storeIds = [
       ...new Set(
-        pakets.flatMap((paket) => paket.stores.map((store) => store.id)),
+        pakets.flatMap((paket) =>
+          Array.isArray(paket.stores)
+            ? paket.stores.map((store) => store.id)
+            : [],
+        ),
       ),
     ];
 
