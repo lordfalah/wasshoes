@@ -28,7 +28,7 @@ export function LobbySkeleton() {
           className="animate-fade-up"
           style={{ animationDelay: "0.20s", animationFillMode: "both" }}
         >
-          <SparklesText text="Wasshoes Pontianak" />
+          <SparklesText text="Cleaning Wasshoes" />
         </PageHeaderHeading>
         <PageHeaderDescription
           className="animate-fade-up max-w-[46.875rem]"

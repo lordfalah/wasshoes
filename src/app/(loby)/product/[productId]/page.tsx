@@ -117,7 +117,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               {formatToRupiah(product.price)}
             </p>
             {product.stores.length > 0 ? (
-              <div className="flex items-center gap-x-2.5">
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
                 <Store
                   className="text-muted-foreground size-6"
                   aria-hidden="true"

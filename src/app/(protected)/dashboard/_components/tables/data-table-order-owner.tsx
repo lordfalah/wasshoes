@@ -33,7 +33,7 @@ import { LapTimerIcon } from "@radix-ui/react-icons";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { parseAsInteger, useQueryStates } from "nuqs";
 import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
-import { OrdersTableActionBar } from "./orders-table-action-bar";
+import { OrdersTableActionBarOwner } from "./orders-table-action-bar-owner";
 
 const DataTableOrderOwner: React.FC<{
   data: Array<
@@ -370,7 +370,7 @@ const DataTableOrderOwner: React.FC<{
       <DataTable
         table={table}
         pagination={true}
-        actionBar={<OrdersTableActionBar table={table} />}
+        actionBar={<OrdersTableActionBarOwner table={table} />}
       >
         <DataTableToolbar table={table}>
           <DataTableSortList table={table} align="start" />

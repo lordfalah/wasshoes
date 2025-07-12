@@ -1,5 +1,6 @@
 import PlaiceholderImage, { TypeImage } from "@/components/plaiceholder-image";
-import { GalleryVerticalEnd } from "lucide-react";
+import { Footprints } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
@@ -10,9 +11,9 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="flex justify-center gap-2 md:justify-start">
           <Link href="/" className="flex items-center gap-2 font-medium">
             <div className="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-md">
-              <GalleryVerticalEnd className="size-4" />
+              <Footprints className="size-4" />
             </div>
-            Acme Inc.
+            Wasshoes
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-center">
@@ -20,13 +21,27 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
       <div className="bg-muted relative hidden lg:block">
+        <Image
+          src={"/images/logo/wasshoes3.png"}
+          alt="logo"
+          fill
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+
         <PlaiceholderImage
+          src={"/images/logo/wasshoes3.png"}
+          alt="logo"
+          fill
+          className="absolute inset-0 h-full w-full object-cover shadow-2xl shadow-black drop-shadow-xl"
+          type={TypeImage.PUBLIC}
+        />
+        {/* <PlaiceholderImage
           alt="placeholder"
           src={"https://ui.shadcn.com/placeholder.svg"}
           type={TypeImage.REMOTE}
           className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
           fill
-        />
+        /> */}
       </div>
     </main>
   );

@@ -5,8 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { CheckIcon, EyeOpenIcon, PlusIcon } from "@radix-ui/react-icons";
-// import { toast } from "sonner"
-
 import { cn, formatToRupiah } from "@/lib/utils";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -44,7 +42,7 @@ export function ProductCard({
   return (
     <Card
       className={cn(
-        "size-full !gap-0 overflow-hidden rounded-lg !p-0",
+        "hover:bg-muted/25 size-full !gap-0 overflow-hidden rounded-lg !p-0 transition-colors",
         className,
       )}
       {...props}
@@ -87,7 +85,7 @@ export function ProductCard({
               className="h-8 w-full flex-1 rounded-sm"
               onClick={async () => {
                 startUpdateTransition(() => {});
-                const { error } = await addToCart({
+                const { error, data } = await addToCart({
                   productId: product.id,
                   quantity: 1,
                 });
@@ -95,6 +93,8 @@ export function ProductCard({
                 if (error) {
                   toast.error(error);
                 }
+
+                console.log(data);
               }}
               disabled={isUpdatePending}
             >

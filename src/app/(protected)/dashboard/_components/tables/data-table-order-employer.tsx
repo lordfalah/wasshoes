@@ -3,24 +3,18 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import {
-  Check,
+  ArrowUpDown,
+  CalendarSearch,
   CheckCircle,
   CheckCircle2Icon,
-  ChevronsUpDown,
   ClipboardCheck,
   Contact,
   Loader2,
-  MoreHorizontal,
   Text,
   XCircle,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Fragment, useMemo, useTransition } from "react";
+
+import { useMemo } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
 import { DataTable } from "@/components/data-table/data-table";
 import {
@@ -31,53 +25,25 @@ import {
   Store,
   TStatusOrder,
   User,
+  TPriority,
 } from "@prisma/client";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-
-import { calculateOrderTotals, cn, formatToRupiah } from "@/lib/utils";
+import {
+  calculateOrderTotals,
+  formatToRupiah,
+  getEnumKeys,
+  getPriorityIcon,
+} from "@/lib/utils";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { LapTimerIcon } from "@radix-ui/react-icons";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Scroller } from "@/components/ui/scroller";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { orderSchema, TOrderSchema } from "@/schemas/order.schema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { updateStatusLaundry } from "@/actions/order";
-import { getErrorMessage } from "@/lib/handle-error";
+
+import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
+import { parseAsInteger, useQueryStates } from "nuqs";
+import { OrdersTableActionBarEmployer } from "./orders-table-action-bar-employer";
 
 const DataTableOrderEmployer: React.FC<{
   data: Array<
@@ -87,7 +53,8 @@ const DataTableOrderEmployer: React.FC<{
       pakets: Array<PaketOrder & { paket: Paket }>;
     }
   >;
-}> = ({ data }) => {
+  total: number;
+}> = ({ data, total }) => {
   const columns = useMemo<
     ColumnDef<
       Order & {
@@ -134,13 +101,73 @@ const DataTableOrderEmployer: React.FC<{
       },
 
       {
-        id: "Payment",
+        id: "createdAt",
+        accessorKey: "createdAt",
+        header: "Date",
+        cell: ({ row }) => (
+          <div className="w-40 text-wrap break-all">
+            <p>{row.original.createdAt.toDateString()}</p>
+          </div>
+        ),
+
+        meta: {
+          label: "Date",
+          placeholder: "Search date...",
+          variant: "dateRange",
+          icon: CalendarSearch,
+        },
+
+        enableColumnFilter: true,
+      },
+
+      {
+        id: "paymentMethod",
         accessorKey: "paymentMethod",
         header: "Payment Method",
 
         cell: ({ row }) => (
           <h4 className="font-semibold">{row.original.paymentMethod}</h4>
         ),
+        meta: {
+          label: "Payment Method",
+        },
+
+        enableColumnFilter: true,
+      },
+
+      {
+        id: "priority",
+        accessorKey: "priority",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Priority" />
+        ),
+        cell: ({ cell }) => {
+          const priority = getEnumKeys(TPriority).find(
+            (priority) => priority === cell.getValue(),
+          );
+
+          if (!priority) return null;
+
+          const Icon = getPriorityIcon(priority as TPriority);
+
+          return (
+            <Badge variant="outline" className="py-1 [&>svg]:size-3.5">
+              <Icon />
+              <span className="capitalize">{priority}</span>
+            </Badge>
+          );
+        },
+        meta: {
+          label: "Priority",
+          variant: "multiSelect",
+          options: getEnumKeys(TPriority).map((priority) => ({
+            label: priority.charAt(0).toUpperCase() + priority.slice(1),
+            value: priority,
+            icon: getPriorityIcon(priority as TPriority),
+          })),
+          icon: ArrowUpDown,
+        },
+        enableColumnFilter: true,
       },
 
       {
@@ -176,6 +203,7 @@ const DataTableOrderEmployer: React.FC<{
         },
 
         enableColumnFilter: true,
+        enableSorting: false,
       },
 
       {
@@ -191,6 +219,12 @@ const DataTableOrderEmployer: React.FC<{
             ))}
           </div>
         ),
+
+        meta: {
+          label: "Name Paket",
+        },
+        enableSorting: false,
+        enableHiding: false,
       },
 
       {
@@ -216,7 +250,7 @@ const DataTableOrderEmployer: React.FC<{
 
           return (
             <div className="w-44 text-wrap break-all">
-              <p>{adjustmentText ?? ""}</p>
+              <p>{adjustmentText ?? "Tidak ada Diskon/Biaya Tambahan"}</p>
               <p>
                 {adjustmentText &&
                   `sub total price Rp. ${formatToRupiah(subtotalPrice)}`}
@@ -224,6 +258,9 @@ const DataTableOrderEmployer: React.FC<{
             </div>
           );
         },
+
+        enableSorting: false,
+        enableHiding: false,
       },
 
       {
@@ -238,6 +275,10 @@ const DataTableOrderEmployer: React.FC<{
             <p>Rp. {formatToRupiah(row.original.totalPrice)}</p>
           </div>
         ),
+
+        meta: {
+          label: "Total Price",
+        },
       },
 
       {
@@ -292,7 +333,7 @@ const DataTableOrderEmployer: React.FC<{
       },
 
       {
-        id: "status_laundry",
+        id: "laundryStatus",
         accessorKey: "laundryStatus",
         header: "Status Laundry",
         cell: ({ row }) => (
@@ -318,6 +359,11 @@ const DataTableOrderEmployer: React.FC<{
             {row.original.laundryStatus}
           </Badge>
         ),
+
+        meta: {
+          label: "Status Laundry",
+        },
+        enableColumnFilter: true,
       },
 
       {
@@ -328,7 +374,7 @@ const DataTableOrderEmployer: React.FC<{
         cell: ({ row }) => (
           <div className="gap-x-5">
             <Scroller orientation="horizontal" className="p-4" asChild>
-              <div className="flex items-center justify-center gap-2.5">
+              <div className="flex w-72 items-center gap-2.5 md:w-96">
                 {row.original.shoesImages.map(({ ufsUrl, name }, idx) => (
                   <Image
                     priority
@@ -337,219 +383,63 @@ const DataTableOrderEmployer: React.FC<{
                     alt={name}
                     width={180}
                     height={180}
-                    className="size-28 rounded-md object-cover"
+                    className="flex h-32 w-[180px] shrink-0 flex-col items-center justify-center rounded-md object-cover"
                   />
                 ))}
               </div>
             </Scroller>
           </div>
         ),
-      },
 
-      {
-        id: "actions",
-        cell: function Cell({ cell }) {
-          const router = useRouter();
-          const [pending, startTransition] = useTransition();
-
-          const form = useForm<TOrderSchema>({
-            resolver: zodResolver(orderSchema),
-            defaultValues: {
-              statusLaundry: cell.row.original.laundryStatus,
-            },
-          });
-
-          const onSubmit = (values: TOrderSchema) => {
-            toast.promise(
-              new Promise<void>((resolve, reject) => {
-                startTransition(async () => {
-                  try {
-                    const { error: updateError } = await updateStatusLaundry(
-                      values.statusLaundry,
-                      cell.row.original.id,
-                    );
-
-                    if (updateError) {
-                      throw new Error(updateError);
-                    }
-
-                    router.refresh(); // Refresh router untuk update data di UI
-                    resolve(); // Resolve promise jika berhasil
-                  } catch (error) {
-                    console.error("Submission error:", error); // Gunakan console.error untuk error
-                    reject(error); // Reject promise jika ada error
-                  }
-                });
-              }),
-              {
-                loading: "Updating status...", // Pesan loading untuk toast
-                success: "Status updated successfully!",
-                error: (err) => getErrorMessage(err),
-              },
-            );
-          };
-
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      className="w-full cursor-pointer text-center"
-                      variant="ghost"
-                      type="button"
-                    >
-                      Edit
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>
-                        Update Status Laundry :{" "}
-                        {cell.row.original.informationCustomer
-                          ? cell.row.original.informationCustomer.name
-                          : `${
-                              cell.row.original.user.name
-                                ? cell.row.original.user.name
-                                : `${cell.row.original.user.firstName} ${cell.row.original.user.lastName}`
-                            }`}
-                      </DialogTitle>
-                      <DialogDescription>
-                        Make changes to your Management role here. Click save
-                        when you&apos;re done.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <Form {...form}>
-                        <form
-                          onSubmit={form.handleSubmit(onSubmit)}
-                          className="space-y-8"
-                        >
-                          <FormField
-                            control={form.control}
-                            name="statusLaundry"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-col">
-                                <FormLabel>Laundry Status</FormLabel>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <FormControl>
-                                      <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        className={cn(
-                                          "w-full justify-between",
-                                          !field.value &&
-                                            "text-muted-foreground",
-                                        )}
-                                      >
-                                        {field.value
-                                          ? // Cari label berdasarkan nilai field.value
-                                            // Anda bisa pakai helper object, atau langsung string replace
-                                            field.value.replace(/_/g, " ") // Mengubah AWAITING_PROCESSING jadi AWAITING PROCESSING
-                                          : "Select laundry status"}
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                      </Button>
-                                    </FormControl>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-full p-0">
-                                    <Command>
-                                      <CommandInput
-                                        placeholder="Search status..."
-                                        className="h-9"
-                                      />
-                                      <CommandList>
-                                        <CommandEmpty>
-                                          No status found.
-                                        </CommandEmpty>
-                                        <CommandGroup>
-                                          {/* Loop melalui nilai-nilai dari LaundryStatus enum */}
-                                          {Object.values(TLaundryStatus).map(
-                                            (status) => (
-                                              <CommandItem
-                                                value={status} // Value harus berupa string dari enum
-                                                key={status}
-                                                onSelect={() => {
-                                                  form.setValue(
-                                                    "statusLaundry",
-                                                    status,
-                                                  );
-                                                  form.trigger("statusLaundry"); // Untuk memastikan validasi segera
-                                                }}
-                                              >
-                                                {status.replace(/_/g, " ")}{" "}
-                                                {/* Tampilan label yang lebih rapi */}
-                                                <Check
-                                                  className={cn(
-                                                    "ml-auto h-4 w-4",
-                                                    status === field.value
-                                                      ? "opacity-100"
-                                                      : "opacity-0",
-                                                  )}
-                                                />
-                                              </CommandItem>
-                                            ),
-                                          )}
-                                        </CommandGroup>
-                                      </CommandList>
-                                    </Command>
-                                  </PopoverContent>
-                                </Popover>
-                                <FormDescription>
-                                  Select the current processing status of the
-                                  laundry order.
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <Button type="submit" disabled={pending}>
-                            {pending ? (
-                              <Fragment>
-                                <Loader2 className="animate-spin" />
-                                Please wait
-                              </Fragment>
-                            ) : (
-                              "Submit"
-                            )}
-                          </Button>
-                        </form>
-                      </Form>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
+        meta: {
+          label: "Picture Shoes",
         },
-        size: 32,
+
+        enableSorting: false,
       },
     ],
     [],
   );
 
+  const [params] = useQueryStates({
+    page: parseAsInteger.withDefault(1),
+    perPage: parseAsInteger.withDefault(10),
+  });
+
+  const currentPage = params.page;
+  const currentPerPage = params.perPage;
+
+  const calculatedPageCount = useMemo(() => {
+    if (total === 0) return 1;
+    return Math.ceil(total / currentPerPage);
+  }, [total, currentPerPage]);
+
   const { table } = useDataTable({
     data,
     columns,
-    pageCount: 1,
+    pageCount: calculatedPageCount,
     initialState: {
-      sorting: [{ id: "status", desc: true }],
+      sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
+      pagination: {
+        pageIndex: currentPage - 1,
+        pageSize: currentPerPage,
+      },
     },
     shallow: false,
-    debounceMs: 1000,
+    clearOnDefault: true,
     getRowId: (row) => row.id,
   });
 
   return (
-    <DataTable table={table}>
-      <DataTableToolbar table={table} />
+    <DataTable
+      table={table}
+      pagination={true}
+      actionBar={<OrdersTableActionBarEmployer table={table} />}
+    >
+      <DataTableToolbar table={table}>
+        <DataTableSortList table={table} align="start" />
+      </DataTableToolbar>
     </DataTable>
   );
 };

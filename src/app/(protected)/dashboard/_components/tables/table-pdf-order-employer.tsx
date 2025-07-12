@@ -1,7 +1,14 @@
 "use client";
 
 import { formatToRupiah } from "@/lib/utils";
-import { Order, PaketOrder, Store, TStatusOrder, User } from "@prisma/client";
+import {
+  Order,
+  Paket,
+  PaketOrder,
+  Store,
+  TStatusOrder,
+  User,
+} from "@prisma/client";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
 const styles = StyleSheet.create({
@@ -78,11 +85,15 @@ const ITEMS_PER_PAGE = 20;
 
 type OrderTablePDFDocumentProps = {
   data: Array<
-    Order & { user: User; store: Store & { admin: User }; pakets: PaketOrder[] }
+    Order & {
+      user: User;
+      store: Store;
+      pakets: Array<PaketOrder & { paket: Paket }>;
+    }
   >;
 };
 
-export default function TablePdfOrderOwner({
+export default function TablePdfOrdersEmployer({
   data,
 }: OrderTablePDFDocumentProps) {
   const pages = Array.from(
@@ -134,7 +145,7 @@ export default function TablePdfOrderOwner({
                 </Text>
                 <Text style={styles.cell}>{item.paymentMethod}</Text>
                 <Text style={styles.cell}>{item.store.name}</Text>
-                <Text style={styles.cell}>{item.store.admin.name}</Text>
+                <Text style={styles.cell}>{item.store.name}</Text>
                 <Text style={styles.cell}>
                   {item.informationCustomer?.first_name || item.user.name}
                 </Text>

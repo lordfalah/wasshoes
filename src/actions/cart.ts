@@ -10,7 +10,7 @@ import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getErrorMessage } from "@/lib/handle-error";
-import { Category, Paket, Store, UserRole } from "@prisma/client";
+import { Cart, Category, Paket, Store, UserRole } from "@prisma/client";
 import { auth } from "@/auth";
 import { connection } from "next/server";
 import { cookies } from "next/headers";
@@ -26,19 +26,36 @@ export async function getCart(input?: {
   storeId?: string;
 }): Promise<CartLineItem[]> {
   await connection();
-  try {
-    const cookieStore = await cookies();
 
+  try {
+    const [session, cookieStore] = await Promise.all([auth(), cookies()]);
+    const userId = session?.user?.id;
     const cartIdFromCookie = cookieStore.get("cartId")?.value;
 
-    if (!cartIdFromCookie) return [];
+    let cart = null;
 
-    const cart = await db.cart.findUnique({
-      where: { id: cartIdFromCookie },
-      select: { closed: true, items: true },
-    });
+    // 1. Coba cari berdasarkan cookie
+    if (cartIdFromCookie) {
+      cart = await db.cart.findUnique({
+        where: { id: cartIdFromCookie },
+        select: { closed: true, items: true },
+      });
 
-    // Cart tidak ditemukan atau sudah ditutup
+      // Jika cart dari cookie tidak valid, reset
+      if (!cart || cart.closed) {
+        cart = null;
+      }
+    }
+
+    // 2. Fallback: Jika login, cari cart berdasarkan userId
+    if (!cart && userId) {
+      cart = await db.cart.findFirst({
+        where: { userId, closed: false },
+        select: { closed: true, items: true },
+      });
+    }
+
+    // 3. Jika cart masih tidak ditemukan
     if (!cart || cart.closed) return [];
 
     const items = cart.items as TCartItemSchema[] | undefined;
@@ -138,7 +155,7 @@ export async function addToCart(rawInput: z.infer<typeof cartItemSchema>) {
       throw new Error("Paket tidak ditemukan atau tidak tersedia.");
     }
 
-    let cart = null;
+    let cart: Cart | null = null;
 
     // 1. Coba ambil cart dari cookie
     if (cartIdFromCookie) {

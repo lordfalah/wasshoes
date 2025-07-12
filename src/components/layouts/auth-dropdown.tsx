@@ -110,8 +110,9 @@ export async function AuthDropdown({ className, ...props }: AuthDropdownProps) {
 async function AuthDropdownGroup({ role }: { role: UserRole }) {
   return (
     <DropdownMenuGroup>
-      {role === UserRole.ADMIN ||
-        (role === UserRole.SUPERADMIN && (
+      {/* Jika role adalah ADMIN ATAU SUPERADMIN, tampilkan Dashboard DAN Settings */}
+      {(role === UserRole.ADMIN || role === UserRole.SUPERADMIN) && (
+        <>
           <DropdownMenuItem asChild>
             <Link href={"/dashboard"}>
               <DashboardIcon className="mr-2 size-4" aria-hidden="true" />
@@ -119,14 +120,26 @@ async function AuthDropdownGroup({ role }: { role: UserRole }) {
               <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
             </Link>
           </DropdownMenuItem>
-        ))}
-      <DropdownMenuItem asChild>
-        <Link href="/dashboard/setting">
-          <GearIcon className="mr-2 size-4" aria-hidden="true" />
-          Settings
-          <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-        </Link>
-      </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/setting">
+              <GearIcon className="mr-2 size-4" aria-hidden="true" />
+              Settings
+              <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+            </Link>
+          </DropdownMenuItem>
+        </>
+      )}
+
+      {/* Jika role BUKAN ADMIN dan BUKAN SUPERADMIN, tapi masih perlu Settings (misal: USER biasa) */}
+      {role === UserRole.USER && (
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/setting">
+            <GearIcon className="mr-2 size-4" aria-hidden="true" />
+            Settings
+            <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+          </Link>
+        </DropdownMenuItem>
+      )}
     </DropdownMenuGroup>
   );
 }

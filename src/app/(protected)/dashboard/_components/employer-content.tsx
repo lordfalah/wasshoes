@@ -1,10 +1,13 @@
 import { SearchParams } from "nuqs";
-import React from "react";
+import React, { Suspense } from "react";
 import { SectionCards } from "./section-cards";
-import { loadSearchParamsDataDashboardEmployer } from "@/lib/searchParams";
 import { getAllOrdersForAdmin } from "@/actions/order";
-import { TStatusOrder } from "@prisma/client";
 import DataTableOrderEmployer from "./tables/data-table-order-employer";
+import { searchParamsCacheOrder } from "@/lib/search-params/search-order";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import PrintTablePdf from "./tables/print-table-pdf";
+import TablePdfOrdersEmployer from "./tables/table-pdf-order-employer";
 
 type PageProps = {
   searchParams: Promise<SearchParams>;
@@ -17,20 +20,13 @@ const EmployerContent: React.FC<PageProps> = async ({
 }) => {
   if (!storeId) return <div>Chat Owner</div>;
 
-  const { page, perPage, sort, status, customer } =
-    await loadSearchParamsDataDashboardEmployer(searchParams);
+  const search = searchParamsCacheOrder.parse(await searchParams);
 
-  const { data: dataOrders, error: errorOrder } = await getAllOrdersForAdmin({
-    page,
-    perPage,
-    sort,
-    storeId: storeId,
-    status: status
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean) as TStatusOrder[],
-    nameUser: customer,
-  });
+  const {
+    total,
+    data: dataOrders,
+    error: errorOrder,
+  } = await getAllOrdersForAdmin(search);
 
   if (!dataOrders || errorOrder) throw new Error(errorOrder);
 
@@ -39,7 +35,28 @@ const EmployerContent: React.FC<PageProps> = async ({
       <SectionCards />
 
       <div className="px-4 lg:px-6">
-        <DataTableOrderEmployer data={dataOrders} />
+        <Suspense
+          key={dataOrders.length}
+          fallback={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex items-center justify-between"
+              disabled={true}
+            >
+              <Loader2 className="animate-spin" />
+              Please wait
+            </Button>
+          }
+        >
+          <PrintTablePdf
+            document={<TablePdfOrdersEmployer data={dataOrders} />}
+            fileName="laporan-order.pdf"
+            className="flex w-0 pb-2 pl-1"
+          />
+        </Suspense>
+        <DataTableOrderEmployer total={total} data={dataOrders} />
       </div>
     </div>
   );

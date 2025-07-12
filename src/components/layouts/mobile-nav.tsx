@@ -26,6 +26,7 @@ import {
 import { Icons } from "@/components/icons";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { VisuallyHidden } from "radix-ui";
+import { Footprints } from "lucide-react";
 
 interface MobileNavProps {
   items?: MainNavItem[];
@@ -63,7 +64,7 @@ export function MobileNav({ items }: MobileNavProps) {
             className="flex items-center"
             onClick={() => setOpen(false)}
           >
-            <Icons.logo className="mr-2 size-4" aria-hidden="true" />
+            <Footprints className="mr-2 size-4" aria-hidden="true" />
             <span className="font-bold">{siteConfig.name}</span>
             <span className="sr-only">Home</span>
           </Link>

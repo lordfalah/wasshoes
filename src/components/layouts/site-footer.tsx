@@ -52,7 +52,7 @@ export function SiteFooter() {
           <div className="text-muted-foreground flex-1 text-left text-sm leading-loose">
             Built by{" "}
             <Link
-              href="https://twitter.com/sadmann17"
+              href="https://www.linkedin.com/in/irfinfalah/"
               target="_blank"
               rel="noreferrer"
               className="hover:text-foreground font-semibold transition-colors"

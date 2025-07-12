@@ -2,7 +2,7 @@
 
 import { SelectTrigger } from "@radix-ui/react-select";
 import type { Table } from "@tanstack/react-table";
-import { ArrowUp, CheckCircle2, Download, Trash2 } from "lucide-react";
+import { ArrowUp, CheckCircle2, Download } from "lucide-react";
 import * as React from "react";
 
 import {
@@ -20,6 +20,7 @@ import { Separator } from "@/components/ui/separator";
 
 import {
   Order,
+  Paket,
   PaketOrder,
   Store,
   TLaundryStatus,
@@ -28,26 +29,27 @@ import {
 } from "@prisma/client";
 import { getEnumKeys } from "@/lib/utils";
 import { exportTableToCSV } from "@/lib/export";
-import { deleteOrders, updateOrders } from "@/actions/order";
+import { updateOrders } from "@/actions/order";
 import { toast } from "sonner";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const actions = [
-  "update-laundry-status",
-  "update-priority",
-  "export",
-  "delete",
-] as const;
+const actions = ["update-laundry-status", "update-priority", "export"] as const;
 
 type Action = (typeof actions)[number];
 
 interface OrderTableActionBarProps {
   table: Table<
-    Order & { user: User; store: Store & { admin: User }; pakets: PaketOrder[] }
+    Order & {
+      user: User;
+      store: Store;
+      pakets: Array<PaketOrder & { paket: Paket }>;
+    }
   >;
 }
 
-export function OrdersTableActionBar({ table }: OrderTableActionBarProps) {
+export function OrdersTableActionBarEmployer({
+  table,
+}: OrderTableActionBarProps) {
   const rows = table.getFilteredSelectedRowModel().rows;
   const [isPending, startTransition] = React.useTransition();
   const [currentAction, setCurrentAction] = React.useState<Action | null>(null);
@@ -93,21 +95,6 @@ export function OrdersTableActionBar({ table }: OrderTableActionBarProps) {
       });
     });
   }, [table]);
-
-  const onTaskDelete = React.useCallback(() => {
-    setCurrentAction("delete");
-    startTransition(async () => {
-      const { error } = await deleteOrders({
-        ids: rows.map((row) => row.original.id),
-      });
-
-      if (error) {
-        toast.error(error);
-        return;
-      }
-      table.toggleAllRowsSelected(false);
-    });
-  }, [rows, table]);
 
   return (
     <DataTableActionBar table={table} visible={rows.length > 0}>
@@ -176,14 +163,6 @@ export function OrdersTableActionBar({ table }: OrderTableActionBarProps) {
           onClick={onTaskExport}
         >
           <Download />
-        </DataTableActionBarAction>
-        <DataTableActionBarAction
-          size="icon"
-          tooltip="Delete Orders"
-          isPending={getIsActionPending("delete")}
-          onClick={onTaskDelete}
-        >
-          <Trash2 />
         </DataTableActionBarAction>
       </div>
     </DataTableActionBar>

@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Link from "next/link"
-import type { MainNavItem } from "@/types"
+import * as React from "react";
+import Link from "next/link";
+import type { MainNavItem } from "@/types";
 
-import { siteConfig } from "@/config/site"
-import { cn } from "@/lib/utils"
+import { siteConfig } from "@/config/site";
+import { cn } from "@/lib/utils";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -14,18 +14,18 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu"
-import { Icons } from "@/components/icons"
+} from "@/components/ui/navigation-menu";
+import { Footprints } from "lucide-react";
 
 interface MainNavProps {
-  items?: MainNavItem[]
+  items?: MainNavItem[];
 }
 
 export function MainNav({ items }: MainNavProps) {
   return (
     <div className="hidden gap-6 lg:flex">
       <Link href="/" className="hidden items-center space-x-2 lg:flex">
-        <Icons.logo className="size-7" aria-hidden="true" />
+        <Footprints className="size-7" aria-hidden="true" />
         <span className="hidden font-bold lg:inline-block">
           {siteConfig.name}
         </span>
@@ -44,13 +44,13 @@ export function MainNav({ items }: MainNavProps) {
                     <NavigationMenuLink asChild>
                       <Link
                         href="/"
-                        className="flex size-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                        className="from-muted/50 to-muted flex size-full flex-col justify-end rounded-md bg-gradient-to-b p-6 no-underline outline-none select-none focus:shadow-md"
                       >
-                        <Icons.logo className="size-6" aria-hidden="true" />
-                        <div className="mb-2 mt-4 text-lg font-medium">
+                        <Footprints className="size-6" aria-hidden="true" />
+                        <div className="mt-4 mb-2 text-lg font-medium">
                           {siteConfig.name}
                         </div>
-                        <p className="text-sm leading-tight text-muted-foreground">
+                        <p className="text-muted-foreground text-sm leading-tight">
                           {siteConfig.description}
                         </p>
                         <span className="sr-only">Home</span>
@@ -104,12 +104,12 @@ export function MainNav({ items }: MainNavProps) {
                     </Link>
                   </NavigationMenuItem>
                 )
-              )
+              ),
             )}
         </NavigationMenuList>
       </NavigationMenu>
     </div>
-  )
+  );
 }
 
 const ListItem = React.forwardRef<
@@ -123,18 +123,18 @@ const ListItem = React.forwardRef<
           ref={ref}
           href={String(href)}
           className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className
+            "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none",
+            className,
           )}
           {...props}
         >
-          <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+          <div className="text-sm leading-none font-medium">{title}</div>
+          <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
             {children}
           </p>
         </Link>
       </NavigationMenuLink>
     </li>
-  )
-})
-ListItem.displayName = "ListItem"
+  );
+});
+ListItem.displayName = "ListItem";

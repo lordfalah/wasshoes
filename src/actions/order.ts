@@ -184,49 +184,32 @@ export async function getAllOrdersForSuperadmin(input: GetOrderSchema) {
   }
 }
 
-type GetAllOrdersForAdminParams = {
-  page: number;
-  perPage: number;
-  sort: { id: string; desc: boolean }[];
-  status: TStatusOrder[];
-  storeId: string;
-  nameUser: string;
-};
-
-export async function getAllOrdersForAdmin({
-  page,
-  perPage,
-  sort = [],
-  status = [],
-  storeId,
-  nameUser = "",
-}: GetAllOrdersForAdminParams) {
+export async function getAllOrdersForAdmin(input: GetOrderSchema) {
   try {
+    const session = await auth();
+    if (!session?.user.storeId) throw new Error("Store id is required");
+
+    const { page, perPage, sort, customer, status, createdAt } = input;
+
     const skip = (page - 1) * perPage;
 
     const orderBy = sort.length
-      ? sort.map(({ id, desc }) => ({
-          [id]: desc ? "desc" : "asc",
-        }))
+      ? sort.map(({ id, desc }) => ({ [id]: desc ? "desc" : "asc" }))
       : [{ createdAt: "desc" }];
 
     // Filter pencarian namaUser
-    const nameFilter: Prisma.OrderWhereInput[] = nameUser
+    const nameFilter: Prisma.OrderWhereInput[] = customer
       ? [
           {
             user: {
-              OR: [
-                { name: { contains: nameUser, mode: "insensitive" } },
-                { firstName: { contains: nameUser, mode: "insensitive" } },
-                { lastName: { contains: nameUser, mode: "insensitive" } },
-              ],
+              name: { contains: customer, mode: "insensitive" },
             },
           },
 
           {
             informationCustomer: {
               path: ["name"],
-              string_contains: nameUser,
+              string_contains: customer,
               mode: "insensitive",
             },
           },
@@ -234,7 +217,7 @@ export async function getAllOrdersForAdmin({
       : [];
 
     const where: Prisma.OrderWhereInput = {
-      storeId,
+      storeId: session.user.storeId,
       ...(status.length > 0 && {
         status: {
           in: status,
@@ -242,6 +225,13 @@ export async function getAllOrdersForAdmin({
       }),
       ...(nameFilter.length > 0 && {
         OR: nameFilter,
+      }),
+
+      ...(createdAt.length === 2 && {
+        createdAt: {
+          gte: new Date(createdAt[0]),
+          lte: new Date(createdAt[1]),
+        },
       }),
     };
 
@@ -267,8 +257,6 @@ export async function getAllOrdersForAdmin({
     return {
       data: orders,
       total,
-      page,
-      perPage,
       error: null,
     };
   } catch (error) {
@@ -276,8 +264,6 @@ export async function getAllOrdersForAdmin({
     return {
       data: null,
       total: 0,
-      page,
-      perPage,
       error: getErrorMessage(error),
     };
   }

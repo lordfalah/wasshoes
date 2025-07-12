@@ -2,11 +2,11 @@ import type { FooterItem, MainNavItem } from "@/types";
 export type SiteConfig = typeof siteConfig;
 
 const links = {
-  x: "https://twitter.com/sadmann17",
-  github: "https://github.com/sadmann7/skateshop",
-  githubAccount: "https://github.com/sadmann7",
-  discord: "https://discord.com/users/sadmann7",
-  calDotCom: "https://cal.com/sadmann7",
+  x: "https://x.com/IrfinF19505",
+  github: "https://github.com/lordfalah/wasshoes",
+  githubAccount: "https://github.com/lordfalah",
+  discord: "https://discord.com/users/falhhalla",
+  instagram: "https://www.instagram.com/cleaningwasshoes/",
 };
 
 export const siteConfig = {
@@ -133,8 +133,8 @@ export const siteConfig = {
           external: true,
         },
         {
-          title: "cal.com",
-          href: links.calDotCom,
+          title: "Instagram",
+          href: links.instagram,
           external: true,
         },
       ],

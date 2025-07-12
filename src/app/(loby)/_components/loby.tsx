@@ -10,7 +10,7 @@ import { Shell } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Category, Paket } from "@prisma/client";
+import { Category, Paket, UserRole } from "@prisma/client";
 import Link from "next/link";
 import React from "react";
 import { CategoryCard } from "./category-card";
@@ -18,13 +18,15 @@ import { ProductCard } from "@/components/ui/product-card";
 import { SparklesText } from "@/components/ui/sparkles-text";
 import { StoreCard } from "@/components/ui/store-card";
 import { getFeaturedStores } from "@/actions/store";
+import { auth } from "@/auth";
 
 const Loby: React.FC<{
   packagePromise: Promise<Array<Paket>>;
   categorysPromise: Promise<Category[]>;
   storesPromise: ReturnType<typeof getFeaturedStores>;
 }> = async ({ packagePromise, categorysPromise, storesPromise }) => {
-  const [packages, categorys, stores] = await Promise.all([
+  const [session, packages, categorys, stores] = await Promise.all([
+    auth(),
     packagePromise,
     categorysPromise,
     storesPromise,
@@ -51,14 +53,14 @@ const Loby: React.FC<{
           className="animate-fade-up"
           style={{ animationDelay: "0.20s", animationFillMode: "both" }}
         >
-          <SparklesText text="Wasshoes Pontianak" />
+          <SparklesText text="Cleaning Wasshoes" />
         </PageHeaderHeading>
         <PageHeaderDescription
           className="animate-fade-up max-w-[46.875rem]"
           style={{ animationDelay: "0.30s", animationFillMode: "both" }}
         >
-          Skateshop is an open-source platform for building and customizing your
-          own commerce platform with ease.
+          Wasshoes adalah layanan pencucian sepatu profesional yang
+          membersihkan, merawat, dan melindungi sepatu kesayangan Anda.
         </PageHeaderDescription>
         <PageActions
           className="animate-fade-up"
@@ -67,12 +69,15 @@ const Loby: React.FC<{
           <Link href="/products" className={cn(buttonVariants())}>
             Buy now
           </Link>
-          <Link
-            href="/dashboard/stores"
-            className={cn(buttonVariants({ variant: "outline" }))}
-          >
-            Sell now
-          </Link>
+
+          {session && session.user.role.name === UserRole.SUPERADMIN && (
+            <Link
+              href="/dashboard/stores"
+              className={cn(buttonVariants({ variant: "outline" }))}
+            >
+              Sell now
+            </Link>
+          )}
         </PageActions>
       </PageHeader>
       <section
