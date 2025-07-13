@@ -21,6 +21,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
       </div>
       <div className="bg-muted relative hidden lg:block">
         <Image
+          priority
           src={"/images/logo/wasshoes3.png"}
           alt="logo"
           fill
