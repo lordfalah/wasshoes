@@ -1,11 +1,9 @@
-import { getImage } from "@/hooks/use-plaiceholder";
 import { Footprints } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
-const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
-  const base64 = await getImage("/images/logo/wasshoes3.png");
+const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <main className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
@@ -27,8 +25,6 @@ const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
           alt="logo"
           fill
           className="absolute inset-0 h-full w-full object-cover shadow-2xl shadow-black drop-shadow-xl"
-          blurDataURL={base64}
-          placeholder="blur"
         />
 
         {/* <PlaiceholderImage
