@@ -1,6 +1,5 @@
 import PlaiceholderImage, { TypeImage } from "@/components/plaiceholder-image";
 import { Footprints } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
@@ -21,13 +20,6 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
       <div className="bg-muted relative hidden lg:block">
-        <Image
-          src={"/images/logo/wasshoes3.png"}
-          alt="logo"
-          fill
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-
         <PlaiceholderImage
           src={"/images/logo/wasshoes3.png"}
           alt="logo"
