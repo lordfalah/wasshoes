@@ -72,7 +72,7 @@ export async function CartSheet() {
         </SheetHeader>
         {itemCount > 0 ? (
           <>
-            <CartLineItems items={cartLineItems} className="flex-1" />
+            <CartLineItems items={cartLineItems} className="flex-1 px-6" />
             <div className="space-y-4 px-6">
               <Separator />
               <div className="space-y-1.5 text-sm">

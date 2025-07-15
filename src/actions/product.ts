@@ -98,19 +98,18 @@ export async function getTotalPriceAndItemDetails(
       let actualQuantityForMidtrans: number; // Ini akan menjadi 'quantity' di Midtrans ItemDetails
 
       // Logika khusus untuk ADMIN jika ada customTotalPrice
-      if (
+      const hasCustomTotal =
         isAdmin &&
         customTotalPrice !== undefined &&
-        customTotalPrice !== null
-      ) {
-        // Jika admin memberikan harga total, kirimkan ke Midtrans sebagai 1 unit dengan harga total tersebut.
+        customTotalPrice !== null &&
+        customTotalPrice > 0; // <— hanya true jika > 0
+
+      if (hasCustomTotal) {
         effectivePriceForMidtrans = Number(customTotalPrice);
         actualQuantityForMidtrans = 1;
       } else {
-        // Untuk user biasa, atau admin yang tidak memberikan customTotalPrice,
-        // gunakan harga dasar per unit dan quantity sebenarnya.
-        effectivePriceForMidtrans = Number(p.price); // Harga dasar per unit
-        actualQuantityForMidtrans = quantity; // Quantity sebenarnya
+        effectivePriceForMidtrans = Number(p.price);
+        actualQuantityForMidtrans = quantity;
       }
 
       // Hitung total harga untuk baris item ini

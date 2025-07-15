@@ -3,7 +3,6 @@ import { ClientUploadedFileData } from "uploadthing/types";
 import { z } from "zod";
 
 // price validation
-
 export const priceValidation = z.preprocess(
   (val) => {
     if (typeof val === "string" && val.trim() !== "") {
@@ -14,12 +13,10 @@ export const priceValidation = z.preprocess(
     }
     return val;
   },
-  z
-    .number({
-      required_error: "Harga wajib diisi",
-      invalid_type_error: "Harga harus berupa angka",
-    })
-    .min(1000, { message: "Harga tidak boleh di bawah 1.000" }),
+  z.number({
+    required_error: "Harga wajib diisi",
+    invalid_type_error: "Harga harus berupa angka",
+  }),
 );
 
 // Data form konsumen (manual input dari Admin)

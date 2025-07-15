@@ -67,9 +67,14 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
   ...props
 }) => {
   const initialDefaultPriceOrder = carts.reduce(
-    (total, item) => total + (item.priceOrder ?? item.price * item.quantity),
+    (total, item) =>
+      total +
+      (item.priceOrder && item.priceOrder > 0
+        ? item.priceOrder
+        : item.price * item.quantity),
     0,
   );
+
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<TAdminCheckoutSchemaClient>({
@@ -105,7 +110,7 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
               files: data.shoesImages,
             });
 
-            if (!resFile) return console.log("GAGAL UPLOADTHING");
+            if (!resFile) throw new Error("GAGAL UPLOADTHING");
 
             const req = await fetch(
               `${process.env.NEXT_PUBLIC_APP_URL}/api/transactions`,
@@ -150,7 +155,17 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
                 resTransaction.data.paymentToken &&
                 resTransaction.data.paymentMethod === TPaymentMethod.AUTO
               ) {
-                window.snap.pay(resTransaction.data.paymentToken);
+                window.snap.pay(resTransaction.data.paymentToken, {
+                  onClose: function () {
+                    // User menutup popup tanpa menyelesaikan pembayaran
+                    router.push("/invoice");
+                  },
+
+                  onError: function () {
+                    // Gagal bayar
+                    router.push("/checkout/error");
+                  },
+                });
               } else if (
                 resTransaction.data.paymentMethod === TPaymentMethod.MANUAL
               ) {
@@ -173,8 +188,8 @@ const CheckoutFormDetailAdmin: React.FC<CheckoutFormDetailProps> = ({
         },
       );
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [form],
+
+    [form, router],
   );
 
   return (

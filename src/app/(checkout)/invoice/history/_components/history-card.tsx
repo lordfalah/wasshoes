@@ -28,6 +28,7 @@ interface HistoryOrderCardProps {
 
 const HistoryOrderCard: React.FC<HistoryOrderCardProps> = async ({ order }) => {
   const store = await getStoreByStoreId(order.storeId);
+
   return (
     <Card
       key={order.storeId}

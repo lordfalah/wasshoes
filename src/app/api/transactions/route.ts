@@ -54,6 +54,8 @@ export const POST = withAuth(async (req) => {
         true, // karena admin
       );
 
+      console.log({ total });
+
       let order: Order | undefined = undefined;
 
       if (data.paymentMethod === TPaymentMethod.AUTO) {

@@ -40,6 +40,7 @@ import { deleteFiles } from "@/app/api/uploadthing/helper-function";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { PatternFormat } from "react-number-format";
+import { useRouter } from "next/navigation";
 
 interface CheckoutFormDetailProps
   extends React.ComponentPropsWithoutRef<"form"> {
@@ -60,6 +61,7 @@ const CheckoutFormDetailUser: React.FC<CheckoutFormDetailProps> = ({
     0,
   );
 
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<TUserCheckoutSchemaClient>({
     resolver: zodResolver(userCheckoutSchemaClient),
@@ -135,7 +137,17 @@ const CheckoutFormDetailUser: React.FC<CheckoutFormDetailProps> = ({
               );
             } else {
               if (resTransaction.data.paymentToken) {
-                window.snap.pay(resTransaction.data.paymentToken);
+                window.snap.pay(resTransaction.data.paymentToken, {
+                  onClose: function () {
+                    // User menutup popup tanpa menyelesaikan pembayaran
+                    router.push("/invoice");
+                  },
+
+                  onError: function () {
+                    // Gagal bayar
+                    router.push("/checkout/error");
+                  },
+                });
               } else {
                 throw new Error(`Token is required!!!`);
               }
@@ -154,7 +166,7 @@ const CheckoutFormDetailUser: React.FC<CheckoutFormDetailProps> = ({
         },
       );
     },
-    [form],
+    [form, router],
   );
 
   return (

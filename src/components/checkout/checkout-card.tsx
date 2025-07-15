@@ -44,7 +44,7 @@ export async function CheckoutCard({
       id={`checkout-store-${storeId}`}
       aria-labelledby={`checkout-store-${storeId}-heading`}
     >
-      <CardHeader className="flex flex-row items-center space-x-4 py-4">
+      <CardHeader className="flex flex-col items-center space-x-4 py-4 sm:flex-row">
         <CardTitle className="line-clamp-1 flex-1">
           {cartLineItems[0].stores.find(({ id }) => id === storeId)?.name}
         </CardTitle>
