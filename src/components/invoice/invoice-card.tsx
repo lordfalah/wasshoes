@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/card";
-
 import { calculateOrderTotals, cn, formatToRupiah } from "@/lib/utils";
 import { Separator } from "../ui/separator";
 import { getStoreByStoreId } from "@/actions/store";
@@ -21,7 +20,6 @@ import {
 import { InvoiceLineItems } from "./cart-line-items";
 import ShiftingCountdown from "../shifting-countdown";
 import ButtonPayTransaction from "./pay-transaction";
-
 import { cancelTransactionOrder, updateStatusOrder } from "@/actions/order";
 import {
   Tooltip,
@@ -174,6 +172,7 @@ const InvoiceCard: React.FC<InvoiceCardProps> = async ({
               : "Selesaikan Dalam Tempo"
           }
         />
+        <Separator className="my-4 block w-full sm:hidden" />
         <InvoiceLineItems
           isEditable={false}
           items={order.pakets}

@@ -371,7 +371,7 @@ const EditPackage: React.FC<{
                     value={field.value}
                     onValueChange={field.onChange}
                     accept="image/*"
-                    maxFiles={1}
+                    maxFiles={2}
                     maxSize={4 * 1024 * 1024}
                     onFileReject={(_, message) => {
                       form.setError("image", {

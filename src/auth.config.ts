@@ -5,6 +5,7 @@ import Google from "next-auth/providers/google";
 import { LoginSchema } from "@/schemas";
 import { getUserByEmail } from "@/data/user";
 import { ZodError } from "zod";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 export default {
   providers: [
@@ -34,6 +35,7 @@ export default {
 
           return null;
         } catch (error) {
+          if (isRedirectError(error)) throw error;
           if (error instanceof ZodError) {
             // Return `null` to indicate that the credentials are invalid
             return null;

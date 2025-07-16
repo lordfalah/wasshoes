@@ -196,7 +196,7 @@ model Order {
   informationCustomer Json?
 
   storeId String // ✅ Foreign key ke Store
-  store   Store  @relation(fields: [storeId], references: [id])
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -21,7 +21,7 @@ export function CategoryCard({ category }: { category: Category }) {
   });
 
   return (
-    <Link href={`/collections/${category.name}`}>
+    <Link href={`/collections/${category.id}`}>
       <Card className="hover:bg-muted/25 h-full rounded-lg transition-colors">
         <CardHeader className="flex-1">
           <CardTitle className="capitalize">{category.name}</CardTitle>

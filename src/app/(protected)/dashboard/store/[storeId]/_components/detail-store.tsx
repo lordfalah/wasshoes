@@ -104,6 +104,8 @@ const DetailStore: React.FC<{ dataStore: Store; dataAdmins: User[] }> = ({
     setCurrentStep(step);
   };
 
+  console.log(dataAdmins);
+
   const form = useForm<TStoreSchemaClient>({
     resolver: zodResolver(StoreSchemaClient),
     defaultValues: {
@@ -314,7 +316,7 @@ const DetailStore: React.FC<{ dataStore: Store; dataAdmins: User[] }> = ({
                     <PopoverContent align="center" className="w-full p-0">
                       <Command>
                         <CommandInput
-                          placeholder="Search framework..."
+                          placeholder="Search head store..."
                           className="h-9"
                         />
                         <CommandList>

@@ -14,7 +14,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -399,10 +398,6 @@ const DataTableUser: React.FC<{ data: TDataUsersRole[]; total: number }> = ({
                     </div>
                   </DialogContent>
                 </Dialog>
-
-                <DropdownMenuItem variant="destructive">
-                  Delete
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           );

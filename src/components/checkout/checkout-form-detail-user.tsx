@@ -212,7 +212,7 @@ const CheckoutFormDetailUser: React.FC<CheckoutFormDetailProps> = ({
                     autoComplete="off"
                     {...field}
                     placeholder="wasshoes"
-                    type="tel"
+                    type="text"
                   />
                 </FormControl>
                 <FormMessage />

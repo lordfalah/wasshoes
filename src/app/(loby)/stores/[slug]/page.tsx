@@ -92,7 +92,10 @@ export default async function StoreSlugPage({ params }: StoreSlugPageProps) {
             <ProductCard key={product.id} product={product} />
           ))
         ) : (
-          <AlertCard />
+          <AlertCard
+            title="Doesn't have Package"
+            description="Please contact owner"
+          />
         )}
       </section>
 

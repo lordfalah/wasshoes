@@ -511,11 +511,7 @@ export async function getHistoryOrder() {
 
 export async function cancelTransactionOrder(orderId: string) {
   try {
-    const session = await auth();
-    if (!session) redirect("/");
-
     await coreApi.transaction.cancel(orderId);
-
     const updateStatusOrder = await db.order.update({
       where: {
         id: orderId,
