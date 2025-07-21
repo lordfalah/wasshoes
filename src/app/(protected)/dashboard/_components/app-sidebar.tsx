@@ -34,6 +34,8 @@ import { NavDocuments } from "./nav-documents";
 import { NavUser } from "./nav-user";
 import { NavSecondaryTemp } from "./nav-secondary";
 import Link from "next/link";
+import { UserRole } from "@prisma/client";
+import { NavItem } from "@/types";
 
 const data = {
   user: {
@@ -183,7 +185,19 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { role?: UserRole }) {
+  const filteredNavMain = filterNavItemsByRole(
+    props.role,
+    data.navMain as never,
+  );
+
+  const filteredNavSecondary = filterNavItemsByRole(
+    props.role,
+    data.navSecondary as never,
+  );
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -202,15 +216,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        {filteredNavMain.length > 0 && (
+          <NavMain items={filteredNavMain as never} />
+        )}
         <NavDocuments items={data.documents} />
-        <NavSecondaryTemp items={data.navSecondary} className="mt-auto" />
+        {filteredNavSecondary.length > 0 && (
+          <NavSecondaryTemp items={data.navSecondary} className="mt-auto" />
+        )}
       </SidebarContent>
       <SidebarFooter>
-        <React.Suspense fallback={<p>Loadingg.....</p>}>
-          <NavUser user={data.user} />
-        </React.Suspense>
+        <NavUser user={data.user} />
       </SidebarFooter>
     </Sidebar>
   );
+}
+
+function filterNavItemsByRole(
+  role: UserRole | undefined,
+  items: NavItem[],
+): NavItem[] {
+  if (role === UserRole.SUPERADMIN) {
+    return items;
+  } else if (role === UserRole.ADMIN) {
+    return items.filter((item) =>
+      ["Dashboard", "Settings"].includes(item.title),
+    );
+  } else if (role === UserRole.USER) {
+    return items.filter((item) => item.title === "Settings");
+  } else {
+    return [];
+  }
 }

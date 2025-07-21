@@ -125,3 +125,29 @@ export async function getTotalOrders() {
     return 0;
   }
 }
+
+export async function getTotalPackage() {
+  try {
+    const session = await auth();
+    if (!session) return 0;
+
+    const isAdmin = session.user.role.name === UserRole.ADMIN;
+
+    const total = await db.paket.count({
+      where: isAdmin
+        ? {
+            stores: {
+              some: {
+                adminId: session.user.id,
+              },
+            },
+          }
+        : undefined, // superadmin → tidak filter
+    });
+
+    return total;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
+    return 0;
+  }
+}

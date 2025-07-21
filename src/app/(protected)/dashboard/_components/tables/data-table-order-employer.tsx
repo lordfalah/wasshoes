@@ -10,6 +10,8 @@ import {
   ClipboardCheck,
   Contact,
   Loader2,
+  MessageCircleIcon,
+  MoreHorizontal,
   Text,
   XCircle,
 } from "lucide-react";
@@ -27,7 +29,12 @@ import {
   User,
   TPriority,
 } from "@prisma/client";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import {
   calculateOrderTotals,
@@ -40,10 +47,23 @@ import { LapTimerIcon } from "@radix-ui/react-icons";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Scroller } from "@/components/ui/scroller";
 import Image from "next/image";
-
 import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
 import { parseAsInteger, useQueryStates } from "nuqs";
 import { OrdersTableActionBarEmployer } from "./orders-table-action-bar-employer";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+
+const TLaundryStatusDisplay = {
+  AWAITING_PROCESSING: "Menunggu untuk diproses/dikerjakan",
+  IN_PROGRESS: "Sedang dalam pengerjaan (laundry)",
+  QUALITY_CHECK: "Pemeriksaan kualitas (setelah pengerjaan selesai)",
+  READY_FOR_COLLECTION:
+    "Pesanan sudah siap dan menunggu diambil oleh pelanggan di lokasi",
+  COMPLETED:
+    "Pesanan telah diambil oleh pelanggan dan dianggap selesai sepenuhnya",
+  ON_HOLD:
+    "Ditahan karena alasan tertentu (misal: menunggu konfirmasi pelanggan, masalah pada sepatu)",
+};
 
 const DataTableOrderEmployer: React.FC<{
   data: Array<
@@ -396,6 +416,93 @@ const DataTableOrderEmployer: React.FC<{
         },
 
         enableSorting: false,
+      },
+
+      {
+        id: "actions",
+        cell: function Cell({ cell }) {
+          const originalData = cell.row.original;
+
+          // Mendapatkan nama pelanggan
+          const customerName = originalData.informationCustomer
+            ? originalData.informationCustomer.name
+            : originalData.user.name
+              ? originalData.user.name
+              : `${originalData.user.firstName || ""} ${originalData.user.lastName || ""}`.trim();
+
+          // Mendapatkan nomor telepon pelanggan
+          const customerPhone = originalData.informationCustomer
+            ? originalData.informationCustomer.phone
+            : originalData.user.phone; // Fallback to user.phone if informationCustomer is null
+
+          // Menerjemahkan status laundry
+          const laundryStatusText =
+            TLaundryStatusDisplay[originalData.laundryStatus] ||
+            originalData.laundryStatus;
+
+          // Menentukan status pembayaran (Lunas/Belum Lunas)
+          let paymentStatusText;
+          if (
+            originalData.status === "SETTLEMENT" ||
+            originalData.status === "CAPTURE"
+          ) {
+            paymentStatusText = "Lunas";
+          } else {
+            paymentStatusText = "Belum Lunas";
+          }
+
+          // Mendapatkan nama toko
+          const storeName = originalData.store
+            ? originalData.store.name
+            : "Toko tidak diketahui";
+
+          // Mengambil URL gambar pertama jika ada
+          const imageUrl =
+            originalData.shoesImages && originalData.shoesImages.length > 0
+              ? originalData.shoesImages[0].ufsUrl
+              : null;
+
+          // Membuat pesan WhatsApp yang lebih lengkap
+          let message = `Halo ${customerName},\n`;
+          message += `Pesanan Anda (ID: ${originalData.id}) di ${storeName}.\n`;
+          message += `Status Pembayaran: ${paymentStatusText}.\n`;
+          message += `Status Pengerjaan Laundry: ${laundryStatusText}.`;
+
+          if (imageUrl) {
+            message += `\n\nLihat gambar sepatu Anda: ${imageUrl}`;
+          }
+
+          // Mengenkode pesan agar aman untuk URL
+          const encodedMessage = encodeURIComponent(message);
+
+          // Membuat link WhatsApp jika nomor telepon tersedia
+          const linkWA = customerPhone
+            ? `https://wa.me/${customerPhone}?text=${encodedMessage}`
+            : null;
+
+          return linkWA ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem variant="destructive" asChild>
+                  <Link
+                    href={linkWA}
+                    target="_blank"
+                    className="cursor-pointer"
+                  >
+                    Send To Wa <MessageCircleIcon size={20} />
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null;
+        },
+        size: 32,
       },
     ],
     [],

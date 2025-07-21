@@ -19,11 +19,12 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
+import { SVGProps } from "react";
 
 type NavItem = {
   title: string;
   url: string;
-  icon?: LucideIcon;
+  icon?: LucideIcon | React.ComponentType<SVGProps<SVGSVGElement>>;
   items?: NavItem[];
 };
 
